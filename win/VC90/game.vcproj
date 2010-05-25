@@ -807,6 +807,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\LfgMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\LfgMgr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\LootHandler.cpp"
 				>
 			</File>
