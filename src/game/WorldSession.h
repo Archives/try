@@ -695,6 +695,11 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleResetInstancesOpcode(WorldPacket& recv_data);
         void HandleHearthandResurrect(WorldPacket & recv_data);
 
+        // Looking for Dungeon/Raid
+        void HandleSetLfgCommentOpcode(WorldPacket & recv_data);
+        void HandleLfgPlayerLockInfoRequestOpcode(WorldPacket& recv_data);
+        void HandleLfgPartyLockInfoRequestOpcode(WorldPacket& recv_data);
+
         // Arena Team
         void HandleInspectArenaTeamsOpcode(WorldPacket& recv_data);
         void HandleArenaTeamQueryOpcode(WorldPacket& recv_data);

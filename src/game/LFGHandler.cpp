@@ -23,6 +23,28 @@
 #include "WorldPacket.h"
 #include "ObjectMgr.h"
 #include "World.h"
+#include "LfgMgr.h"
+
+
+void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
+{
+    DEBUG_LOG("CMSG_LFD_PLAYER_LOCK_INFO_REQUEST");
+    sLfgMgr.SendLfgPlayerInfo(_player);
+}
+
+void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
+{
+    DEBUG_LOG("CMSG_LFD_PARTY_LOCK_INFO_REQUEST");
+    sLfgMgr.SendLfgPartyInfo(_player);
+}
+
+
+
+
+
+//**************** ALL BELOW THIS LINE IS OBSOLETE!!!! ****************
+// I will delete it one time....
+
 
 static void AttemptJoin(Player* _player)
 {
