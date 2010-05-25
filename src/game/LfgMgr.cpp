@@ -27,9 +27,9 @@
 INSTANTIATE_SINGLETON_1( LfgMgr );
 
 
-LfgGroup::LfgGroup() : Group()
+LfgGroup::LfgGroup(uint8 lfgType) : Group()
 {
-    
+    m_lfgType = lfgType;
 }
 LfgGroup::~LfgGroup()
 {
@@ -216,9 +216,84 @@ LfgReward* LfgMgr::GetRandomDungeonReward(uint32 dungeon, bool firstToday, uint8
 
     for(LfgRewardList::iterator itr = m_rewardsList.begin(); itr != m_rewardsList.end(); , ++itr)
     {
-        if((*itr)->type == index && (*itr)->firstToday == firstToday)
+        if((*itr)->type == index && (*itr)->daily == firstToday)
             return *itr;
     }
     return NULL;
 }
 
+/*
+CREATE TABLE `mangostest`.`dungeon_rewards` (
+`type` TINYINT( 3 ) UNSIGNED NOT NULL ,
+`daily` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT '0',
+`baseMoney` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`baseXP` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`variableMoney` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`variableXP` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`itemId` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`displayId` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
+`stackCount` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0',
+`description` VARCHAR( 255 ) NOT NULL ,
+INDEX ( `type` ) 
+) ENGINE = InnoDB;
+*/
+
+void LfgMgr::LoadDungeonRewards()
+{
+    // In case of reload
+    m_rewardsList.clear();
+
+    uint32 count = 0;
+    //                                                0     1      2          3       4              5           6       7          8        
+    QueryResult *result = WorldDatabase.Query("SELECT type, daily, baseMoney, baseXP, variableMoney, variableXP, itemId, displayId, stackCount FROM dungeon_rewards");
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u random dungeon rewards", count );
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+
+        LfgReward *reward = new LfgReward();
+        reward->type                  = fields[0].GetUInt8();
+        reward->daily                 = fields[1].GetBool();
+        reward->baseMoney             = fields[2].GetInt32();
+        reward->baseXP                = fields[3].GetInt32();
+        reward->variableMoney         = fields[4].GetInt32();
+        reward->variableXP            = fields[5].GetInt32();
+        reward->itemId                = fields[6].GetInt32();
+        reward->displayId             = fields[7].GetInt32();
+        reward->stackCount            = fields[8].GetInt32();
+        if(reward->type >= LFG_REWARD_DATA_SIZE)
+        {
+            sLog.outErrorDb("Entry listed in 'dungeon_rewards' has wrong type %u, skipping.", reward->type);
+            delete reward;
+            continue;
+        }
+        if(!sItemStore.LookupEntry(reward->itemId))
+        {
+            sLog.outErrorDb("Entry listed in 'dungeon_rewards' has wrong item entry %u, skipping.", reward->itemId);
+            delete reward;
+            continue;
+        }
+
+        m_rewardsList.push_back(reward);
+    } while( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u random dungeon rewards.", count );
+}

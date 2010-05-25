@@ -1189,6 +1189,9 @@ void World::SetInitialWorldSettings()
     sLog.outString();
     sWaypointMgr.Load();
 
+    sLog.outString( "Loading Random Dungeon rewards..." );
+    sLfgMgr.LoadDungeonRewards();
+
     sLog.outString( "Loading GM tickets...");
     sTicketMgr.LoadGMTickets();
 

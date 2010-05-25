@@ -107,7 +107,7 @@ enum LfgRewardEnums
 struct LfgReward
 {
     uint8 type;                 // reward type from LfgRewardEnums
-    bool firstToday;
+    bool daily;
     uint32 baseMoney;
     uint32 baseXP;
     uint32 variableMoney;
@@ -120,10 +120,12 @@ struct LfgReward
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
     public:
-        LfgGroup();
+        LfgGroup(uint8 lfgType);
         ~LfgGroup();
 
-        void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);  
+        void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);
+    private:
+        uint8 m_lfgType;
 }
 class LfgMgr
 {
@@ -138,6 +140,8 @@ class LfgMgr
         void SendLfgPartyInfo(Player *plr);
 
         void BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr);
+
+        void LoadDungeonRewards();
 
     private:
         LfgRewardList m_rewardsList;
