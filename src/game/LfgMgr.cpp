@@ -21,6 +21,7 @@
 #include "Player.h"
 #include "World.h"
 #include "LfgMgr.h"
+#include "DBCStores.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -127,27 +128,31 @@ void LfgMgr::SendLfgPartyInfo(Player *plr)
 }
 void LfgMgr::SendLfgPlayerInfo(Player *plr)
 {
-    uint32 rsize = 0;        // size of random dungeons locks
-    uint32 lsize = 0;        // size of normal dungeons locks
+    LfgDungeonList *random = GetRandomDungeons(plr);
+    LfgLocksList *locks = GetDungeonsLock(plr);
+    uint32 rsize = random->size();
+    uint32 lsize = locks->size();
 
-    WorldPacket data(SMSG_LFG_PLAYER_INFO, 1 + rsize * (4 + 1 + 4 + 4 + 4 + 4 + 1 + 4 + 4 + 4) + 4 + lsize * (4 + 4));
+    WorldPacket data(SMSG_LFG_PLAYER_INFO, 1 + rsize * 34 + 4 + lsize * 8);
     if (rsize == 0)
     {
         data << uint8(0);
     }
     else
     {
-        data << uint8(rsize);                  // Random Dungeon count
-        //for (/* all random dungeons of player */)
+        data << uint8(rsize);                                      // Random Dungeon count
+        for (LfgDungeonList::iterator itr = random->begin(); itr != random->end(); ++itr)
         {
-            data << uint32(0);                            // Entry of random dungeon
-            BuildRewardBlock(data, 0, plr);               // 0 is entry of dungeon
+            data << uint32((*itr)->ID);                            // Entry of random dungeon
+            BuildRewardBlock(data, (*itr)->ID, plr);               // 0 is entry of dungeon
         }
+        random->clear();
+        delete random;
     }
-    //for (/* every non-random lock OF THAT PLAYER!! */ )
+    for (LfgLocksList::iterator = locks->begin(); itr != locks->end(); ++itr)
     {
-        data << uint32(0);                     // Dungeon entry + type
-        data << uint32(0);                     // Lock status
+        data << uint32((*itr)->dungeonInfo->Entry());              // Dungeon entry + type
+        data << uint32((*itr)->lockType);                          // Lock status
     }
     plr->GetSession()->SendPacket(&data);
 }
@@ -155,86 +160,103 @@ void LfgMgr::SendLfgPlayerInfo(Player *plr)
 void LfgMgr::BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr)
 {
     bool hasCompletedToday = false;
-    LfgReward *reward = GetRandomDungeonReward(dungeon, hasCompletedToday, plr->getLevel());
+    LfgReward *reward = GetDungeonReward(dungeon, hasCompletedToday, plr->getLevel());
 
     if (!reward)
         return;
 
     data << uint8(hasCompletedToday);
     if (data.GetOpcode() == SMSG_LFG_PLAYER_REWARD)
-        data << uint32(reward->strangers);
-    data << uint32(reward->baseMoney);
-    data << uint32(reward->baseXP);
-    data << uint32(reward->variableMoney);
-    data << uint32(reward->variableXP);
-    data << uint8(reward->itemId != 0);
-    if (reward->itemId)
+        data << uint32(0);             // ???
+    data << uint32(reward->questInfo->GetRewOrReqMoney());
+    data << uint32(reward->questInfo->XPValue( plr )*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST));
+    data << uint32(reward->questInfo->GetRewMoneyMaxLevel());                                      // some "variable" money?
+    data << uint32(reward->questInfo->XPValue( plr )*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST));// some "variable" xp?
+    
+    ItemPrototype const *rewItem = sObjectMgr.GetItemPrototype(reward->questInfo->RewItemId[0]);   // Only first item is for dungeon finder
+    if(!rewItem)
+        data << uint8(0);   // have not reward item
+    else
     {
-        data << uint32(reward->itemId);
-        data << uint32(reward->displayId);
-        data << uint32(reward->stackCount);
+        data << uint8(1);   // have reward item
+        data << uint32(rewItem->ItemId);
+        data << uint32(rewItem->DisplayInfoID);
+        data << uint32(reward->questInfo->RewItemCount[0]);
     }
 }
 
-LfgReward* LfgMgr::GetRandomDungeonReward(uint32 dungeon, bool firstToday, uint8 level)
+LfgReward* LfgMgr::GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level)
 {
-    uint8 index = 0;
-    switch((dungeon & 0x00FFFFFF))                          // Get dungeon id from dungeon entry
-    {
-        case LFG_RANDOM_CLASSIC:
-            if (level < 15)
-                index = LFG_REWARD_LEVEL0;
-            else if (level < 24)
-                index = LFG_REWARD_LEVEL1;
-            else if (level < 35)
-                index = LFG_REWARD_LEVEL2;
-            else if (level < 46)
-                index = LFG_REWARD_LEVEL3;
-            else if (level < 56)
-                index = LFG_REWARD_LEVEL4;
-            else
-                index = LFG_REWARD_LEVEL5;
-            break;
-        case LFG_RANDOM_BC_NORMAL:
-            index = LFG_REWARD_BC_NORMAL;
-            break;
-        case LFG_RANDOM_BC_HEROIC:
-            index = LFG_REWARD_BC_HEROIC;
-            break;
-        case LFG_RANDOM_LK_NORMAL:
-            index = level == 80 ? LFG_REWARD_LK_NORMAL80 : LFG_REWARD_LK_NORMAL;
-            break;
-        case LFG_RANDOM_LK_HEROIC:
-            index = LFG_REWARD_LK_HEROIC;
-            break;
-        default:                                                // This should never happen!
-            firstToday = false;
-            index = LFG_REWARD_LEVEL0;
-            sLog.outError("LFGMgr::GetRandomDungeonReward: Dungeon %u is not random dungeon!", dungeon);
-            break;
-    }
+    LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry(dungeon);
+    if(!dungeonInfo)
+        return NULL;
 
-    for(LfgRewardList::iterator itr = m_rewardsList.begin(); itr != m_rewardsList.end(); , ++itr)
+    for(LfgRewardList::iterator itr = m_rewardsList.begin(); itr != m_rewardsList.end(); ++itr)
     {
-        if((*itr)->type == index && (*itr)->daily == firstToday)
-            return *itr;
+        if((*itr)->type == dungeonInfo->type && (*itr)->GroupType == dungeonInfo->grouptype &&
+            (*itr)->isDaily() == firstToday)
+        {
+            Quest *rewQuest = (*itr)->questInfo;
+            if((*itr)->questInfo->GetMinLevel() >= level && (*itr)->questInfo->GetQuestLevel() <= level)  // ...mostly, needs some adjusting in db, blizz q level are without order
+                return *itr;      
+        }
     }
     return NULL;
 }
 
+LfgDungeonList* LfgMgr::GetRandomDungeons(Player *plr)
+{
+    LfgDungeonList *dungeons = new LfgDungeonList();
+    LFGDungeonEntry const *currentRow;
+    for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
+    {
+        currentRow = sLFGDungeonStore.LookupEntry(i);
+        if(currentRow && currentRow->type == LFG_TYPE_RANDOM &&
+            currentRow->minlevel <= plr->getLevel() && currentRow->maxlevel >= plr->getLevel() &&
+            currentRow->expansion <= plr->GetSession()->Expansion())
+            dungeons->insert(currentRow);
+    }
+    return dungeons;
+}
+
+LfgLocksList* LfgMgr::GetDungeonsLock(Player *plr)
+{
+    LfgLocksList* locks = new LfgLocksList();
+    LFGDungeonEntry const *currentRow;
+    LfgLockStatusType type;
+    for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
+    {
+        currentRow = sLFGDungeonStore.LookupEntry(i);
+        if(!currentRow)
+            continue;
+        type = LFG_LOCKSTATUS_OK;
+        if(currentRow->expansion > plr->GetSession()->Expansion())
+            type = LFG_LOCKSTATUS_INSUFFICIENT_EXPANSION;
+        else if(currentRow->minlevel > plr->getLevel())
+            type = LFG_LOCKSTATUS_TOO_LOW_LEVEL;
+        else if(plr->getLevel() > currentRow->maxlevel)
+            type = LFG_LOCKSTATUS_TOO_HIGH_LEVEL;
+        //others to be done, I just need to test if LFG window has correct function right now...
+
+        if(type != LFG_LOCKSTATUS_OK)
+        {
+            LfgLockStatus *lockStatus = new LfgLockStatus();
+            lockStatus->dungeonInfo = currentRow;
+            lockStatus->lockType = type;
+            locks->push_back(lockStatus);
+        } 
+    }
+    return locks;
+}
+
 /*
-CREATE TABLE `mangostest`.`dungeon_rewards` (
-`type` TINYINT( 3 ) UNSIGNED NOT NULL ,
-`daily` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT '0',
-`baseMoney` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`baseXP` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`variableMoney` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`variableXP` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`itemId` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`displayId` INT( 10 ) UNSIGNED NOT NULL DEFAULT '0',
-`stackCount` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0',
-`description` VARCHAR( 255 ) NOT NULL ,
-INDEX ( `type` ) 
+CREATE TABLE `quest_lfg_relation` (
+`type` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0',
+`groupType` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0',
+`questEntry` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
+`flags` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
+INDEX ( `type` , `groupType` ) ,
+UNIQUE (`questEntry`)
 ) ENGINE = InnoDB;
 */
 
@@ -244,8 +266,8 @@ void LfgMgr::LoadDungeonRewards()
     m_rewardsList.clear();
 
     uint32 count = 0;
-    //                                                0     1      2          3       4              5           6       7          8        
-    QueryResult *result = WorldDatabase.Query("SELECT type, daily, baseMoney, baseXP, variableMoney, variableXP, itemId, displayId, stackCount FROM dungeon_rewards");
+    //                                                0     1          2           3       
+    QueryResult *result = WorldDatabase.Query("SELECT type, groupType, questEntry, flags, FROM quest_lfg_relation");
 
     if( !result )
     {
@@ -254,7 +276,7 @@ void LfgMgr::LoadDungeonRewards()
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u random dungeon rewards", count );
+        sLog.outString( ">> Loaded %u LFG dungeon quest relations", count );
         return;
     }
 
@@ -268,32 +290,22 @@ void LfgMgr::LoadDungeonRewards()
 
         LfgReward *reward = new LfgReward();
         reward->type                  = fields[0].GetUInt8();
-        reward->daily                 = fields[1].GetBool();
-        reward->baseMoney             = fields[2].GetInt32();
-        reward->baseXP                = fields[3].GetInt32();
-        reward->variableMoney         = fields[4].GetInt32();
-        reward->variableXP            = fields[5].GetInt32();
-        reward->itemId                = fields[6].GetInt32();
-        reward->displayId             = fields[7].GetInt32();
-        reward->stackCount            = fields[8].GetInt32();
-        if(reward->type >= LFG_REWARD_DATA_SIZE)
-        {
-            sLog.outErrorDb("Entry listed in 'dungeon_rewards' has wrong type %u, skipping.", reward->type);
-            delete reward;
-            continue;
-        }
-        if(!sItemStore.LookupEntry(reward->itemId))
-        {
-            sLog.outErrorDb("Entry listed in 'dungeon_rewards' has wrong item entry %u, skipping.", reward->itemId);
-            delete reward;
-            continue;
-        }
+        reward->GroupType             = fields[1].GetBool();
+        reward->flags                 = fields[3].GetUInt32();
 
+        if(Quest *rewardQuest = const_cast<Quest*>(sObjectMgr.GetQuestTemplate(fields[2].GetUInt32())))
+            reward->questInfo = rewardQuest;
+        else
+        {
+            sLog.outErrorDb("Entry listed in 'quest_lfg_relation' has non-exist quest %u, skipping.", fields[2].GetUInt32());
+            delete reward;
+            continue;
+        }
         m_rewardsList.push_back(reward);
     } while( result->NextRow() );
 
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u random dungeon rewards.", count );
+    sLog.outString( ">> Loaded %u LFG dungeon quest relations.", count );
 }

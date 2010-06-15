@@ -52,16 +52,6 @@ enum LfgUpdateType
     LFG_UPDATETYPE_GROUP_DISBAND        = 16,
 };
 
-enum LfgType
-{
-    LFG_TYPE_DUNGEON = 1,
-    LFG_TYPE_RAID    = 2,
-    LFG_TYPE_QUEST   = 3,
-    LFG_TYPE_ZONE    = 4,
-    LFG_TYPE_HEROIC  = 5,
-    LFG_TYPE_RANDOM  = 6,
-};
-
 enum LfgLockStatusType
 {
     LFG_LOCKSTATUS_OK                        = 0,           // Internal use only
@@ -88,34 +78,58 @@ enum LfgRandomDungeonEntries
     LFG_RANDOM_LK_HEROIC   = 262,
 };
 
-enum LfgRewardEnums
+enum LfgType
 {
-    LFG_REWARD_LEVEL0      = 10,
-    LFG_REWARD_LEVEL1      = 0,
-    LFG_REWARD_LEVEL2      = 1,
-    LFG_REWARD_LEVEL3      = 2,
-    LFG_REWARD_LEVEL4      = 3,
-    LFG_REWARD_LEVEL5      = 4,
-    LFG_REWARD_BC_NORMAL   = 5,
-    LFG_REWARD_BC_HEROIC   = 6,
-    LFG_REWARD_LK_NORMAL   = 7,
-    LFG_REWARD_LK_NORMAL80 = 7,
-    LFG_REWARD_LK_HEROIC   = 8,
-    LFG_REWARD_DATA_SIZE   = 10,
+    LFG_TYPE_DUNGEON = 1,                //world event count as dungeon
+    LFG_TYPE_RAID    = 2,
+    LFG_TYPE_QUEST   = 3,
+    LFG_TYPE_ZONE    = 4,
+    LFG_TYPE_HEROIC  = 5,
+    LFG_TYPE_RANDOM  = 6,
+};
+
+// From LFGDungeonGroup.dbc
+enum LfgGroupType
+{
+    LFG_GROUPTYPE_CLASSIC      = 1,
+    LFG_GROUPTYPE_BC_NORMAL    = 2,
+    LFG_GROUPTYPE_BC_HEROIC    = 3,
+    LFG_GROUPTYPE_WTLK_NORMAL  = 4,
+    LFG_GROUPTYPE_WTLK_HEROIC  = 5,
+    LFG_GROUPTYPE_CLASSIC_RAID = 6,
+    LFG_GROUPTYPE_BC_RAID      = 7,
+    LFG_GROUPTYPE_WTLK_RAID_10 = 8,
+    LFG_GROUPTYPE_WTLK_RAID_25 = 9,
+    LFG_GROUPTYPE_WORLD_EVENT  = 11,
+};
+
+//Theres some quest for rewards, but they have not anything different, so make custom flags
+enum __LfgQuestFlags
+{
+    LFG_QUEST_NONE         = 0x00000000,
+    LFG_QUEST_REWARD       = 0x00000001,    // Its lfg reward quest
+    LFG_QUEST_FIRST_RUN    = 0x00000002,    // First run that day
+    LFG_QUEST_NEXT_RUN     = 0x00000004,    // Another run that day
 };
 
 struct LfgReward
 {
-    uint8 type;                 // reward type from LfgRewardEnums
-    bool daily;
-    uint32 baseMoney;
-    uint32 baseXP;
-    uint32 variableMoney;
-    uint32 variableXP;
-    uint32 itemId;
-    uint32 displayId;
-    uint32 stackCount;
+    uint8 type;                      // enum LfgType
+    uint8 GroupType;                 // reward type from LfgGroupType
+    Quest *questInfo;                // rewards are quests
+    uint32 flags;                    //__LfgQuestFlags
+
+    bool isDaily() const { return (flags & LFG_QUEST_FIRST_RUN); }
 };
+typedef std::list<LfgReward*> LfgRewardList;
+typedef std::list<LFGDungeonEntry*> LfgDungeonList;
+
+struct LfgLockStatus
+{
+   LFGDungeonEntry* dungeonInfo;
+   LfgLockStatusType lockType;
+};
+typedef std::list<LfgLockStatus*> LfgLocksList;
 
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
@@ -127,13 +141,14 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
     private:
         uint8 m_lfgType;
 }
-class LfgMgr
+
+class MANGOS_DLL_SPEC LfgMgr
 {
     public:
-        typedef std::list<LfgReward*> LfgRewardList;
         /* Construction */
         LfgMgr();
         ~LfgMgr();
+
         void Update(uint32 diff);
 
         void SendLfgPlayerInfo(Player *plr);
@@ -145,7 +160,9 @@ class LfgMgr
 
     private:
         LfgRewardList m_rewardsList;
-        LfgReward *GetRandomDungeonReward(uint32 dungeon, bool firstToday, uint8 level);
+        LfgReward *GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level);
+        LfgDungeonList *GetRandomDungeons(Player *plr);
+        LfgLocksList *GetDungeonsLock(Player *plr);
 };
 
 #define sLfgMgr MaNGOS::Singleton<LfgMgr>::Instance()

@@ -1086,7 +1086,7 @@ struct LFGDungeonEntry
     uint32  recmaxlevel;                                    // 22
     uint32  map;                                            // 23
     uint32  heroic;                                         // 24
-    //uint32  unk;                                            // 25
+    uint32  unk;                                            // 25 0 = raid or zone, 3 = dungeon, 15 = world event
     uint32  type;                                           // 26
     //uint32  unk2;                                           // 27
     //char*   unk3;                                           // 28
