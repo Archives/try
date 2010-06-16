@@ -120,7 +120,7 @@ struct LfgReward
     bool isDaily() const { return (flags & LFG_QUEST_DAILY); }
 };
 typedef std::list<LfgReward*> LfgRewardList;
-typedef std::list<LFGDungeonEntry*> LfgDungeonList;
+typedef std::set<LFGDungeonEntry*> LfgDungeonList;
 
 struct LfgLockStatus
 {
@@ -128,6 +128,7 @@ struct LfgLockStatus
    LfgLockStatusType lockType;
 };
 typedef std::list<LfgLockStatus*> LfgLocksList;
+typedef std::map<uint64, LfgLocksList*> LfgLocksMap;
 
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
@@ -136,6 +137,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         ~LfgGroup();
 
         void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);
+        void SendLfgPartyInfo(Player *plr);
+        LfgLocksMap *GetLocksList();
     private:
         uint8 m_lfgType;
 };
@@ -150,16 +153,15 @@ class MANGOS_DLL_SPEC LfgMgr
         void Update(uint32 diff);
 
         void SendLfgPlayerInfo(Player *plr);
-        void SendLfgPartyInfo(Player *plr);
 
         void BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr);
 
         void LoadDungeonRewards();
+        LfgLocksList *GetDungeonsLock(Player *plr);
     private:
         LfgRewardList m_rewardsList;
-        LfgReward *GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level);
+        LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
         LfgDungeonList *GetRandomDungeons(Player *plr);
-        LfgLocksList *GetDungeonsLock(Player *plr);
 };
 
 #define sLfgMgr MaNGOS::Singleton<LfgMgr>::Instance()

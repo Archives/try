@@ -94,6 +94,41 @@ void LfgGroup::SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry)
     BroadcastPacket(&data, true);
 }
 
+LfgLocksMap* LfgGroup::GetLocksList()
+{
+    LfgLocksMap *groupLocks;
+    for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+    {
+        Player *plr = itr->getSource();
+        LfgLocksList *playerLocks = sLfgMgr.GetDungeonsLock(plr);
+        if(!playerLocks->empty())
+            groupLocks[plr->GetGUID()] = playerLocks;
+    }
+    return groupLocks;
+}
+void LfgGroup::SendLfgPartyInfo(Player *plr)
+{   
+    LfgLocksMap *groupLocks = GetLocksList();
+
+    uint32 size = 0;
+    for (LfgLocksMap::const_iterator itr = groupLocks->begin(); itr != groupLocks->end(); ++itr)
+        size += 8 + 4 + itr->second->size() * (4 + 4);
+
+    WorldPacket data(SMSG_LFG_PARTY_INFO, 1 + size);
+    data << uint8(groupLocks->size());                   // number of locks...
+    for (LfgLocksMap::const_iterator itr = groupLocks->begin(); itr != groupLocks->end(); ++itr)
+    {
+        data << uint64(itr->first);                      // guid of player which has lock
+        data << uint32(itr->second->size());             // Size of lock dungeons for that player
+        for (LfgLocksList::iterator it = itr->second->begin(); it != itr->second->end(); ++it)
+        {
+            data << uint32((*it)->dungeonInfo->Entry()); // Dungeon entry + type
+            data << uint32((*it)->lockType);             // Lock status
+        }
+    }
+    plr->GetSession()->SendPacket(&data);
+}
+
 LfgMgr::LfgMgr()
 {
     
@@ -109,25 +144,6 @@ void LfgMgr::Update(uint32 diff)
     
 }
 
-void LfgMgr::SendLfgPartyInfo(Player *plr)
-{
-    uint32 size = 0;
-    //for (/* for every lock */)
-      //  size += 8 + 4 + it->second->size() * (4 + 4);
-    WorldPacket data(SMSG_LFG_PARTY_INFO, 1 + size);
-    data << uint8(0); // number of locks...
-    //for(/* for every lock */)
-    {
-        data << uint64(0);  // guid of player which has lock
-        data << uint32(0);                        // Size of lock dungeons for that player
-        //for (/* every lock OF THAT PLAYER!! */ )
-        {
-            data << uint32(0);                     // Dungeon entry + type
-            data << uint32(0);                  // Lock status
-        }
-    }
-    plr->GetSession()->SendPacket(&data);
-}
 void LfgMgr::SendLfgPlayerInfo(Player *plr)
 {
     LfgDungeonList *random = GetRandomDungeons(plr);
@@ -159,13 +175,12 @@ void LfgMgr::SendLfgPlayerInfo(Player *plr)
 
 void LfgMgr::BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr)
 {
-    bool hasCompletedToday = true;
-    LfgReward *reward = GetDungeonReward(dungeon, hasCompletedToday, plr->getLevel());
+    LfgReward *reward = GetDungeonReward(dungeon, plr->m_lookingForGroup.DoneDungeon(dungeon), plr->getLevel());
 
     if (!reward)
         return;
 
-    data << uint8(hasCompletedToday);  // false = its first run this day, true = it isnt
+    data << uint8(plr->m_lookingForGroup.DoneDungeon(dungeon));  // false = its first run this day, true = it isnt
     if (data.GetOpcode() == SMSG_LFG_PLAYER_REWARD)
         data << uint32(0);             // ???
     data << uint32(reward->questInfo->GetRewOrReqMoney());
@@ -185,7 +200,7 @@ void LfgMgr::BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr)
     }
 }
 
-LfgReward* LfgMgr::GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level)
+LfgReward* LfgMgr::GetDungeonReward(uint32 dungeon, bool done, uint8 level)
 {
     LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry(dungeon);
     if(!dungeonInfo)
@@ -194,7 +209,7 @@ LfgReward* LfgMgr::GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level
     for(LfgRewardList::iterator itr = m_rewardsList.begin(); itr != m_rewardsList.end(); ++itr)
     {
         if((*itr)->type == dungeonInfo->type && (*itr)->GroupType == dungeonInfo->grouptype &&
-            (*itr)->isDaily() == firstToday)
+            (*itr)->isDaily() != done)
         {
             Quest *rewQuest = (*itr)->questInfo;
             if(level >= (*itr)->questInfo->GetMinLevel() && (*itr)->questInfo->GetQuestLevel() <= level)  // ...mostly, needs some adjusting in db, blizz q level are without order
@@ -214,7 +229,7 @@ LfgDungeonList* LfgMgr::GetRandomDungeons(Player *plr)
         if(currentRow && currentRow->type == LFG_TYPE_RANDOM &&
             currentRow->minlevel <= plr->getLevel() && currentRow->maxlevel >= plr->getLevel() &&
             currentRow->expansion <= plr->GetSession()->Expansion())
-            dungeons->push_back(const_cast<LFGDungeonEntry*>(currentRow));
+            dungeons->insert(const_cast<LFGDungeonEntry*>(currentRow));
     }
     return dungeons;
 }
@@ -243,7 +258,7 @@ LfgLocksList* LfgMgr::GetDungeonsLock(Player *plr)
             LfgLockStatus *lockStatus = new LfgLockStatus();
             lockStatus->dungeonInfo = const_cast<LFGDungeonEntry*>(currentRow);
             lockStatus->lockType = type;
-            locks->push_back(lockStatus);
+            locks->insert(lockStatus);
         } 
     }
     return locks;
