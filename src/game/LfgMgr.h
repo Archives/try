@@ -107,9 +107,7 @@ enum LfgGroupType
 enum __LfgQuestFlags
 {
     LFG_QUEST_NONE         = 0x00000000,
-    LFG_QUEST_REWARD       = 0x00000001,    // Its lfg reward quest
-    LFG_QUEST_FIRST_RUN    = 0x00000002,    // First run that day
-    LFG_QUEST_NEXT_RUN     = 0x00000004,    // Another run that day
+    LFG_QUEST_DAILY        = 0x00000001,    // Its only daily quest
 };
 
 struct LfgReward
@@ -119,7 +117,7 @@ struct LfgReward
     Quest *questInfo;                // rewards are quests
     uint32 flags;                    //__LfgQuestFlags
 
-    bool isDaily() const { return (flags & LFG_QUEST_FIRST_RUN); }
+    bool isDaily() const { return (flags & LFG_QUEST_DAILY); }
 };
 typedef std::list<LfgReward*> LfgRewardList;
 typedef std::list<LFGDungeonEntry*> LfgDungeonList;
@@ -140,7 +138,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);
     private:
         uint8 m_lfgType;
-}
+};
 
 class MANGOS_DLL_SPEC LfgMgr
 {
@@ -157,7 +155,6 @@ class MANGOS_DLL_SPEC LfgMgr
         void BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr);
 
         void LoadDungeonRewards();
-
     private:
         LfgRewardList m_rewardsList;
         LfgReward *GetDungeonReward(uint32 dungeon, bool firstToday, uint8 level);

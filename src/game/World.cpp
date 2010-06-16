@@ -1189,7 +1189,7 @@ void World::SetInitialWorldSettings()
     sLog.outString();
     sWaypointMgr.Load();
 
-    sLog.outString( "Loading Random Dungeon rewards..." );
+    sLog.outString( "Loading LFG dungeon quest relations..." ); // must be after quest_template
     sLfgMgr.LoadDungeonRewards();
 
     sLog.outString( "Loading GM tickets...");
