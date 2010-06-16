@@ -370,6 +370,7 @@
     <ClCompile Include="..\..\src\game\BattleGroundWS.cpp" />
     <ClCompile Include="..\..\src\game\Calendar.cpp" />
     <ClCompile Include="..\..\src\game\CalendarHandler.cpp" />
+    <ClCompile Include="..\..\src\game\Camera.cpp" />
     <ClCompile Include="..\..\src\game\Channel.cpp" />
     <ClCompile Include="..\..\src\game\ChannelHandler.cpp" />
     <ClCompile Include="..\..\src\game\ChannelMgr.cpp" />
@@ -398,6 +399,7 @@
     <ClCompile Include="..\..\src\game\GMTicketHandler.cpp" />
     <ClCompile Include="..\..\src\game\GMTicketMgr.cpp" />
     <ClCompile Include="..\..\src\game\GossipDef.cpp" />
+    <ClCompile Include="..\..\src\game\GridMap.cpp" />
     <ClCompile Include="..\..\src\game\GridNotifiers.cpp" />
     <ClCompile Include="..\..\src\game\GridStates.cpp" />
     <ClCompile Include="..\..\src\game\Group.cpp" />
@@ -516,6 +518,7 @@
     <ClInclude Include="..\..\src\game\BattleGroundSA.h" />
     <ClInclude Include="..\..\src\game\BattleGroundWS.h" />
     <ClInclude Include="..\..\src\game\Calendar.h" />
+    <ClInclude Include="..\..\src\game\Camera.h" />
     <ClInclude Include="..\..\src\game\Cell.h" />
     <ClInclude Include="..\..\src\game\CellImpl.h" />
     <ClInclude Include="..\..\src\game\Channel.h" />
@@ -547,6 +550,7 @@
     <ClInclude Include="..\..\src\game\GMTicketMgr.h" />
     <ClInclude Include="..\..\src\game\GossipDef.h" />
     <ClInclude Include="..\..\src\game\GridDefines.h" />
+    <ClInclude Include="..\..\src\game\GridMap.h" />
     <ClInclude Include="..\..\src\game\GridNotifiers.h" />
     <ClInclude Include="..\..\src\game\GridNotifiersImpl.h" />
     <ClInclude Include="..\..\src\game\GridStates.h" />
