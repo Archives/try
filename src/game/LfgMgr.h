@@ -155,11 +155,11 @@ struct LfgReward
     bool isDaily() const { return (flags & LFG_QUEST_DAILY); }
 };
 typedef std::list<LfgReward*> LfgRewardList;
-typedef std::set<LFGDungeonEntry* const> LfgDungeonList;
+typedef std::set<LFGDungeonEntry const*> LfgDungeonList;
 
 struct LfgLockStatus
 {
-   LFGDungeonEntry* const dungeonInfo;
+   LFGDungeonEntry const *dungeonInfo;
    LfgLockStatusType lockType;
 };
 typedef std::list<LfgLockStatus*> LfgLocksList;
@@ -173,17 +173,6 @@ enum QueueFaction
 #define MAX_LFG_FACTION                  2
 
 typedef std::set<Player*> PlayerList;
-typedef std::set<LfgGroup*> GroupsList;
-
-struct QueuedDungeonInfo
-{
-    LFGDungeonEntry* const dungeonInfo;
-
-    PlayerList PlayerList;
-    GroupsList GroupsList;  
-};
-
-typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;
 
 //Used not only inside dungeons, but also as queued group
 class MANGOS_DLL_SPEC LfgGroup : public Group
@@ -208,17 +197,30 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SetTank(Player *tank) { m_tank = tank; }
         void SetHeal(Player *heal) { m_heal = heal; }
 
-        void SetDungeonInfo(LFGDungeonEntry* const dungeonInfo) { m_dungeonInfo = dungeonInfo; }
+        void SetDungeonInfo(LFGDungeonEntry const *dungeonInfo) { m_dungeonInfo = dungeonInfo; }
+        LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
 
         std::set<uint64> GetPremadePlayers() { return premadePlayers; }
     private:
         Player *m_tank;
         Player *m_heal;
         PlayerList *dps;
-        LFGDungeonEntry* const m_dungeonInfo;
+        LFGDungeonEntry const *m_dungeonInfo;
         std::set<uint64> premadePlayers;
 
 };
+
+typedef std::set<LfgGroup*> GroupsList;
+
+struct QueuedDungeonInfo
+{
+    LFGDungeonEntry const *dungeonInfo;
+
+    PlayerList players;
+    GroupsList groups;  
+};
+
+typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;
 
 class MANGOS_DLL_SPEC LfgMgr
 {
@@ -229,7 +231,7 @@ class MANGOS_DLL_SPEC LfgMgr
 
         void Update(uint32 diff);
 
-        void AddToQueue(Player *player, uint32 LfgGroupType);
+        void AddToQueue(Player *player);
         void RemoveFromQueue(Player *player);
         void UpdateQueues();
 

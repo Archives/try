@@ -399,7 +399,7 @@ struct LookingForGroup
 {
     LookingForGroup()
     {
-        completedRandomDungeons.clear();
+        completedRandoms.clear();
         queuedDungeons.clear();
     }
     
@@ -408,12 +408,14 @@ struct LookingForGroup
     LfgDungeonList completedRandoms;
     LfgDungeonList queuedDungeons;
     LfgGroup *group;
+    GroupReference m_LfgGroup;
+    time_t joinTime;
 
     bool DoneDungeon(uint32 ID)
     {
        LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry(ID);
        if(dungeonInfo)
-            return completedRandomDungeons.find(dungeonInfo) != completedRandoms.end();
+            return completedRandoms.find(dungeonInfo) != completedRandoms.end();
        return false;
     }
 };

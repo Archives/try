@@ -31,8 +31,8 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
     DEBUG_LOG("WORLD: Received CMSG_LFG_JOIN");
 
     uint32 error = LFG_JOIN_OK;
-    uint32 roles, unk;
-    uint8 count;
+    uint32 roles;
+    uint8 count, unk;
     std::string comment;
 
     recv_data >> roles;
@@ -64,7 +64,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry((dungeonEntry & 0x00FFFFFF));
         if(!dungeonInfo)
         {
-            ERROR_LOG("WORLD: Player %u has attempted to join for non-exist dungeon from LFG", _player->GetGUID());
+            sLog.outError("WORLD: Player %u has attempted to join for non-exist dungeon from LFG", _player->GetGUID());
             error = LFG_JOIN_DUNGEON_INVALID;
         }
         //Raids are not implemented yet, and they are not so popular on offi, so get rid of them for now
@@ -110,8 +110,20 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
 
     _player->m_lookingForGroup.roles = uint8(roles);
     _player->m_lookingForGroup.comment = comment;
+    _player->m_lookingForGroup.joinTime = time(NULL);
 
     sLfgMgr.AddToQueue(_player);
+}
+
+void WorldSession::HandleLfgLeaveOpcode(WorldPacket & /*recv_data*/)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_LEAVE");
+
+    if(Group *group = _player->GetGroup())
+        if(group->GetLeaderGUID() != _player->GetGUID())    // Only leader can leave
+            return;
+
+    sLfgMgr.RemoveFromQueue(_player);
 }
 
 void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
@@ -122,10 +134,11 @@ void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data
 
 void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
 {
+    // TODO: Find out why its sometimes send even when player is not in group...
     DEBUG_LOG("WORLD: Received CMSG_LFD_PARTY_LOCK_INFO_REQUEST");
     if(!_player->GetGroup())
     {
-        error_log("Recieved CMSG_LFD_PARTY_LOCK_INFO_REQUEST but player %u is not in Group!", _player->GetGUID()); 
+        DEBUG_LOG("Recieved CMSG_LFD_PARTY_LOCK_INFO_REQUEST but player %u is not in Group!", _player->GetGUID()); 
         return;
     }
     ((LfgGroup*)_player->GetGroup())->SendLfgPartyInfo(_player);

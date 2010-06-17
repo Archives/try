@@ -837,7 +837,7 @@ void WorldSession::HandleMeetingStoneInfo( WorldPacket & /*recv_data*/ )
 {
     DEBUG_LOG( "WORLD: Received CMSG_MEETING_STONE_INFO" );
 
-    SendLfgUpdate(0, 0, 0);
+    //sLfgMgr.SendLfgUpdatePlayer(_player, 0);
 }
 
 void WorldSession::HandleTutorialFlag( WorldPacket & recv_data )
