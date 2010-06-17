@@ -24,21 +24,109 @@
 #include "ObjectMgr.h"
 #include "World.h"
 #include "LfgMgr.h"
+#include "DBCStores.h"
 
+void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_JOIN");
+
+    uint32 error = LFG_JOIN_OK;
+    uint32 roles, unk;
+    uint8 count;
+    std::string comment;
+
+    recv_data >> roles;
+    recv_data.read_skip<uint8>();                           // unk - always 0
+    recv_data.read_skip<uint8>();                           // unk - always 0
+    recv_data >> count;
+    
+    //Some first checks
+    if(_player->InBattleGround() || _player->InBattleGroundQueue() || _player->InArena())
+        error = LFG_JOIN_USING_BG_SYSTEM;
+    else if(_player->HasAura(LFG_DESERTER))
+        error = LFG_JOIN_PARTY_DESERTER;
+    else if(_player->GetGroup() && _player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
+            error = LFG_JOIN_NOT_MEET_REQS;
+
+    if(error != LFG_JOIN_OK)
+    {
+        WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+        data << uint32(error);                                  // Check Result
+        data << uint32(0);                                      // Check Value
+        SendPacket(&data);
+        return;
+    }
+    // for every dungeon check also if theres some error
+    for(uint8 i = 0; i < count; ++i)
+    {
+        uint32 dungeonEntry;
+        recv_data >> dungeonEntry;
+        LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry((dungeonEntry & 0x00FFFFFF));
+        if(!dungeonInfo)
+        {
+            ERROR_LOG("WORLD: Player %u has attempted to join for non-exist dungeon from LFG", _player->GetGUID());
+            error = LFG_JOIN_DUNGEON_INVALID;
+        }
+        //Raids are not implemented yet, and they are not so popular on offi, so get rid of them for now
+        else if(dungeonInfo->type == LFG_TYPE_RAID)
+            error = LFG_JOIN_INTERNAL_ERROR;
+        else if(dungeonInfo->type == LFG_TYPE_RANDOM && _player->HasAura(LFG_RANDOM_COOLDOWN))
+            error = LFG_JOIN_RANDOM_COOLDOWN;
+        //Now the group
+        else if(Group *group = _player->GetGroup())
+        {
+            if(group->isRaidGroup())
+                error = LFG_JOIN_MIXED_RAID_DUNGEON;
+            else
+            {
+                for (GroupReference *itr = group->GetFirstMember(); itr != NULL && error == LFG_JOIN_OK; itr = itr->next())
+                {
+                    if (Player *plr = itr->getSource())
+                    {
+                        if (plr->HasAura(LFG_DESERTER))
+                            error = LFG_JOIN_PARTY_DESERTER;
+                        else if(dungeonInfo->type == LFG_TYPE_RANDOM && plr->HasAura(LFG_RANDOM_COOLDOWN))
+                            error = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
+                    }else
+                        error = LFG_JOIN_DISCONNECTED;
+                }
+            }
+        }
+        if(error != LFG_JOIN_OK)
+        {
+            WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+            data << uint32(error);                                  // Check Result
+            data << uint32(0);                                      // Check Value
+            SendPacket(&data);
+            return;
+        }
+        _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
+    } 
+    recv_data >> unk; // looks like unk from LFGDungeons.dbc, so 0 = raid or zone, 3 = dungeon, 15 = world event. Possibly count of next data? anyway seems unused
+    for (int8 i = 0 ; i < unk; ++i)
+        recv_data.read_skip<uint8>();                       // unk, always 0?
+
+    recv_data >> comment;
+
+    _player->m_lookingForGroup.roles = uint8(roles);
+    _player->m_lookingForGroup.comment = comment;
+
+    sLfgMgr.AddToQueue(_player);
+}
 
 void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
 {
-    DEBUG_LOG("CMSG_LFD_PLAYER_LOCK_INFO_REQUEST");
+    DEBUG_LOG("WORLD: Received CMSG_LFD_PLAYER_LOCK_INFO_REQUEST");
     sLfgMgr.SendLfgPlayerInfo(_player);
 }
 
 void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
 {
-    DEBUG_LOG("CMSG_LFD_PARTY_LOCK_INFO_REQUEST");
-    if(!_player->m_lookingForGroup.group)
+    DEBUG_LOG("WORLD: Received CMSG_LFD_PARTY_LOCK_INFO_REQUEST");
+    if(!_player->GetGroup())
     {
-        error_log("Recieved CMSG_LFD_PARTY_LOCK_INFO_REQUEST but player %u is not in LfgGroup!", _player->GetGUID()); 
+        error_log("Recieved CMSG_LFD_PARTY_LOCK_INFO_REQUEST but player %u is not in Group!", _player->GetGUID()); 
         return;
     }
-    _player->m_lookingForGroup.group->SendLfgPartyInfo(_player);
+    ((LfgGroup*)_player->GetGroup())->SendLfgPartyInfo(_player);
 }

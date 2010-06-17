@@ -886,7 +886,7 @@ OpcodeHandler opcodeTable[NUM_MSG_TYPES] =
     /*0x359*/ { "MSG_MOVE_START_ASCEND",                        STATUS_LOGGEDIN, &WorldSession::HandleMovementOpcodes           },
     /*0x35A*/ { "MSG_MOVE_STOP_ASCEND",                         STATUS_LOGGEDIN, &WorldSession::HandleMovementOpcodes           },
     /*0x35B*/ { "SMSG_ARENA_TEAM_STATS",                        STATUS_NEVER,    &WorldSession::Handle_ServerSide               },
-    /*0x35C*/ { "CMSG_LFG_JOIN",                                STATUS_LOGGEDIN, &WorldSession::Handle_NULL                     },
+    /*0x35C*/ { "CMSG_LFG_JOIN",                                STATUS_LOGGEDIN, &WorldSession::HandleLfgJoinOpcode                     },
     /*0x35D*/ { "CMSG_LFG_LEAVE",                               STATUS_LOGGEDIN, &WorldSession::Handle_NULL                     },
     /*0x35E*/ { "CMSG_SEARCH_LFG_JOIN",                         STATUS_LOGGEDIN, &WorldSession::Handle_NULL                     },
     /*0x35F*/ { "CMSG_SEARCH_LFG_LEAVE",                        STATUS_LOGGEDIN, &WorldSession::Handle_NULL                     },
