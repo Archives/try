@@ -540,14 +540,32 @@ LfgLocksList* LfgMgr::GetDungeonsLock(Player *plr)
         currentRow = sLFGDungeonStore.LookupEntry(i);
         if(!currentRow)
             continue;
+
+        uint32 minlevel, maxlevel;
+        //Take level from db where possible
+        if(InstanceTemplate const *instance = sObjectMgr.GetInstanceTemplate(currentRow->map))
+        {
+            minlevel = instance->levelMin;
+            maxlevel = instance->levelMax;
+        }
+        else
+        {
+            minlevel = currentRow->minlevel;
+            maxlevel = currentRow->maxlevel;
+        }
         type = LFG_LOCKSTATUS_OK;
+
+        InstancePlayerBind *playerBind = plr->GetBoundInstance(currentRow->map, Difficulty(currentRow->heroic));
+
         if(currentRow->expansion > plr->GetSession()->Expansion())
             type = LFG_LOCKSTATUS_INSUFFICIENT_EXPANSION;
-        else if(currentRow->minlevel > plr->getLevel())
+        else if(minlevel > plr->getLevel())
             type = LFG_LOCKSTATUS_TOO_LOW_LEVEL;
-        else if(plr->getLevel() > currentRow->maxlevel)
+        else if(plr->getLevel() > maxlevel)
             type = LFG_LOCKSTATUS_TOO_HIGH_LEVEL;
-        //others to be done, I just need to test if LFG window has correct function right now...
+        else if(playerBind && playerBind->perm)
+            type = LFG_LOCKSTATUS_RAID_LOCKED;
+        //others to be done
 
         if(type != LFG_LOCKSTATUS_OK)
         {
