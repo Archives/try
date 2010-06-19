@@ -26,6 +26,14 @@
 #include "Group.h"
 #include "ace/Recursive_Thread_Mutex.h"
 
+enum LfgTimers
+{
+    LFG_TIMER_UPDATE_QUEUES            = 1*MINUTE*IN_MILLISECONDS,
+    LFG_TIMER_UPDATE_PROPOSAL          = 10*IN_MILLISECONDS;
+    LFG_TIMER_READY_CHECK              = 2*MINUTE*IN_MILLISECONDS,
+    LFG_TIMER_DELETE_INVALID_GROUPS    = 5*MINUTE*IN_MILLISECONDS
+};
+
 enum LfgRoles
 {
     NONE   = 0x00,
@@ -82,6 +90,12 @@ enum LfgJoinResult
     LFG_JOIN_FAILED2               = 18,                    // RoleCheck Failed
 };
 
+enum LfgProposalStatus
+{
+    LFG_PROPOSAL_WAITING           = 0,
+    LFG_PROPOSAL_FAILED            = 1,
+    LFG_PROPOSAL_SUCCESS           = 2,
+}
 enum LfgLockStatusType
 {
     LFG_LOCKSTATUS_OK                        = 0,           // Internal use only
@@ -136,8 +150,6 @@ enum LfgGroupType
     LFG_GROUPTYPE_WORLD_EVENT  = 11,
 };
 
-#define MAX_LFG_GROUPTYPE        12
-
 //Theres some quest for rewards, but they have not anything different, so make custom flags
 enum __LfgQuestFlags
 {
@@ -172,8 +184,9 @@ enum QueueFaction
 };
 #define MAX_LFG_FACTION                  2
 
-typedef std::set<Player*> PlayerList;
+typedef std::set<uint64> PlayerList;
 
+typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 //Used not only inside dungeons, but also as queued group
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
@@ -181,20 +194,24 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         LfgGroup();
         ~LfgGroup();
 
-        void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);
+        uint32 GetGroupId() { return m_groupid; }
+        void SetGroupId(uint32 newid) { m_groupid = newid; }
+        uint32 GetKilledBosses() { return m_killedBosses; }
+
         void SendLfgPartyInfo(Player *plr);
         void SendLfgQueueStatus();
         void SendGroupFormed();
-        void SendProposalUpdate(bool isReady);
+        void SendProposalUpdate(uint8 state);
         LfgLocksMap *GetLocksList();
         
         //Override these methods
         bool AddMember(const uint64 &guid, const char* name);
         uint32 RemoveMember(const uint64 &guid, const uint8 &method);
 
-        Player *GetTank() const { return m_tank; };
-        Player *GetHeal() const { return m_heal; };
+        uint64 *GetTank() const { return m_tank; };
+        uint64 *GetHeal() const { return m_heal; };
         PlayerList *GetDps() { return dps; };
+        ProposalAnswersMap *GetProposalAnswers() { return m_answers; }
 
         void SetTank(Player *tank) { m_tank = tank; }
         void SetHeal(Player *heal) { m_heal = heal; }
@@ -203,16 +220,27 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
 
         std::set<uint64> GetPremadePlayers() { return premadePlayers; }
+        void RemoveOfflinePlayers();
+        bool UpdateCheckTimer(uint32 time);
+        void TeleportToDungeon();
+        bool HasCorrectLevel(uint8 level);
+        
     private:
-        Player *m_tank;
-        Player *m_heal;
+        uint64 m_tank;
+        uint64 m_heal;
         PlayerList *dps;
         LFGDungeonEntry const *m_dungeonInfo;
         std::set<uint64> premadePlayers;
+        ProposalAnswersMap m_answers;
 
+        uint32 m_groupid;
+        uint32 m_killedBosses;
+        uint32 m_readycheckTimer;
+        uint8 m_baseLevel;
 };
 
 typedef std::set<LfgGroup*> GroupsList;
+typedef std::map<uint32, LfgGroup*> GroupMap;
 
 struct QueuedDungeonInfo
 {
@@ -220,7 +248,6 @@ struct QueuedDungeonInfo
 
     PlayerList players;
     GroupsList groups;  
-    GroupsList formedGroups;
 };
 
 typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;
@@ -236,20 +263,37 @@ class MANGOS_DLL_SPEC LfgMgr
 
         void AddToQueue(Player *player);
         void RemoveFromQueue(Player *player);
-        void UpdateQueues();
 
         void SendLfgPlayerInfo(Player *plr);
         void SendLfgUpdatePlayer(Player *plr, uint8 updateType);
+        void SendLfgUpdateParty(Player *plr, uint8 updateType);
         void BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr);
 
         void LoadDungeonRewards();
         LfgLocksList *GetDungeonsLock(Player *plr);
+
+        uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
+        LfgGroup *GetLfgGroupById(uint32 groupid);
+        GroupsList *GetInDungeonGroups(uint8 faction) { return inDungeonGroups[faction]; }
+        void AddGroupToDelete(LfgGroup *group) { groupsForDelete.insert(group); }
+
     private:
+        void UpdateQueues();
+        void UpdateFormedGroups();
+
         LfgRewardList m_rewardsList;
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
         LfgDungeonList *GetRandomDungeons(Player *plr);
 
         QueuedDungeonsMap m_queuedDungeons[MAX_LFG_FACTION];
+        GroupsList formedGroups[MAX_LFG_FACTION];
+        GroupsList inDungeonGroups[MAX_LFG_FACTION];
+        GroupsList groupsForDelete;
+
+        uint32 m_groupids;
+        uint32 m_updateQueuesTimer;
+        uint32 m_updateProposalTimer;
+        uint32 m_deleteInvalidTimer;
 };
 
 #define sLfgMgr MaNGOS::Singleton<LfgMgr>::Instance()

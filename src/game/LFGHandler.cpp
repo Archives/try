@@ -147,11 +147,19 @@ void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*
 void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
 {
     DEBUG_LOG("WORLD: Received CMSG_LFG_PROPOSAL_RESULT");
-    uint32 unk1;
-    uint8 result;
+    uint32 groupid;
+    uint8 accept;
 
-    recv_data >> unk1; //Again that strange ID! 24856 for random heroic, possible some groupid
-    recv_data >> result;
-    error_log("unk1: %u, result: %u", unk1, result);
+    recv_data >> groupid;
+    recv_data >> accept; 
+    
+    if(LfgGroup *group = sLfgMgr.GetLfgGroupById(groupid))
+    {
+        ProposalAnswers* answer = new ProposalAnswers();
+        answer->answer = 1;
+        answer->accept = accept;
+        group->GetProposalAnswers()->insert(std::pair<uint64, ProposalAnswers*>(_player->GetGUID(), answer));       
+        group->SendProposalUpdate(LFG_PROPOSAL_WAITING);
+    }
 }
 

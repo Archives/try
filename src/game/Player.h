@@ -401,15 +401,16 @@ struct LookingForGroup
     {
         completedRandoms.clear();
         queuedDungeons.clear();
+        groups.clear();
     }
     
     std::string comment;
     uint8 roles;
     LfgDungeonList completedRandoms;
     LfgDungeonList queuedDungeons;
-    LfgGroup *group;
-    GroupReference m_LfgGroup;
-    time_t joinTime;
+    GroupMap groups;
+    std::map<uint32, GroupReference*> m_LfgGroup; // dung ID
+    time_t joinTime; 
 
     bool DoneDungeon(uint32 ID)
     {
