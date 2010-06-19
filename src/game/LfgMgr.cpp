@@ -185,6 +185,63 @@ void LfgGroup::SendLfgQueueStatus()
         plr->GetSession()->SendPacket(&data);
     }
 }
+void LfgGroup::SendGroupFormed()
+{
+    //SMSG_LFG_UPDATE_PLAYER -> SMSG_LFG_PROPOSAL_UPDATE
+    WorldPacket data(SMSG_LFG_UPDATE_PLAYER, 10);
+    data << uint8(LFG_UPDATETYPE_PROPOSAL_FOUND);
+    data << uint8(true); //extra info
+    data << uint8(false); //queued
+    data << uint8(0); //unk
+    data << uint8(0); //unk
+    data << uint8(1); //count
+    data << uint32((*grpitr)->GetDungeonInfo()->Entry());
+    data << uint8(0);
+    BroadcastPacket(&data);
+
+    SendProposalUpdate(false);
+}
+
+void LfgGroup::SendProposalUpdate(bool isReady)
+{
+    for (GroupReference *plritr = GetFirstMember(); plritr != NULL; plritr = plritr->next())
+    {
+        if(!plritr->getSource())
+            continue;
+        //Correct - 3.3.3a
+        WorldPacket data(SMSG_LFG_PROPOSAL_UPDATE, 15 + (GetMembersCount() * 9));
+        data << uint32(GetDungeonInfo()->Entry());
+        data << uint8(isReady ? 2 : 0); // 2 when ready check succes
+        data << uint32(0); // 24856 for random hero, some number, id of something, I swear I saw this number somewhere but for the god sake I cant remember where..
+        data << uint32(0); //never saw any other number
+        data << uint8(0); //same here
+        data << uint8(GetMembersCount());
+        for (GroupReference *plritr2 = GetFirstMember(); plritr2 != NULL; plritr2 = plritr->next())
+        {
+            if(Player *plr = plritr2->getSource())
+            {
+                data << uint32(plr->m_lookingForGroup.roles);
+                data << uint8((plr == plritr->getSource()));  // if its you, this is true
+                data << uint8(0); // Always 0
+                data << uint8(0); // Always 0
+                //If player agrees with dungeon, these two are 1
+                data << uint8(0);  
+                data << uint8(0);
+            }
+            else
+            {
+                data << uint32(0);
+                data << uint8(0);
+                data << uint8(0);
+                data << uint8(0);
+                data << uint8(0);
+                data << uint8(0);
+            }
+        }
+        plritr->getSource()->GetSession()->SendPacket(&data);
+    }
+}
+
 LfgMgr::LfgMgr()
 {
     
@@ -390,16 +447,13 @@ void LfgMgr::UpdateQueues()
                 (*grpitr)->SendLfgQueueStatus();
 
                 //prepare complete groups
-                if((*grpitr)->GetMembersCount() == 1)
+                if((*grpitr)->GetMembersCount() == 5)
                 {
-                    for (GroupReference *plritr = (*grpitr)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
-                    {
-                        if(!plritr->getSource())
-                            break;
-
-                        // FIXME
-                    }
-                }
+                    (*grpitr)->SendGroupFormed();
+                    
+                    itr->second->formedGroups.insert(*grpitr);
+                    itr->second->groups.erase(grpitr);
+                } 
             }
         }
     }

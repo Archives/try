@@ -694,6 +694,7 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleLfgLeaveOpcode(WorldPacket& recv_data);
         void HandleLfgPlayerLockInfoRequestOpcode(WorldPacket& recv_data);
         void HandleLfgPartyLockInfoRequestOpcode(WorldPacket& recv_data);
+        void HandleLfgProposalResult(WorldPacket& recv_data);
 
         // Arena Team
         void HandleInspectArenaTeamsOpcode(WorldPacket& recv_data);

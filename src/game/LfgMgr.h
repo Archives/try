@@ -184,6 +184,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SendLfgUpdateParty(uint8 updateType, uint32 dungeonEntry  = 0);
         void SendLfgPartyInfo(Player *plr);
         void SendLfgQueueStatus();
+        void SendGroupFormed();
+        void SendProposalUpdate(bool isReady);
         LfgLocksMap *GetLocksList();
         
         //Override these methods
@@ -218,6 +220,7 @@ struct QueuedDungeonInfo
 
     PlayerList players;
     GroupsList groups;  
+    GroupsList formedGroups;
 };
 
 typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;

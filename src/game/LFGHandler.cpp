@@ -143,3 +143,15 @@ void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*
     }
     ((LfgGroup*)_player->GetGroup())->SendLfgPartyInfo(_player);
 }
+
+void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_PROPOSAL_RESULT");
+    uint32 unk1;
+    uint8 result;
+
+    recv_data >> unk1; //Again that strange ID! 24856 for random heroic, possible some groupid
+    recv_data >> result;
+    error_log("unk1: %u, result: %u", unk1, result);
+}
+
