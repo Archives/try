@@ -29,11 +29,21 @@
 enum LfgTimers
 {
     LFG_TIMER_UPDATE_QUEUES            = 1*MINUTE*IN_MILLISECONDS,
-    LFG_TIMER_UPDATE_PROPOSAL          = 10*IN_MILLISECONDS;
+    LFG_TIMER_UPDATE_PROPOSAL          = 10*IN_MILLISECONDS,
     LFG_TIMER_READY_CHECK              = 2*MINUTE*IN_MILLISECONDS,
     LFG_TIMER_DELETE_INVALID_GROUPS    = 5*MINUTE*IN_MILLISECONDS
 };
 
+
+enum LfgWaitTimeSlots
+{
+    LFG_WAIT_TIME_AVG                  = 0,
+    LFG_WAIT_TIME                      = 1,
+    LFG_WAIT_TIME_TANK                 = 2,
+    LFG_WAIT_TIME_HEAL                 = 3,
+    LFG_WAIT_TIME_DPS                  = 4
+};
+#define LFG_WAIT_TIME_SLOT_MAX           5
 enum LfgRoles
 {
     NONE   = 0x00,
@@ -95,7 +105,7 @@ enum LfgProposalStatus
     LFG_PROPOSAL_WAITING           = 0,
     LFG_PROPOSAL_FAILED            = 1,
     LFG_PROPOSAL_SUCCESS           = 2,
-}
+};
 enum LfgLockStatusType
 {
     LFG_LOCKSTATUS_OK                        = 0,           // Internal use only
@@ -208,13 +218,13 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         bool AddMember(const uint64 &guid, const char* name);
         uint32 RemoveMember(const uint64 &guid, const uint8 &method);
 
-        uint64 *GetTank() const { return m_tank; };
-        uint64 *GetHeal() const { return m_heal; };
+        uint64 GetTank() const { return m_tank; };
+        uint64 GetHeal() const { return m_heal; };
         PlayerList *GetDps() { return dps; };
-        ProposalAnswersMap *GetProposalAnswers() { return m_answers; }
+        ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
 
-        void SetTank(Player *tank) { m_tank = tank; }
-        void SetHeal(Player *heal) { m_heal = heal; }
+        void SetTank(uint64 tank) { m_tank = tank; }
+        void SetHeal(uint64 heal) { m_heal = heal; }
 
         void SetDungeonInfo(LFGDungeonEntry const *dungeonInfo) { m_dungeonInfo = dungeonInfo; }
         LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
@@ -255,6 +265,7 @@ typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;
 class MANGOS_DLL_SPEC LfgMgr
 {
     public:
+        typedef std::map<uint32, time_t> WaitTimeMap;
         /* Construction */
         LfgMgr();
         ~LfgMgr();
@@ -274,8 +285,9 @@ class MANGOS_DLL_SPEC LfgMgr
 
         uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
         LfgGroup *GetLfgGroupById(uint32 groupid);
-        GroupsList *GetInDungeonGroups(uint8 faction) { return inDungeonGroups[faction]; }
-        void AddGroupToDelete(LfgGroup *group) { groupsForDelete.insert(group); }
+     //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
+        void AddGroupToDelete(LfgGroup *group);
+        time_t GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
 
     private:
         void UpdateQueues();
@@ -294,6 +306,7 @@ class MANGOS_DLL_SPEC LfgMgr
         uint32 m_updateQueuesTimer;
         uint32 m_updateProposalTimer;
         uint32 m_deleteInvalidTimer;
+        WaitTimeMap m_waitTimes[LFG_WAIT_TIME_SLOT_MAX];
 };
 
 #define sLfgMgr MaNGOS::Singleton<LfgMgr>::Instance()

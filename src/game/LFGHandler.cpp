@@ -124,6 +124,7 @@ void WorldSession::HandleLfgLeaveOpcode(WorldPacket & /*recv_data*/)
             return;
 
     sLfgMgr.RemoveFromQueue(_player);
+    _player->m_lookingForGroup.roles = 0;
 }
 
 void WorldSession::HandleLfgPlayerLockInfoRequestOpcode(WorldPacket &/*recv_data*/)
@@ -155,10 +156,7 @@ void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
     
     if(LfgGroup *group = sLfgMgr.GetLfgGroupById(groupid))
     {
-        ProposalAnswers* answer = new ProposalAnswers();
-        answer->answer = 1;
-        answer->accept = accept;
-        group->GetProposalAnswers()->insert(std::pair<uint64, ProposalAnswers*>(_player->GetGUID(), answer));       
+        group->GetProposalAnswers()->insert(std::pair<uint64, uint8>(_player->GetGUID(), accept));       
         group->SendProposalUpdate(LFG_PROPOSAL_WAITING);
     }
 }
