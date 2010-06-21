@@ -562,7 +562,7 @@ void Guild::BroadcastToGuild(WorldSession *session, const std::string& msg, uint
 
         if(m_friendlyGuild)
         {
-            for(MemberList::const_iterator itr = m_friendlyGuild->GetMembers().begin(); itr != m_friendlyGuild->GetMembers().end(); ++itr)
+            for(MemberList::const_iterator itr = m_friendlyGuild->GetMembers()->begin(); itr != m_friendlyGuild->GetMembers()->end(); ++itr)
             {
                 Player *pl = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first));
 
