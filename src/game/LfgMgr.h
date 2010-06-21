@@ -30,7 +30,7 @@ enum LfgTimers
 {
     LFG_TIMER_UPDATE_QUEUES            = 1*MINUTE*IN_MILLISECONDS,
     LFG_TIMER_UPDATE_PROPOSAL          = 10*IN_MILLISECONDS,
-    LFG_TIMER_READY_CHECK              = 2*MINUTE*IN_MILLISECONDS,
+    LFG_TIMER_READY_CHECK              = 1*MINUTE*IN_MILLISECONDS,
     LFG_TIMER_DELETE_INVALID_GROUPS    = 5*MINUTE*IN_MILLISECONDS
 };
 
@@ -274,6 +274,7 @@ class MANGOS_DLL_SPEC LfgMgr
 
         void AddToQueue(Player *player);
         void RemoveFromQueue(Player *player);
+        void RemovePlayer(Player *player);
 
         void SendLfgPlayerInfo(Player *plr);
         void SendLfgUpdatePlayer(Player *plr, uint8 updateType);

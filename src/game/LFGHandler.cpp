@@ -101,6 +101,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
             return;
         }
         _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
+        error_log("JOIN TO %u", dungeonInfo->ID);
     } 
     recv_data >> unk; // looks like unk from LFGDungeons.dbc, so 0 = raid or zone, 3 = dungeon, 15 = world event. Possibly count of next data? anyway seems unused
     for (int8 i = 0 ; i < unk; ++i)
@@ -159,5 +160,6 @@ void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
         group->GetProposalAnswers()->insert(std::pair<uint64, uint8>(_player->GetGUID(), accept));       
         group->SendProposalUpdate(LFG_PROPOSAL_WAITING);
     }
+    error_log("Odpoved %u", accept);
 }
 
