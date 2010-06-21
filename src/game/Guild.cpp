@@ -232,13 +232,6 @@ bool Guild::LoadGuildFromDB(QueryResult *guildDataResult)
     m_PurchasedTabs   = fields[12].GetUInt32();
     m_friendlyGuildId = fields[13].GetUInt32();
 
-    if(m_friendlyGuildId)
-    {
-        m_friendlyGuild = sObjectMgr.GetGuildById(m_friendlyGuildId);
-        if(!m_friendlyGuild)
-            DeleteFriendlyGuildId();
-    }
-
     if (m_PurchasedTabs > GUILD_BANK_MAX_TABS)
         m_PurchasedTabs = GUILD_BANK_MAX_TABS;
 
@@ -559,7 +552,12 @@ void Guild::BroadcastToGuild(WorldSession *session, const std::string& msg, uint
             if (pl && pl->GetSession() && HasRankRight(pl->GetRank(),GR_RIGHT_GCHATLISTEN) && !pl->GetSocial()->HasIgnore(session->GetPlayer()->GetGUIDLow()) )
                 pl->GetSession()->SendPacket(&data);
         }
-
+        if(m_friendlyGuildId && !m_friendlyGuild)
+        {
+            m_friendlyGuild = sObjectMgr.GetGuildById(m_friendlyGuildId);
+            if(!m_friendlyGuild)
+                DeleteFriendlyGuildId();
+        }
         if(m_friendlyGuild)
         {
             for(MemberList::const_iterator itr = m_friendlyGuild->GetMembers()->begin(); itr != m_friendlyGuild->GetMembers()->end(); ++itr)
