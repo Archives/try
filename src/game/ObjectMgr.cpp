@@ -2330,7 +2330,7 @@ void ObjectMgr::LoadItemExtendedCost()
     sLog.outString(">> %u Extended Cost changed.", count);
 }
 
-void ObjectMgr::LoadLLoadItemRequiredTarget()
+void ObjectMgr::LoadItemRequiredTarget()
 {
     m_ItemRequiredTarget.clear();                           // needed for reload case
 
