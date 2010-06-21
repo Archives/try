@@ -40,12 +40,15 @@ inline bool isStatic(MovementGenerator *mv)
 void
 MotionMaster::Initialize()
 {
+    // stop current move
+    if (!i_owner->IsStopped())
+        i_owner->StopMoving();
+
     // clear ALL movement generators (including default)
-    i_owner->StopMoving();
     Clear(false,true);
 
     // set new default movement generator
-    if (i_owner->GetTypeId() == TYPEID_UNIT && !i_owner->hasUnitState(UNIT_STAT_CONTROLED))
+    if (i_owner->GetTypeId() == TYPEID_UNIT && !i_owner->hasUnitState(UNIT_STAT_CONTROLLED))
     {
         MovementGenerator* movement = FactorySelector::selectMovementGenerator((Creature*)i_owner);
         push(movement == NULL ? &si_idleMovement : movement);

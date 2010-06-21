@@ -1195,7 +1195,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent = false);
         void RemoveMiniPet();
-        Pet* GetMiniPet();
+        Pet* GetMiniPet() const;
         void SetMiniPet(Pet* pet) { m_miniPet = pet->GetGUID(); }
 
         template<typename Func>
@@ -1686,6 +1686,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         PlayerSpellMap      & GetSpellMap()       { return m_spells; }
 
         SpellCooldowns const& GetSpellCooldownMap() const { return m_spellCooldowns; }
+
+        PlayerTalent const* GetKnownTalentById(int32 talentId) const;
+        SpellEntry const* GetKnownTalentRankById(int32 talentId) const;
 
         void AddSpellMod(SpellModifier* mod, bool apply);
         bool IsAffectedBySpellmod(SpellEntry const *spellInfo, SpellModifier *mod, Spell const* spell = NULL);
@@ -2222,11 +2225,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
         void UpdateFallInformationIfNeed(MovementInfo const& minfo,uint16 opcode);
-        Unit *m_mover;
-        Unit *m_mover_in_queve;
-
-        void SetMoverInQueve(Unit* pet) {m_mover_in_queve = pet ? pet : this; }
-
         void SetFallInformation(uint32 time, float z)
         {
             m_lastFallTime = time;
@@ -2245,12 +2243,13 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SetClientControl(Unit* target, uint8 allowMove);
         void SetMover(Unit* target) { m_mover = target ? target : this; }
+        Unit* GetMover() const { return m_mover; }
+        bool IsSelfMover() const { return m_mover == this; }// normal case for player not controlling other unit
 
         // vehicle system
         void SendEnterVehicle(Vehicle *vehicle, VehicleSeatEntry const *veSeat);
 
-        uint64 GetFarSight() const { return GetUInt64Value(PLAYER_FARSIGHT); }
-        void SetFarSightGUID(uint64 guid);
+        ObjectGuid const& GetFarSightGuid() const { return GetGuidValue(PLAYER_FARSIGHT); }
 
         // Transports
         Transport * GetTransport() const { return m_transport; }
@@ -2387,7 +2386,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasTitle(CharTitlesEntry const* title) { return HasTitle(title->bit_index); }
         void SetTitle(CharTitlesEntry const* title, bool lost = false);
 
-        bool isActiveObject() const { return true; }
         bool canSeeSpellClickOn(Creature const* creature) const;
 
         //TEAMBG helpers
@@ -2641,17 +2639,28 @@ class MANGOS_DLL_SPEC Player : public Unit
         int32 CalculateReputationGain(uint32 creatureOrQuestLevel, int32 rep, int32 faction, bool for_quest);
         void AdjustQuestReqItemCount( Quest const* pQuest, QuestStatusData& questStatusData );
 
-        bool IsCanDelayTeleport() const { return m_bCanDelayTeleport; }
         void SetCanDelayTeleport(bool setting) { m_bCanDelayTeleport = setting; }
-        bool IsHasDelayedTeleport() const { return m_bHasDelayedTeleport; }
-        void SetDelayedTeleportFlag(bool setting) { m_bHasDelayedTeleport = setting; }
+        bool IsHasDelayedTeleport() const
+        {
+            // we should not execute delayed teleports for now dead players but has been alive at teleport
+            // because we don't want player's ghost teleported from graveyard
+            return m_bHasDelayedTeleport && (isAlive() || !m_bHasBeenAliveAtDelayedTeleport);
+        }
+
+        bool SetDelayedTeleportFlagIfCan()
+        {
+            m_bHasDelayedTeleport = m_bCanDelayTeleport;
+            m_bHasBeenAliveAtDelayedTeleport = isAlive();
+            return m_bHasDelayedTeleport;
+        }
 
         void ScheduleDelayedOperation(uint32 operation)
         {
-            if(operation < DELAYED_END)
+            if (operation < DELAYED_END)
                 m_DelayedOperations |= operation;
         }
 
+        Unit *m_mover;
         Camera m_camera;
 
         GridReference<Player> m_gridRef;
@@ -2681,6 +2690,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_DelayedOperations;
         bool m_bCanDelayTeleport;
         bool m_bHasDelayedTeleport;
+        bool m_bHasBeenAliveAtDelayedTeleport;
 
         uint32 m_DetectInvTimer;
 
@@ -2766,7 +2776,7 @@ template<typename Func>
 bool Player::CheckAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms, bool withMiniPet) const
 {
     if (withMiniPet)
-        if(Unit* mini = GetMiniPet())
+        if(Unit const* mini = GetMiniPet())
             if (func(mini))
                 return true;
 

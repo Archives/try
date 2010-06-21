@@ -406,7 +406,7 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
 
 UpdateMask Player::updateVisualBits;
 
-Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_camera(this)
+Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this), m_mover(this), m_camera(this)
 {
     m_transport = 0;
 
@@ -417,6 +417,8 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_objectTypeId = TYPEID_PLAYER;
 
     m_valuesCount = PLAYER_END;
+
+    m_isActiveObject = true;                                // player is always active object
 
     m_session = session;
 
@@ -478,6 +480,7 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_DelayedOperations = 0;
     m_bCanDelayTeleport = false;
     m_bHasDelayedTeleport = false;
+    m_bHasBeenAliveAtDelayedTeleport = true;                // overwrite always at setup teleport data, so not used infact
     m_teleport_options = 0;
 
     m_trade = NULL;
@@ -585,9 +588,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
     m_summon_x = 0.0f;
     m_summon_y = 0.0f;
     m_summon_z = 0.0f;
-
-    m_mover = this;
-    m_mover_in_queve = NULL;
 
     m_miniPet = 0;
     m_contestedPvPTimer = 0;
@@ -1497,9 +1497,7 @@ void Player::Update( uint32 p_time )
         RemovePet(pet, PET_SAVE_NOT_IN_SLOT, true);
     }
 
-    //we should execute delayed teleports only for alive(!) players
-    //because we don't want player's ghost teleported from graveyard
-    if(IsHasDelayedTeleport() && isAlive())
+    if (IsHasDelayedTeleport())
         TeleportTo(m_teleport_dest, m_teleport_options);
 }
 
@@ -1799,10 +1797,9 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         //lets reset far teleport flag if it wasn't reset during chained teleports
         SetSemaphoreTeleportFar(false);
         //setup delayed teleport flag
-        SetDelayedTeleportFlag(IsCanDelayTeleport());
         //if teleport spell is casted in Unit::Update() func
         //then we need to delay it until update process will be finished
-        if(IsHasDelayedTeleport())
+        if (SetDelayedTeleportFlagIfCan())
         {
             SetSemaphoreTeleportNear(true);
             //lets save teleport destination for player
@@ -1818,7 +1815,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 UnsummonPetTemporaryIfAny();
         }
 
-        if(!(options & TELE_TO_NOT_LEAVE_COMBAT))
+        if (!(options & TELE_TO_NOT_LEAVE_COMBAT))
             CombatStop();
 
         // this will be used instead of the current location in SaveToDB
@@ -1855,10 +1852,9 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             //lets reset near teleport flag if it wasn't reset during chained teleports
             SetSemaphoreTeleportNear(false);
             //setup delayed teleport flag
-            SetDelayedTeleportFlag(IsCanDelayTeleport());
             //if teleport spell is casted in Unit::Update() func
             //then we need to delay it until update process will be finished
-            if(IsHasDelayedTeleport())
+            if (SetDelayedTeleportFlagIfCan())
             {
                 SetSemaphoreTeleportFar(true);
                 //lets save teleport destination for player
@@ -1874,7 +1870,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             ResetContestedPvP();
 
             // remove player from battleground on far teleport (when changing maps)
-            if(BattleGround const* bg = GetBattleGround())
+            if (BattleGround const* bg = GetBattleGround())
             {
                 // Note: at battleground join battleground id set before teleport
                 // and we already will found "current" battleground
@@ -1892,14 +1888,14 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
             // stop spellcasting
             // not attempt interrupt teleportation spell at caster teleport
-            if(!(options & TELE_TO_SPELL))
-                if(IsNonMeleeSpellCasted(true))
+            if (!(options & TELE_TO_SPELL))
+                if (IsNonMeleeSpellCasted(true))
                     InterruptNonMeleeSpells(true);
 
             //remove auras before removing from map...
             RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_CHANGE_MAP | AURA_INTERRUPT_FLAG_MOVE | AURA_INTERRUPT_FLAG_TURNING);
 
-            if(!GetSession()->PlayerLogout())
+            if (!GetSession()->PlayerLogout())
             {
                 // send transfer packets
                 WorldPacket data(SMSG_TRANSFER_PENDING, (4+4+4));
@@ -1933,7 +1929,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             }
 
             // remove from old map now
-            if(oldmap)
+            if (oldmap)
                 oldmap->Remove(this, false);
 
             // new final coordinates
@@ -1942,7 +1938,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             float final_z = z;
             float final_o = orientation;
 
-            if(m_transport)
+            if (m_transport)
             {
                 final_x += m_movementInfo.GetTransportPos()->x;
                 final_y += m_movementInfo.GetTransportPos()->y;
@@ -3094,7 +3090,7 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool dependen
 
             if(active)
             {
-                if (IsPassiveSpell(spell_id) && IsNeedCastPassiveSpellAtLearn(spellInfo))
+                if (IsPassiveSpell(spellInfo) && IsNeedCastPassiveSpellAtLearn(spellInfo))
                     CastSpell (this, spell_id, true);
             }
             else if(IsInWorld())
@@ -3285,7 +3281,7 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool dependen
         CastSpell(this, spell_id, true);
     }
     // also cast passive spells (including all talents without SPELL_EFFECT_LEARN_SPELL) with additional checks
-    else if (IsPassiveSpell(spell_id))
+    else if (IsPassiveSpell(spellInfo))
     {
         if (IsNeedCastPassiveSpellAtLearn(spellInfo))
             CastSpell(this, spell_id, true);
@@ -13841,10 +13837,6 @@ void Player::IncompleteQuest( uint32 quest_id )
 
 void Player::RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver, bool announce )
 {
-    //this THING should be here to protect code from quest, which cast on player far teleport as a reward
-    //should work fine, cause far teleport will be executed in Player::Update()
-    SetCanDelayTeleport(true);
-
     uint32 quest_id = pQuest->GetQuestId();
 
     for (int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i )
@@ -14011,9 +14003,6 @@ void Player::RewardQuest( Quest const *pQuest, uint32 reward, Object* questGiver
                 if (!HasAura(itr->second->spellId, EFFECT_INDEX_0))
                     CastSpell(this,itr->second->spellId,true);
     }
-
-    //lets remove flag for delayed teleports
-    SetCanDelayTeleport(false);
 }
 
 void Player::FailQuest(uint32 questId)
@@ -18102,7 +18091,7 @@ void Player::RemoveMiniPet()
     }
 }
 
-Pet* Player::GetMiniPet()
+Pet* Player::GetMiniPet() const
 {
     if (!m_miniPet)
         return NULL;
@@ -19991,7 +19980,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
     if(HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED) || HasAuraType(SPELL_AURA_FLY) || isInFlight())
         m_movementInfo.AddMovementFlag(MOVEFLAG_FLYING);
 
-    m_mover = this;
+    SetMover(this);
     m_mover_in_queve = NULL;
 }
 
@@ -21847,6 +21836,23 @@ void Player::UpdateAchievementCriteria( AchievementCriteriaTypes type, uint32 mi
     GetAchievementMgr().UpdateAchievementCriteria(type, miscvalue1,miscvalue2,unit,time);
 }
 
+PlayerTalent const* Player::GetKnownTalentById(int32 talentId) const
+{
+    PlayerTalentMap::const_iterator itr = m_talents[m_activeSpec].find(talentId);
+    if (itr != m_talents[m_activeSpec].end() && itr->second.state != PLAYERSPELL_REMOVED)
+        return &itr->second;
+    else
+        return NULL;
+}
+
+SpellEntry const* Player::GetKnownTalentRankById(int32 talentId) const
+{
+    if (PlayerTalent const* talent = GetKnownTalentById(talentId))
+        return sSpellStore.LookupEntry(talent->m_talentEntry->RankID[talent->currentRank]);
+    else
+        return NULL;
+}
+
 void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 {
     uint32 CurTalentPoints = GetFreeTalentPoints();
@@ -21873,9 +21879,8 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank)
 
     // find current max talent rank
     uint32 curtalent_maxrank = 0;
-    PlayerTalentMap::iterator itr = m_talents[m_activeSpec].find(talentId);
-    if (itr != m_talents[m_activeSpec].end() && itr->second.state != PLAYERSPELL_REMOVED)
-        curtalent_maxrank = itr->second.currentRank + 1;
+    if (PlayerTalent const* talent = GetKnownTalentById(talentId))
+        curtalent_maxrank = talent->currentRank + 1;
 
     // we already have same or higher talent rank learned
     if(curtalent_maxrank >= (talentRank + 1))
@@ -22525,17 +22530,16 @@ void Player::ActivateSpec(uint8 specNum)
 
         // learn talent spells if they not in new spec (old spec copy)
         // and if they have different rank
-        PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
-        if (specIter != m_talents[m_activeSpec].end() && specIter->second.state != PLAYERSPELL_REMOVED)
+        if (PlayerTalent const* cur_talent = GetKnownTalentById(tempIter->first))
         {
-            if ((*specIter).second.currentRank != talent.currentRank)
+            if (cur_talent->currentRank != talent.currentRank)
                 learnSpell(talentSpellId, false);
         }
         else
             learnSpell(talentSpellId, false);
 
         // sync states - original state is changed in addSpell that learnSpell calls
-        specIter = m_talents[m_activeSpec].find(tempIter->first);
+        PlayerTalentMap::iterator specIter = m_talents[m_activeSpec].find(tempIter->first);
         if (specIter != m_talents[m_activeSpec].end())
             (*specIter).second.state = talent.state;
         else
