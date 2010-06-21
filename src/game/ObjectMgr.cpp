@@ -2214,9 +2214,10 @@ void ObjectMgr::LoadItemPrototypes()
 
         if(proto->ExtraFlags)
         {
+            /*
             if (proto->ExtraFlags & ~ITEM_EXTRA_ALL)
                 sLog.outErrorDb("Item (Entry: %u) has wrong ExtraFlags (%u) with unused bits set",i,proto->ExtraFlags);
-
+            */
             if (proto->ExtraFlags & ITEM_EXTRA_NON_CONSUMABLE)
             {
                 bool can_be_need = false;
@@ -2329,7 +2330,7 @@ void ObjectMgr::LoadItemExtendedCost()
     sLog.outString(">> %u Extended Cost changed.", count);
 }
 
-void ObjectMgr::LoadItemRequiredTarget()
+void ObjectMgr::LoadLLoadItemRequiredTarget()
 {
     m_ItemRequiredTarget.clear();                           // needed for reload case
 

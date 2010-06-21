@@ -283,9 +283,7 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
     //DEBUG_LOG("Item::UpdateDuration Item (Entry: %u Duration %u Diff %u)",GetEntry(),GetUInt32Value(ITEM_FIELD_DURATION),diff);
 
     if (GetUInt32Value(ITEM_FIELD_DURATION)<=diff)
-    {
-        owner->DestroyItem(GetBagSlot(), GetSlot(), true);
-
+    { 
         //Some items with duration create new item after expire
         if((GetProto()->ExtraFlags & ITEM_EXTRA_CREATE_ITEM_ON_EXPIRE) && !loot.empty())
         {
@@ -295,6 +293,7 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
                     owner->SendNewItem(Item,(*itr).count, true, false);               
             }
         }
+        owner->DestroyItem(GetBagSlot(), GetSlot(), true);
         return;
     }
 
