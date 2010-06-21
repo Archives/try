@@ -217,7 +217,7 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
             SetPower(POWER_HAPPINESS, fields[12].GetUInt32());
             setPowerType(POWER_FOCUS);
             if(fields[19].GetUInt32())
-                setDeathState((DeathState)fields[19].GetUInt32());
+                setDeathState(fields[19].GetUInt32() == 3 ? DEAD : ALIVE);
 
             break;
         default:
@@ -433,7 +433,7 @@ void Pet::SavePetToDB(PetSaveMode mode)
             << uint64(m_resetTalentsTime) << ", "
             << GetUInt32Value(UNIT_CREATED_BY_SPELL) << ", "
             << uint32(getPetType()) << ", "
-            << uint8(getDeathState()) << ")";
+            << uint8(getDeathState() != ALIVE ? 3 : 0) << ")";
 
         CharacterDatabase.Execute( ss.str().c_str() );
         CharacterDatabase.CommitTransaction();
