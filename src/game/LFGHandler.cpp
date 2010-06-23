@@ -155,7 +155,7 @@ void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
     recv_data >> groupid;
     recv_data >> accept; 
     
-    if(LfgGroup *group = sLfgMgr.GetLfgGroupById(groupid))
+    if(LfgGroup *group = (LfgGroup*)sObjectMgr.GetGroupById(groupid))
     {
         group->GetProposalAnswers()->insert(std::pair<uint64, uint8>(_player->GetGUID(), accept));       
         group->SendProposalUpdate(LFG_PROPOSAL_WAITING);

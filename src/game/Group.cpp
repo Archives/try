@@ -209,6 +209,9 @@ bool Group::AddInvite(Player *player)
     if( group )
         return false;
 
+    //Remove player from LFG
+    sLfgMgr.RemovePlayer(player);
+
     RemoveInvite(player);
 
     m_invitees.insert(player);

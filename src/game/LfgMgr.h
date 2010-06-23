@@ -217,8 +217,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         LfgGroup();
         ~LfgGroup();
 
-        uint32 GetGroupId() { return m_groupid; }
-        void SetGroupId(uint32 newid) { m_groupid = newid; }
+        void SetGroupId(uint32 newid) { m_Id = newid; }
         uint32 GetKilledBosses() { return m_killedBosses; }
 
         void SendLfgPartyInfo(Player *plr);
@@ -256,7 +255,6 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         std::set<uint64> premadePlayers;
         ProposalAnswersMap m_answers;
 
-        uint32 m_groupid;
         uint32 m_killedBosses;
         uint32 m_readycheckTimer;
         uint8 m_baseLevel;
@@ -279,7 +277,7 @@ class MANGOS_DLL_SPEC LfgMgr
 {
     public:
         typedef std::map<uint32, uint32> WaitTimeMap;
-        typedef std::set<DugeonInfo*> DungeonInfoList;
+        typedef std::map<uint32, DugeonInfo*> DungeonInfoMap;
         /* Construction */
         LfgMgr();
         ~LfgMgr();
@@ -296,6 +294,7 @@ class MANGOS_DLL_SPEC LfgMgr
         void BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr);
 
         void LoadDungeonRewards();
+        void LoadDungeonsInfo();
         LfgLocksList *GetDungeonsLock(Player *plr);
 
         uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
@@ -309,7 +308,7 @@ class MANGOS_DLL_SPEC LfgMgr
         void UpdateFormedGroups();
 
         LfgRewardList m_rewardsList;
-        DungeonInfoList m_dungeonInfoList;
+        DungeonInfoMap m_dungeonInfoMap;
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
         LfgDungeonList *GetRandomDungeons(Player *plr);
 

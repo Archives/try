@@ -1192,6 +1192,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading LFG dungeon quest relations..." ); // must be after quest_template
     sLfgMgr.LoadDungeonRewards();
 
+    sLog.outString( "Loading LFG dungeons info..." );
+    sLfgMgr.LoadDungeonsInfo();
+
     sLog.outString( "Loading GM tickets...");
     sTicketMgr.LoadGMTickets();
 
