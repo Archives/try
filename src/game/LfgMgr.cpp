@@ -276,7 +276,7 @@ void LfgGroup::SendLfgQueueStatus()
         data << uint8(m_tank ? 0 : 1);                                  // Tanks needed
         data << uint8(m_heal ? 0 : 1);                                  // Healers needed
         data << uint8(LFG_DPS_COUNT - dps->size());                     // Dps needed
-        data << uint32(time(NULL) - plr->m_lookingForGroup.joinTime);   // Player wait time in queue
+        data << uint32(getMSTimeDiff(plr->m_lookingForGroup.joinTime, getMSTime()));   // Player wait time in queue
         plr->GetSession()->SendPacket(&data);
     }
 }
@@ -443,12 +443,15 @@ void LfgMgr::RemoveFromQueue(Player *player)
         uint8 side = (player->GetTeam() == ALLIANCE) ? LFG_ALLIANCE : LFG_HORDE;
         for (LfgDungeonList::const_iterator it = player->m_lookingForGroup.queuedDungeons.begin(); it != player->m_lookingForGroup.queuedDungeons.end(); ++it)
         {
+            error_log("Tu, ID: %u", (*it)->ID);
             QueuedDungeonsMap::iterator itr = m_queuedDungeons[side].find((*it)->ID);
             if(itr == m_queuedDungeons[side].end())                 // THIS SHOULD NEVER HAPPEN
                 continue;
+            error_log("Tu2, ID: %u, size tu %u, size player %u", (*it)->ID, itr->second->groups.size(), player->m_lookingForGroup.groups.size());
             itr->second->players.erase(player->GetGUID());
             if(itr->second->groups.find(player->m_lookingForGroup.groups.find((*it)->ID)->second) != itr->second->groups.end())
             {
+                 error_log(" uvnitr");
                 GroupsList::iterator grpitr = itr->second->groups.find(player->m_lookingForGroup.groups.find((*it)->ID)->second);
                 if((*grpitr)->IsMember(player->GetGUID()))
                 {
@@ -459,7 +462,7 @@ void LfgMgr::RemoveFromQueue(Player *player)
                 if((*grpitr)->GetMembersCount() == 0)
                     itr->second->groups.erase(grpitr);
             }
-            if(itr->second->groups.empty() && itr->second->groups.empty())
+            if(itr->second->groups.empty() && itr->second->players.empty())
             {
                 delete itr->second;
                 m_queuedDungeons[side].erase(itr);
@@ -618,20 +621,20 @@ void LfgMgr::UpdateQueues()
                 if((*grpitr)->GetMembersCount() == 5)
                 {
                     //Update wait times
-                    time_t avgWaitTime = 0;
+                    uint32 avgWaitTime = 0;
                     if(Player *tank = sObjectMgr.GetPlayer((*grpitr)->GetTank()))
                     {
-                        time_t waitTimeTank = m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second;
-                        time_t currentTankTime = time_t(NULL) - tank->m_lookingForGroup.joinTime;
-                        time_t avgWaitTank = (waitTimeTank+currentTankTime)/2;
+                        uint32 waitTimeTank = m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second;
+                        uint32 currentTankTime = getMSTimeDiff(tank->m_lookingForGroup.joinTime, getMSTime());
+                        uint32 avgWaitTank = (waitTimeTank+currentTankTime)/2;
                         avgWaitTime += avgWaitTank;
                         m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second = avgWaitTank;           
                     }
                     if(Player *heal = sObjectMgr.GetPlayer((*grpitr)->GetHeal()))
                     {
-                        time_t waitTimeHeal = m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second;
-                        time_t currentHealTime = time_t(NULL) - heal->m_lookingForGroup.joinTime;
-                        time_t avgTimeHeal = (waitTimeHeal+currentHealTime)/2;
+                        uint32 waitTimeHeal = m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second;
+                        uint32 currentHealTime = getMSTimeDiff(heal->m_lookingForGroup.joinTime, getMSTime());
+                        uint32 avgTimeHeal = (waitTimeHeal+currentHealTime)/2;
                         avgWaitTime += avgTimeHeal;
                         m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second = avgTimeHeal;           
                     }
@@ -639,14 +642,14 @@ void LfgMgr::UpdateQueues()
                     {
                         if(Player *dps = sObjectMgr.GetPlayer(*plritr))
                         {
-                            time_t waitTimeDps = m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second;
-                            time_t currTime = time_t(NULL) - dps->m_lookingForGroup.joinTime;
-                            time_t avgWaitDps = (waitTimeDps+currTime)/2;
+                            uint32 waitTimeDps = m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second;
+                            uint32 currTime = getMSTimeDiff(dps->m_lookingForGroup.joinTime, getMSTime());
+                            uint32 avgWaitDps = (waitTimeDps+currTime)/2;
                             avgWaitTime += avgWaitDps;
                             m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second = avgWaitDps;
                         }
                     }
-                    m_waitTimes[LFG_WAIT_TIME].find(itr->second->dungeonInfo->ID)->second = time_t(avgWaitTime/5);
+                    m_waitTimes[LFG_WAIT_TIME].find(itr->second->dungeonInfo->ID)->second = (avgWaitTime/5);
                     
                     //Send Info                   
                     (*grpitr)->SendGroupFormed();
@@ -717,7 +720,7 @@ void LfgMgr::UpdateFormedGroups()
                     for (GroupReference *plritr = (*grpitr)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
                     {
                         SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_PROPOSAL_FAILED);
-                        (*grpitr)->RemoveMember(plritr->first, 0);
+                        (*grpitr)->RemoveMember(plritr->getSource(), 0);
                         AddToQueue(plritr->getSource());
                     }
                     delete *grpitr;
@@ -1040,6 +1043,74 @@ void LfgMgr::LoadDungeonRewards()
 
     sLog.outString();
     sLog.outString( ">> Loaded %u LFG dungeon quest relations.", count );
+}
+/*
+CREATE TABLE IF NOT EXISTS `lfg_dungeon_info` (
+  `ID` mediumint(8) NOT NULL DEFAULT '0' COMMENT 'ID from LfgDugeons.dbc',
+  `name` text,
+  `lastBossId` int(11) NOT NULL DEFAULT '0' COMMENT 'ID from DungeonEncounters.dbc',
+  `start_map` mediumint(8) NOT NULL DEFAULT '0',
+  `start_x` float NOT NULL DEFAULT '0',
+  `start_y` float NOT NULL DEFAULT '0',
+  `start_z` float NOT NULL DEFAULT '0',
+  `start_o` int(11) NOT NULL,
+  `locked` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+*/
+void LfgMgr::LoadDungeonsInfo()
+{
+    // In case of reload
+    m_dungeonInfoList.clear();
+
+    uint32 count = 0;
+    //                                                0   1     2           3          4        5        6        7        8
+    QueryResult *result = WorldDatabase.Query("SELECT ID, name, lastBossId, start_map, start_x, start_y, start_z, start_o, locked  FROM lfg_dungeon_info");
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u LFG dungeon info entries.", count );
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+        
+        DugeonInfo *info = new DugeonInfo();
+        info->ID                      = fields[0].GetUInt32();
+        info->name                    = fields[1].GetCppString();
+        info->lastBossId              = fields[2].GetUInt32();
+        info->start_map               = fields[3].GetUInt32();
+        info->start_x                 = fields[4].GetFloat();
+        info->start_y                 = fields[5].GetFloat();
+        info->start_z                 = fields[6].GetFloat();
+        info->start_o                 = fields[7].GetFloat();
+        info->locked                  = fields[7].GetBool();
+       
+        if(sLFGDungeonStore.LookupEntry(info->ID))
+        {
+            sLog.outErrorDb("Entry listed in 'lfg_dungeon_info' has non-exist LfgDungeon.dbc id %u, skipping.", info->ID);
+            delete info;
+            continue;
+        }
+        m_dungeonInfoList.push_back(info);
+        ++count;
+    } while( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u LFG dungeon info entries.", count );
 }
 LfgGroup* LfgMgr::GetLfgGroupById(uint32 groupid)
 {

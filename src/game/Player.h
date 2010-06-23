@@ -410,7 +410,7 @@ struct LookingForGroup
     LfgDungeonList queuedDungeons;
     GroupMap groups;
     std::map<uint32, GroupReference*> m_LfgGroup; // dung ID
-    time_t joinTime; 
+    uint32 joinTime; 
 
     bool DoneDungeon(uint32 ID)
     {

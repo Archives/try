@@ -111,7 +111,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
 
     _player->m_lookingForGroup.roles = uint8(roles);
     _player->m_lookingForGroup.comment = comment;
-    _player->m_lookingForGroup.joinTime = time(NULL);
+    _player->m_lookingForGroup.joinTime = getMSTime();
 
     sLfgMgr.AddToQueue(_player);
 }

@@ -196,6 +196,19 @@ enum QueueFaction
 
 typedef std::set<uint64> PlayerList;
 
+struct DugeonInfo             //used in db
+{
+    uint32 ID;                // From LfgDungeons.dbc
+    std::string name;
+    uint32 lastBossId;        // From dungeonEncounters.dbc
+    uint32 start_map;
+    float start_x;
+    float start_y;
+    float start_z;
+    float start_o;
+    bool locked;
+};
+
 typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 //Used not only inside dungeons, but also as queued group
 class MANGOS_DLL_SPEC LfgGroup : public Group
@@ -265,7 +278,8 @@ typedef std::map<uint32, QueuedDungeonInfo*> QueuedDungeonsMap;
 class MANGOS_DLL_SPEC LfgMgr
 {
     public:
-        typedef std::map<uint32, time_t> WaitTimeMap;
+        typedef std::map<uint32, uint32> WaitTimeMap;
+        typedef std::set<DugeonInfo*> DungeonInfoList;
         /* Construction */
         LfgMgr();
         ~LfgMgr();
@@ -288,13 +302,14 @@ class MANGOS_DLL_SPEC LfgMgr
         LfgGroup *GetLfgGroupById(uint32 groupid);
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
         void AddGroupToDelete(LfgGroup *group);
-        time_t GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
+        uint32 GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
 
     private:
         void UpdateQueues();
         void UpdateFormedGroups();
 
         LfgRewardList m_rewardsList;
+        DungeonInfoList m_dungeonInfoList;
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
         LfgDungeonList *GetRandomDungeons(Player *plr);
 
