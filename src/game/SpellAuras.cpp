@@ -2549,8 +2549,22 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 // Overpower
                 if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000000004))
                 {
-                    // Must be casting target
-                    if (!target->IsNonMeleeSpellCasted(false))
+
+                    SpellEntry const* curSpellInfo = NULL;
+
+                    // Must be casting target and must be spell with cast time
+                    for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+                    {
+                        if (!(Spell* spell = target->GetCurrentSpell(CurrentSpellTypes(i))))
+                            continue;
+
+                        curSpellInfo = spell->m_spellInfo;
+
+                        if(curSpellInfo && GetSpellCastTime(curSpellInfo))
+                            break;
+                    }
+
+                    if(!curSpellInfo || !GetSpellCastTime(curSpellInfo))
                         return;
 
                     Unit* caster = GetCaster();
