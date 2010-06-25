@@ -7967,11 +7967,14 @@ void Aura::PeriodicTick()
             if (pCaster->GetTypeId() == TYPEID_PLAYER && spellProto->SpellFamilyName == SPELLFAMILY_WARLOCK && spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
             {
                 // Only from non-grey units
-                if (roll_chance_i(10) &&                    // 1-2 from drain with final and without glyph, 0-1 from damage
+                if (roll_chance_i(40) &&                    // based on comments the chance is about 40%, with glyph there is a possibility of additional Soul Shard on every tick
                     ((Player*)pCaster)->isHonorOrXPTarget(target) &&
                     (target->GetTypeId() != TYPEID_UNIT || ((Player*)pCaster)->isAllowedToLoot((Creature*)target)))
                 {
                     pCaster->CastSpell(pCaster, 43836, true, NULL, this);
+                    // Glyph of Soul Shard
+                    if (pCaster->HasAura(58070) && roll_chance_i(40))
+                        pCaster->CastSpell(pCaster, 58068, true, NULL, this)
                 }
             }
 
