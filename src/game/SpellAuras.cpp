@@ -2555,12 +2555,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     // Must be casting target and must be spell with cast time
                     for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
                     {
-                        if (!(Spell* spell = target->GetCurrentSpell(CurrentSpellTypes(i))))
+                        if (Spell* spell = target->GetCurrentSpell(CurrentSpellTypes(i)))
+                            curSpellInfo = spell->m_spellInfo;
+                        else
                             continue;
 
-                        curSpellInfo = spell->m_spellInfo;
-
-                        if(curSpellInfo && GetSpellCastTime(curSpellInfo))
+                        if (curSpellInfo && GetSpellCastTime(curSpellInfo))
                             break;
                     }
 
@@ -7974,7 +7974,7 @@ void Aura::PeriodicTick()
                     pCaster->CastSpell(pCaster, 43836, true, NULL, this);
                     // Glyph of Soul Shard
                     if (pCaster->HasAura(58070) && roll_chance_i(40))
-                        pCaster->CastSpell(pCaster, 58068, true, NULL, this)
+                        pCaster->CastSpell(pCaster, 58068, true, NULL, this);
                 }
             }
 

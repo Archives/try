@@ -811,18 +811,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\LFGHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\LfgMgr.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\LfgMgr.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\game\LootHandler.cpp"
 				>
 			</File>
@@ -1404,6 +1392,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\SocialMgr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\SpellDBCHacks.cpp"
 				>
 			</File>
 			<File
