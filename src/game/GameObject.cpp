@@ -1561,7 +1561,7 @@ void GameObject::DealSiegeDamage(uint32 damage)
     if (!GetGOInfo()->destructibleBuilding.intactNumHits)
         return;
 
-    if (m_actualHealth > damage)
+    if (uint32(m_actualHealth) > damage)
         m_actualHealth -= damage;
     else
         m_actualHealth = 0;
@@ -1577,7 +1577,7 @@ void GameObject::DealSiegeDamage(uint32 damage)
     }
     else // from intact to damaged
     {
-        if (m_actualHealth <= GetGOInfo()->destructibleBuilding.damagedNumHits)
+        if (uint32(m_actualHealth) <= GetGOInfo()->destructibleBuilding.damagedNumHits)
         {
             if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
                 m_actualHealth = 0;
