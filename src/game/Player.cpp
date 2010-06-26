@@ -2001,6 +2001,38 @@ void Player::ProcessDelayedOperations()
             ContinueTaxiFlight();
         }
     }
+    
+    if (m_DelayedOperations & DELAYED_LFG_PARTY_UPDATE)
+    {
+        if(Group *group = GetGroup())
+        {
+            ((LfgGroup*)group)->SendUpdate();
+            SendDungeonDifficulty(true);
+            SetGroupUpdateFlag(GROUP_UPDATE_FULL);
+            group->UpdatePlayerOutOfRange(this);   
+        }
+    }
+
+    if (m_DelayedOperations & DELAYED_LFG_MOUNT_RESTORE)
+    {
+        if(m_lookingForGroup.mount_spell)
+        {
+            CastSpell(this, m_lookingForGroup.mount_spell, true);
+            m_lookingForGroup.mount_spell = 0;
+        }
+    }
+
+    if (m_DelayedOperations & DELAYED_LFG_TAXI_RESTORE)
+    {
+        if (m_lookingForGroup.taxi_start && m_lookingForGroup.taxi_end)
+        {
+            m_taxi.AddTaxiDestination(m_lookingForGroup.taxi_start);
+            m_taxi.AddTaxiDestination(m_lookingForGroup.taxi_end);
+            m_lookingForGroup.taxi_start = 0;
+            m_lookingForGroup.taxi_end = 0;
+            ContinueTaxiFlight();
+        }
+    }
 
     //we have executed ALL delayed ops, so clear the flag
     m_DelayedOperations = 0;
@@ -16295,10 +16327,15 @@ void Player::_LoadTalents(QueryResult *result)
 }
 void Player::_LoadGroup(QueryResult *result)
 {
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT groupId FROM group_member WHERE memberGuid='%u'", GetGUIDLow());
+    //                                                       0       1          2          3          4          5            6          7        8
+    //QueryResult *result = CharacterDatabase.PQuery("SELECT groupId,lfg_join_x,lfg_join_y,lfg_join_z,lfg_join_o,lfg_join_map,taxi_start,taxi_end,mount_spell FROM group_member WHERE memberGuid='%u'", GetGUIDLow());
     if (result)
     {
-        uint32 groupId = (*result)[0].GetUInt32();
+        uint32 groupId    = (*result)[0].GetUInt32();
+        WorldLoc joinLoc  = WorldLoc((*result)[5].GetUInt32(), (*result)[1].GetFloat(), (*result)[2].GetFloat(), (*result)[3].GetFloat(), (*result)[4].GetFloat());
+        uint32 taxi_start = (*result)[6].GetUInt32();
+        uint32 taxi_end   = (*result)[7].GetUInt32();
+        uint32 mount_spell= (*result)[8].GetUInt32();
         delete result;
 
         if (Group* group = sObjectMgr.GetGroupById(groupId))
@@ -16312,6 +16349,10 @@ void Player::_LoadGroup(QueryResult *result)
                 SetRaidDifficulty(group->GetRaidDifficulty());
             }
         }
+        m_lookingForGroup.joinLoc = joinLoc;
+        m_lookingForGroup.taxi_start = taxi_start;
+        m_lookingForGroup.taxi_end = taxi_end;
+        m_lookingForGroup.mount_spell = mount_spell;
     }
 }
 

@@ -208,6 +208,7 @@ class MANGOS_DLL_SPEC Group
         bool isRaidGroup() const { return m_groupType & GROUPTYPE_RAID; }
         bool isBGGroup()   const { return m_bgGroup != NULL; }
         bool IsCreated()   const { return GetMembersCount() > 0; }
+        bool isLfgGroup()  const { return m_groupType & GROUPTYPE_LFD; }
         const uint64& GetLeaderGUID() const { return m_leaderGuid; }
         const char * GetLeaderName() const { return m_leaderName.c_str(); }
         LootMethod    GetLootMethod() const { return m_lootMethod; }

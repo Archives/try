@@ -402,6 +402,10 @@ struct LookingForGroup
         completedRandoms.clear();
         queuedDungeons.clear();
         groups.clear();
+        taxi_start = 0;
+        taxi_end = 0;
+        mount_spell = 0;
+        joinTime = 0;
     }
     
     std::string comment;
@@ -419,6 +423,10 @@ struct LookingForGroup
             return completedRandoms.find(dungeonInfo) != completedRandoms.end();
        return false;
     }
+    WorldLoc joinLoc;
+    uint32 taxi_start;
+    uint32 taxi_end;
+    uint32 mount_spell;
 };
 
 enum RaidGroupError
@@ -881,6 +889,9 @@ enum PlayerDelayedOperations
     DELAYED_SPELL_CAST_DESERTER = 0x04,
     DELAYED_BG_MOUNT_RESTORE    = 0x08,                     ///< Flag to restore mount state after teleport from BG
     DELAYED_BG_TAXI_RESTORE     = 0x10,                     ///< Flag to restore taxi state after teleport from BG
+    DELAYED_LFG_PARTY_UPDATE    = 0x20,
+    DELAYED_LFG_MOUNT_RESTORE   = 0x40,
+    DELAYED_LFG_TAXI_RESTORE    = 0x80,
     DELAYED_END
 };
 
@@ -1908,6 +1919,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetSemaphoreTeleportNear(bool semphsetting) { mSemaphoreTeleport_Near = semphsetting; }
         void SetSemaphoreTeleportFar(bool semphsetting) { mSemaphoreTeleport_Far = semphsetting; }
         void ProcessDelayedOperations();
+        void ScheduleDelayedOperation(uint32 operation)
+        {
+            if(operation < DELAYED_END)
+                m_DelayedOperations |= operation;
+        }
 
         void CheckExploreSystem(void);
 
@@ -2558,12 +2574,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetCanDelayTeleport(bool setting) { m_bCanDelayTeleport = setting; }
         bool IsHasDelayedTeleport() const { return m_bHasDelayedTeleport; }
         void SetDelayedTeleportFlag(bool setting) { m_bHasDelayedTeleport = setting; }
-
-        void ScheduleDelayedOperation(uint32 operation)
-        {
-            if(operation < DELAYED_END)
-                m_DelayedOperations |= operation;
-        }
 
         Unit *m_mover;
         Camera m_camera;

@@ -29,6 +29,14 @@
 void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
 {
     DEBUG_LOG("WORLD: Received CMSG_LFG_JOIN");
+    if(!sWorld.getConfig(CONFIG_BOOL_ALLOW_JOIN_LFG))
+    {
+        WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+        data << uint32(LFG_JOIN_INTERNAL_ERROR);                // Check Result
+        data << uint32(0);                                      // Check Value
+        SendPacket(&data);
+        return;
+    }
 
     uint32 error = LFG_JOIN_OK;
     uint32 roles;
@@ -99,6 +107,12 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
             data << uint32(0);                                      // Check Value
             SendPacket(&data);
             return;
+        }
+        //Already queued for this dungeon, dunno how this can happen, but it happens
+        if(_player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != _player->m_lookingForGroup.queuedDungeons.end())
+        {
+            error_log("Already queued to %u, continue", dungeonInfo->ID);
+            continue;
         }
         _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
         error_log("JOIN TO %u", dungeonInfo->ID);

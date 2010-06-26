@@ -1399,6 +1399,28 @@ Arena.ArenaSeason.ID = 1
 Arena.ArenaSeason.InProgress = 1
 
 ###################################################################################################################
+# LOOKING FOR GROUP CONFIG
+#
+#    Lfg.AllowJoin
+#         Allow join to LFG system
+#         Default: 1
+#
+#    Lfg.ImmidiateQueueUpdate
+#         Update Queue when player join or leave lfg
+#         Default: 1
+#                  0 (Update only periodically) 
+#
+#    Lfg.QueueUpdateTime
+#         Time between two queue updates in MS
+#         Default: 180000
+#
+###################################################################################################################
+
+Lfg.AllowJoin = 1
+Lfg.ImmidiateQueueUpdate = 1
+Lfg.QueueUpdateTime = 180000
+
+###################################################################################################################
 # NETWORK CONFIG
 #
 #    Network.Threads
