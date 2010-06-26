@@ -117,8 +117,13 @@ void WorldSession::SendDoFlight( uint32 mountDisplayId, uint32 path, uint32 path
     if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    while(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()==FLIGHT_MOTION_TYPE) //<- Causes freeze, but sometimes needed :(
-        GetPlayer()->GetMotionMaster()->MovementExpired(false);
+    //while(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()==FLIGHT_MOTION_TYPE) //<- Causes freeze, but sometimes needed :(
+    for(MotionMaster::const_iterator itr = GetPlayer()->GetMotionMaster()->begin(); itr != GetPlayer()->GetMotionMaster()->end(); ++itr)
+    {
+        if((*itr)->GetMovementGeneratorType() == FLIGHT_MOTION_TYPE)
+            (*itr)->Finalize((Unit*)_player);
+    }
+    GetPlayer()->GetMotionMaster()->Clean(false, true);
 
     if (mountDisplayId)
         GetPlayer()->Mount( mountDisplayId );
