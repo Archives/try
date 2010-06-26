@@ -64,9 +64,9 @@ void BattleGroundDS::Update(uint32 diff)
                 {
                     Player * plr = sObjectMgr.GetPlayer(itr->first);
                     if (plr->GetTeam() == ALLIANCE && plr->GetDistance2d(1214, 765) <= 50 && plr->GetPositionZ() > 10)
-                        plr->KnockBackPlayerWithAngle(6.05f, 35.0f, 7.0f);
+                        plr->KnockWithAngle(6.05f, 35.0f, 7.0f);
                     if (plr->GetTeam() == HORDE && plr->GetDistance2d(1369, 817) <= 50 && plr->GetPositionZ() > 10)
-                        plr->KnockBackPlayerWithAngle(3.03f, 35.0f, 7.0f);
+                        plr->KnockWithAngle(3.03f, 35.0f, 7.0f);
                 }
                 if(!KnockbackSpam)
                 {

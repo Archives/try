@@ -1895,6 +1895,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void DestroyForPlayer( Player *target, bool anim = false ) const;
         void SendLogXPGain(uint32 GivenXP,Unit* victim,uint32 RestXP);
 
+        void KnockWithAngle(float angle, float horizontalSpeed, float verticalSpeed);
+
         // notifiers
         void SendAttackSwingCantAttack();
         void SendAttackSwingCancelAttack();
