@@ -7569,9 +7569,9 @@ void Aura::HandleModTargetResistance(bool apply, bool Real)
     if (target->GetTypeId() == TYPEID_PLAYER && (m_modifier.m_miscvalue & SPELL_SCHOOL_MASK_NORMAL))
         target->ApplyModInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, m_modifier.m_amount, apply);
 
-    // show as spell penetration only full spell penetration bonuses (all resistances except armor and holy
-    if (target->GetTypeId() == TYPEID_PLAYER && (m_modifier.m_miscvalue & SPELL_SCHOOL_MASK_SPELL)==SPELL_SCHOOL_MASK_SPELL)
-        target->ApplyModInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, m_modifier.m_amount, apply);
+    // Spell Penetration showing handled in StatSystem
+    if (target->GetTypeId() == TYPEID_PLAYER)
+        ((Player*)target)->UpdateSpellPenetration();
 }
 
 void Aura::HandleShieldBlockValue(bool apply, bool /*Real*/)

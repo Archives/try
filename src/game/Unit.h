@@ -375,6 +375,7 @@ enum UnitMods
     UNIT_MOD_DAMAGE_MAINHAND,
     UNIT_MOD_DAMAGE_OFFHAND,
     UNIT_MOD_DAMAGE_RANGED,
+    UNIT_MOD_SPELL_PENETRATION,
     UNIT_MOD_END,
     // synonyms
     UNIT_MOD_STAT_START = UNIT_MOD_STAT_STRENGTH,
@@ -1216,6 +1217,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         uint32 GetResistance(SpellSchools school) const { return GetUInt32Value(UNIT_FIELD_RESISTANCES+school); }
         void SetResistance(SpellSchools school, int32 val) { SetStatInt32Value(UNIT_FIELD_RESISTANCES+school,val); }
+
+        int32 GetSpellPenetration() const { return GetInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE); }
+        void SetSpellPenetration( int32 val) { SetInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE,val); }
 
         uint32 GetHealth()    const { return GetUInt32Value(UNIT_FIELD_HEALTH); }
         uint32 GetMaxHealth() const { return GetUInt32Value(UNIT_FIELD_MAXHEALTH); }

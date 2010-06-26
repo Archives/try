@@ -1840,6 +1840,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
         void UpdateResistances(uint32 school);
+        void UpdateSpellPenetration();
         void UpdateArmor();
         void UpdateMaxHealth();
         void UpdateMaxPower(Powers power);

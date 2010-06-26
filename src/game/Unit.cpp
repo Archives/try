@@ -1893,6 +1893,9 @@ void Unit::CalculateAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolMask, D
         float tmpvalue2 = (float)GetResistance(GetFirstSchoolInMask(schoolMask));
         // Ignore resistance by self SPELL_AURA_MOD_TARGET_RESISTANCE aura
         tmpvalue2 += (float)pCaster->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask);
+        //  Ignore resistance by spell penetration rating for players
+        if(pCaster->GetTypeId() == TYPEID_PLAYER)
+            tmpvalue2 -= ((Player*)pCaster)->GetTotalAuraModValue(UNIT_MOD_SPELL_PENETRATION);
 
         tmpvalue2 *= (float)(0.15f / getLevel());
         if (tmpvalue2 < 0.0f)
@@ -12718,6 +12721,13 @@ bool Unit::HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, f
         case UNIT_MOD_RESISTANCE_FROST:
         case UNIT_MOD_RESISTANCE_SHADOW:
         case UNIT_MOD_RESISTANCE_ARCANE:   UpdateResistances(GetSpellSchoolByAuraGroup(unitMod));      break;
+        // UNIT_MOD_SPELL_PENETRATION only for players
+        case UNIT_MOD_SPELL_PENETRATION:
+        {
+            if (GetTypeId() == TYPEID_PLAYER)
+                ((Player*)this)->UpdateSpellPenetration();
+            break;
+        }
 
         case UNIT_MOD_ATTACK_POWER:        UpdateAttackPowerAndDamage();         break;
         case UNIT_MOD_ATTACK_POWER_RANGED: UpdateAttackPowerAndDamage(true);     break;

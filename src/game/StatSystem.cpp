@@ -134,6 +134,7 @@ bool Player::UpdateAllStats()
     UpdateDefenseBonusesMod();
     UpdateShieldBlockValue();
     UpdateArmorPenetration();
+    UpdateSpellPenetration();
     UpdateSpellDamageAndHealingBonus();
     UpdateManaRegen();
     UpdateExpertise(BASE_ATTACK);
@@ -157,6 +158,17 @@ void Player::UpdateResistances(uint32 school)
     }
     else
         UpdateArmor();
+}
+
+void Player::UpdateSpellPenetration()
+{
+    float value = 0;
+    // Spell Penetration is given in positive for proper showing in client we need to do -value
+    value -= GetTotalAuraModValue(UNIT_MOD_SPELL_PENETRATION);
+    // does not really matter which school we use, it just must be a magic one
+    value +=(float)GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, SPELL_SCHOOL_MASK_SHADOW);
+
+    SetSpellPenetration(int32(value));
 }
 
 void Player::UpdateArmor()
