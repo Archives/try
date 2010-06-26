@@ -886,7 +886,7 @@ bool Pet::UpdateStats(Stats stat)
     CreatureInfo const *cinfo = GetCreatureInfo(); 
 
     Unit *owner = GetOwner();
-    if (stat == STAT_STRENGTH && owner && owner->getClass() == CLASS_DEATHKNIGHT)
+    if (stat == STAT_STRENGTH && owner && owner->getClass() == CLASS_DEATH_KNIGHT)
     {
         // only for Risen Ghoul and Army of Ghouls            
         if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
@@ -896,7 +896,7 @@ bool Pet::UpdateStats(Stats stat)
             if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
                scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
            // Glyph of Ghoul
-           if (Aura *glyph = owner->GetAura(58686))
+           if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
                scale_coeff += glyph->GetModifier()->m_amount;
              value += float(owner->GetStat(stat)) * scale_coeff;
        }
@@ -915,7 +915,7 @@ bool Pet::UpdateStats(Stats stat)
                 case CLASS_WARLOCK:
                     scale_coeff = 0.75f;
                     break;
-                case CLASS_DEATHKNIGHT:
+                case CLASS_DEATH_KNIGHT:
                     // only for Risen Ghoul and Army of Ghouls
                     if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
                     {
@@ -925,7 +925,7 @@ bool Pet::UpdateStats(Stats stat)
                         if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
                             scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;       
                         // Glyph of Ghoul
-                        if (Aura *glyph = owner->GetAura(58686))
+                        if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
                             scale_coeff += glyph->GetModifier()->m_amount;
                     }
                     break; 

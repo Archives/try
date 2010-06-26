@@ -121,9 +121,9 @@ void WorldSession::SendDoFlight( uint32 mountDisplayId, uint32 path, uint32 path
     for(MotionMaster::const_iterator itr = GetPlayer()->GetMotionMaster()->begin(); itr != GetPlayer()->GetMotionMaster()->end(); ++itr)
     {
         if((*itr)->GetMovementGeneratorType() == FLIGHT_MOTION_TYPE)
-            (*itr)->Finalize((Unit*)_player);
+            (*itr)->Finalize((Unit&)_player);
     }
-    GetPlayer()->GetMotionMaster()->Clean(false, true);
+    GetPlayer()->GetMotionMaster()->Clear(false, true);
 
     if (mountDisplayId)
         GetPlayer()->Mount( mountDisplayId );
