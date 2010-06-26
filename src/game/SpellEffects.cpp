@@ -7408,6 +7408,7 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
         return;
     }
     m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
+    z+= 0.5f;
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -7448,6 +7449,7 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         return;
     }
     m_caster->UpdateGroundPositionZ(x, y, z, 30.0f);
+    z+= 0.5f;
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->MonsterMove(x, y, z, 1);
