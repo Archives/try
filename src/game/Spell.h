@@ -292,6 +292,7 @@ class Spell
         void EffectSummonGuardian(SpellEffectIndex eff_id, uint32 forceFaction = 0);
         void EffectHealMechanical(SpellEffectIndex eff_id);
         void EffectJump(SpellEffectIndex eff_id);
+        void EffectJumpToDest(SpellEffectIndex eff_id);
         void EffectTeleUnitsFaceCaster(SpellEffectIndex eff_id);
         void EffectLearnSkill(SpellEffectIndex eff_id);
         void EffectAddHonor(SpellEffectIndex eff_id);

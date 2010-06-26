@@ -102,7 +102,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectEmpty,                                    // 39 SPELL_EFFECT_LANGUAGE                 misc store lang id
     &Spell::EffectDualWield,                                // 40 SPELL_EFFECT_DUAL_WIELD
     &Spell::EffectJump,                                     // 41 SPELL_EFFECT_JUMP
-    &Spell::EffectJump,                                     // 42 SPELL_EFFECT_JUMP2
+    &Spell::EffectJumpToDest,                               // 42 SPELL_EFFECT_JUMP2
     &Spell::EffectTeleUnitsFaceCaster,                      // 43 SPELL_EFFECT_TELEPORT_UNITS_FACE_CASTER
     &Spell::EffectLearnSkill,                               // 44 SPELL_EFFECT_SKILL_STEP
     &Spell::EffectAddHonor,                                 // 45 SPELL_EFFECT_ADD_HONOR                honor/pvp related
@@ -2534,25 +2534,23 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 m_caster->CastCustomSpell(m_caster, 45470, &bp, NULL, NULL, true);
                 return;
             }
-            //Death Grip
-            else if (m_spellInfo->Id == 49560 || m_spellInfo->Id == 49576)
+            //Death Grip - 1st part
+            else if (m_spellInfo->Id == 49576)
             {
-                if (!unitTarget || !m_caster)
+                if (!unitTarget)
                     return;
-                float x = m_caster->GetPositionX();
-                float y = m_caster->GetPositionY();
-                float z = m_caster->GetPositionZ()+1;
-                float orientation = unitTarget->GetOrientation();
-
-                m_caster->CastSpell(unitTarget,51399,true,NULL);                
-                    
-                if(unitTarget->GetTypeId() != TYPEID_PLAYER)
-                {
-                   unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);
-                   ((Creature*)unitTarget)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)unitTarget)->GetSplineFlags(), 1);
-                }
-                else unitTarget->NearTeleportTo(x,y,z,orientation,false);
-
+        
+                m_caster->CastSpell(unitTarget, 49560, true);
+                return;
+            }
+            //Death Grip - 2nd part
+            else if (m_spellInfo->Id == 49560)
+            {
+                if (!unitTarget || m_caster == unitTarget)
+                    return;
+                
+                uint32 entry = m_spellInfo->CalculateSimpleValue(eff_idx);
+                unitTarget->CastSpell(unitTarget, entry, true, NULL, NULL, m_caster->GetGUID());
                 return;
             }
             // Raise Dead
@@ -2904,6 +2902,33 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
     }
 
     m_caster->NearTeleportTo(x, y, z, o, true);
+}
+
+void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
+{
+     Unit* target = m_originalCaster && unitTarget == m_caster ? m_originalCaster : unitTarget;
+
+    if (!target)
+        return;
+
+    float distance, angle, vertical, normalized_d;
+    distance = m_caster->GetDistance(target);
+    angle = m_caster->GetAngle(target);
+    vertical = 10.0f + target->GetPositionZ() - m_caster->GetPositionZ();
+    normalized_d = distance - 2;
+    
+    if(m_caster->GetTypeId() == TYPEID_PLAYER)
+        m_caster->KnockBackFrom(target, -normalized_d, vertical);
+    else
+    {
+        float x,z,y,o;
+        x = m_caster->GetPositionX();
+        y = m_caster->GetPositionY();
+        z = m_caster->GetPositionZ()+1;
+        o = unitTarget->GetOrientation();
+        ((Creature*)unitTarget)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)unitTarget)->GetSplineFlags(), 1);
+        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);		
+    }
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
