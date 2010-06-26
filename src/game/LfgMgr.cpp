@@ -327,7 +327,8 @@ void LfgGroup::TeleportToDungeon()
 
         plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
             dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
-    }  
+    }
+    m_inDungeon = true;
 }
 bool LfgGroup::HasCorrectLevel(uint8 level)
 {

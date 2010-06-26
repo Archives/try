@@ -71,6 +71,7 @@ bool ChatHandler::HandleReloadAllCommand(const char*)
 
     HandleReloadMailLevelRewardCommand("");
     HandleReloadCommandCommand("");
+    HandleReloadLfgDungeonInfoCommand("");
     HandleReloadReservedNameCommand("");
     HandleReloadMangosStringCommand("");
     HandleReloadGameTeleCommand("");
@@ -115,6 +116,7 @@ bool ChatHandler::HandleReloadAllNpcCommand(const char* args)
 bool ChatHandler::HandleReloadAllQuestCommand(const char* /*args*/)
 {
     HandleReloadQuestAreaTriggersCommand("a");
+    HandleReloadQuestLfgRelationCommand("a");
     HandleReloadQuestPOICommand("a");
     HandleReloadQuestTemplateCommand("a");
 
@@ -325,6 +327,22 @@ bool ChatHandler::HandleReloadQuestAreaTriggersCommand(const char*)
     sLog.outString( "Re-Loading Quest Area Triggers..." );
     sObjectMgr.LoadQuestAreaTriggers();
     SendGlobalSysMessage("DB table `areatrigger_involvedrelation` (quest area triggers) reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadQuestLfgRelationCommand(const char*)
+{
+    sLog.outString( "Re-Loading Quest Lfg Relations..." );
+    sLfgMgr.LoadDungeonRewards();
+    SendGlobalSysMessage("DB table `quest_lfg_relation` (Quest Lfg Relations) reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadQuestLfgRelationCommand(const char*)
+{
+    sLog.outString( "Re-Loading Lfg Dungeons info..." );
+    sLfgMgr.LoadDungeonsInfo();
+    SendGlobalSysMessage("DB table `lfg_dungeon_info` (Lfg Dungeons info) reloaded.");
     return true;
 }
 
