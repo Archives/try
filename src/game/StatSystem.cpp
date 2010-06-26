@@ -883,9 +883,25 @@ bool Pet::UpdateStats(Stats stat)
 
     // value = ((base_value * base_pct) + total_value) * total_pct
     float value  = GetTotalStatValue(stat);
+    CreatureInfo const *cinfo = GetCreatureInfo(); 
 
     Unit *owner = GetOwner();
-    if ( stat == STAT_STAMINA )
+    if (stat == STAT_STRENGTH && owner && owner->getClass() == CLASS_DEATHKNIGHT)
+    {
+        // only for Risen Ghoul and Army of Ghouls            
+        if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
+        {
+            float scale_coeff = 0.7f;
+            // Ravenous Dead
+            if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
+               scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
+           // Glyph of Ghoul
+           if (Aura *glyph = owner->GetAura(58686))
+               scale_coeff += glyph->GetModifier()->m_amount;
+             value += float(owner->GetStat(stat)) * scale_coeff;
+       }
+    }
+    else if ( stat == STAT_STAMINA ) 
     {
         if(owner)
         {
@@ -894,10 +910,25 @@ bool Pet::UpdateStats(Stats stat)
             {
                 case CLASS_HUNTER:
                     scale_coeff = 0.45f;
+                    // HERE comes Wild Hunt
                     break;
                 case CLASS_WARLOCK:
                     scale_coeff = 0.75f;
                     break;
+                case CLASS_DEATHKNIGHT:
+                    // only for Risen Ghoul and Army of Ghouls
+                    if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
+                    {
+                        // base coeff
+                        scale_coeff = 0.30f;
+                        // Ravenous Dead
+                        if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
+                            scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;       
+                        // Glyph of Ghoul
+                        if (Aura *glyph = owner->GetAura(58686))
+                            scale_coeff += glyph->GetModifier()->m_amount;
+                    }
+                    break; 
             }
             value += float(owner->GetStat(stat)) * scale_coeff;
         }
@@ -1014,16 +1045,14 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
     float bonusAP = 0.0f;
     UnitMods unitMod = UNIT_MOD_ATTACK_POWER;
 
-    if(GetEntry() == 416)                                   // imp's attack power
-        val = GetStat(STAT_STRENGTH) - 10.0f;
-    else
-        val = 2 * GetStat(STAT_STRENGTH) - 20.0f;
+    val = GetStat(STAT_STRENGTH) - 20.0f; 
 
     Unit* owner = GetOwner();
     if( owner && owner->GetTypeId()==TYPEID_PLAYER)
     {
         if(getPetType() == HUNTER_PET)                      //hunter pets benefit from owner's attack power
         {
+            // HERE comes Wild Hunt
             bonusAP = owner->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.22f;
             SetBonusDamage( int32(owner->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.1287f));
         }
