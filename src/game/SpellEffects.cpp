@@ -2927,7 +2927,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
         z = m_caster->GetPositionZ()+1;
         o = unitTarget->GetOrientation();
         ((Creature*)unitTarget)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)unitTarget)->GetSplineFlags(), 1);
-        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,orientation);		
+        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,o);		
     }
 }
 
