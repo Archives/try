@@ -338,7 +338,7 @@ bool ChatHandler::HandleReloadQuestLfgRelationCommand(const char*)
     return true;
 }
 
-bool ChatHandler::HandleReloadQuestLfgRelationCommand(const char*)
+bool ChatHandler::HandleReloadLfgDungeonInfoCommand(const char*)
 {
     sLog.outString( "Re-Loading Lfg Dungeons info..." );
     sLfgMgr.LoadDungeonsInfo();

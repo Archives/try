@@ -120,9 +120,12 @@ enum LfgLockStatusType
     LFG_LOCKSTATUS_MISSING_ITEM              = 1025,
     LFG_LOCKSTATUS_NOT_IN_SEASON             = 1031,
 };
-//Spell IDs
-#define LFG_DESERTER                           71041
-#define LFG_RANDOM_COOLDOWN                    71328
+enum LfgSpells
+{
+    LFG_DESERTER                             = 71041,
+    LFG_RANDOM_COOLDOWN                      = 71328,
+    LFG_BOOST                                = 72221,         //Cast on you at dungeon enter and removed on leave, 5% everything boost
+};
 
 enum LfgInstanceStatus
 {
@@ -255,6 +258,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         bool HasCorrectLevel(uint8 level);
         bool IsInDungeon() const { return m_inDungeon; }
         void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
+        uint8 GetInstanceStatus() const { return m_instanceStatus; }
+        bool IsRandom() const { return m_isRandom; }
         
     private:
         uint64 m_tank;
@@ -269,6 +274,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint8 m_baseLevel;
         uint8 m_instanceStatus;
         bool m_inDungeon;
+        bool m_isRandom;
 };
 
 typedef std::set<LfgGroup*> GroupsList;
@@ -306,7 +312,7 @@ class MANGOS_DLL_SPEC LfgMgr
         void LoadDungeonRewards();
         void LoadDungeonsInfo();
         DugeonInfo* GetDungeonInfo(uint32 id) { return m_dungeonInfoMap.find(id)->second; };
-        LfgLocksList *GetDungeonsLock(Player *plr) const;
+        LfgLocksList *GetDungeonsLock(Player *plr);
 
         uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
         LfgGroup *GetLfgGroupById(uint32 groupid);

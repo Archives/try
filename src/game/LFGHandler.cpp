@@ -177,3 +177,45 @@ void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
     error_log("Odpoved %u", accept);
 }
 
+void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_TELEPORT");
+    uint8 teleportOut;
+    recv_data >> teleportOut;
+
+    if(teleportOut == 0)
+        return;
+
+    if(Group *group = _player->GetGroup())
+    {
+        if(group->isLfgGroup())
+        {
+            group->RemoveMember(_player->GetGUID(), 0);
+            return;
+        }
+    }
+
+    //This should not happen
+    if (!_player->isAlive())
+    {
+        _player->ResurrectPlayer(1.0f);
+        _player->SpawnCorpseBones();
+    }
+    WorldLocation teleLoc = _player->m_lookingForGroup.joinLoc;
+    if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
+    {
+        _player->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
+        _player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
+        _player->RemoveAurasDueToSpell(LFG_BOOST);
+        _player->TeleportTo(teleLoc);
+    }
+}
+
+void WorldSession::HandleSetLfgCommentOpcode(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_SET_LFG_COMMENT");
+    std::string comment;
+    recv_data >> comment;
+    _player->m_lookingForGroup.comment = comment;
+}
+

@@ -167,8 +167,8 @@ bool Group::LoadGroupFromDB(Field* fields)
     {
         ((LfgGroup*)this)->SetTank(m_mainTank);
         ((LfgGroup*)this)->SetHeal(fields[1].GetUInt64());
-        ((LfgGroup*)this)->SetDungeonInfo(sLFGDungeonStore.LookupEntry(fields[19].GetUint32()));
-        ((LfgGroup*)this)->SetInstanceStatus(fields[20].GetUint8());
+        ((LfgGroup*)this)->SetDungeonInfo(sLFGDungeonStore.LookupEntry(fields[19].GetUInt32()));
+        ((LfgGroup*)this)->SetInstanceStatus(fields[20].GetUInt8());
     }
 
     return true;
@@ -359,18 +359,6 @@ uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
             }
 
             _homebindIfInstance(player);
-            //Remove player from LFG
-            sLfgMgr.RemovePlayer(player);
-            if(isLfgGroup())
-            {
-                WorldLoc teleLoc = player->m_lookingForGroup.joinLoc;
-                if(teleLoc && teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
-                {
-                    player->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
-                    player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
-                    player->TeleportTo(teleLoc);
-                }
-            }
         }
 
         if(leaderChanged)
@@ -401,6 +389,11 @@ void Group::ChangeLeader(const uint64 &guid)
     WorldPacket data(SMSG_GROUP_SET_LEADER, slot->name.size()+1);
     data << slot->name;
     BroadcastPacket(&data, true);
+
+    Player *leader = sObjectMgr.GetPlayer(guid);
+    if(isLfgGroup() && leader)
+        sLfgMgr.SendLfgUpdateParty(leader, LFG_UPDATETYPE_LEADER);
+
     SendUpdate();
 }
 
@@ -437,6 +430,9 @@ void Group::Disband(bool hideDestroy)
         WorldPacket data;
         if(!hideDestroy)
         {
+            if(isLfgGroup())
+                sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_GROUP_DISBAND);
+
             data.Initialize(SMSG_GROUP_DESTROYED, 0);
             player->GetSession()->SendPacket(&data);
         }
@@ -1177,6 +1173,30 @@ bool Group::_removeMember(const uint64 &guid)
     Player *player = sObjectMgr.GetPlayer(guid);
     if (player)
     {
+        //Remove player from LFG
+        sLfgMgr.RemovePlayer(player);
+        if(isLfgGroup())
+        {
+            if (!player->isAlive())
+            {
+                player->ResurrectPlayer(1.0f);
+                player->SpawnCorpseBones();
+            }
+            WorldLocation teleLoc = player->m_lookingForGroup.joinLoc;
+            if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
+            {
+                player->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
+                player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
+                player->RemoveAurasDueToSpell(LFG_BOOST);
+                if(((LfgGroup*)this)->GetInstanceStatus() != INSTANCE_COMPLETED)
+                    player->CastSpell(player, LFG_DESERTER, true);
+                if(((LfgGroup*)this)->IsRandom())
+                    player->CastSpell(player, LFG_RANDOM_COOLDOWN, true);
+
+                player->TeleportTo(teleLoc);
+            }
+        }
+
         //if we are removing player from battleground raid
         if( isBGGroup() )
             player->RemoveFromBattleGroundRaid();

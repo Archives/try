@@ -387,7 +387,7 @@ void WorldSession::LogoutPlayer(bool Save)
             }
         }
         ///- Remove player from LFG queues etc..
-        sLfgMgr.RemovePlayer(_player);
+        sLfgMgr.RemovePlayer(_player->GetGUID());
 
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage

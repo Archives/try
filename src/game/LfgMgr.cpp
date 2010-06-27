@@ -24,6 +24,8 @@
 #include "DBCStores.h"
 #include "ObjectMgr.h"
 #include "ProgressBar.h"
+#include "Unit.h"
+#include "SpellAuras.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -42,6 +44,7 @@ LfgGroup::LfgGroup() : Group()
     m_groupType = GROUPTYPE_LFD;
     m_instanceStatus = INSTANCE_NOT_SAVED;
     m_inDungeon = false;
+    m_isRandom = false;
 }
 LfgGroup::~LfgGroup()
 {
@@ -108,6 +111,14 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
 {
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
+        if(!citr)
+            continue;
+        if(!citr->guid)
+        {
+            m_memberSlots.erase(citr);
+            continue;
+        }
+
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
         if(!plr ||!plr->GetSession())
             RemoveMember(citr->guid, 0);
@@ -130,8 +141,10 @@ bool LfgGroup::UpdateCheckTimer(uint32 time)
 void LfgGroup::TeleportToDungeon()
 {
     //If random, then select here
+    uint32 originalDungeonId = m_dungeonInfo->ID;
     if(m_dungeonInfo->type == LFG_TYPE_RANDOM)
     {
+        m_isRandom = true;
         LfgLocksMap *groupLocks = GetLocksList();
         std::vector<LFGDungeonEntry const*> options;
         LFGDungeonEntry const *currentRow;
@@ -218,14 +231,12 @@ void LfgGroup::TeleportToDungeon()
             ADD `taxi_end` INT( 11 ) NOT NULL DEFAULT '0',
             ADD `mount_spell` INT( 11 ) NOT NULL DEFAULT '0';
         */
-        CharacterDatabase.BeginTransaction();
         CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Id);
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Id);
         CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty,healGuid,LfgId,LfgInstanceStatus) "
             "VALUES ('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u','%u','%u','%u')",
             m_Id, GUID_LOPART(m_leaderGuid), GUID_LOPART(m_tank), GUID_LOPART(m_mainAssistant), uint32(m_lootMethod),
-            GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, m_instanceStatus);
-        CharacterDatabase.CommitTransaction();    
+            GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, m_instanceStatus);    
     }
     //sort group members...
 
@@ -234,10 +245,10 @@ void LfgGroup::TeleportToDungeon()
         error_log("Do grupy");
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
     
-        plr->m_lookingForGroup.groups.erase(m_dungeonInfo->ID);
-        plr->m_lookingForGroup.m_LfgGroup.find(m_dungeonInfo->ID)->second->unlink();
-        delete plr->m_lookingForGroup.m_LfgGroup.find(m_dungeonInfo->ID)->second;
-        plr->m_lookingForGroup.m_LfgGroup.erase(m_dungeonInfo->ID);
+        plr->m_lookingForGroup.groups.erase(originalDungeonId);
+        plr->m_lookingForGroup.m_LfgGroup.find(originalDungeonId)->second->unlink();
+        delete plr->m_lookingForGroup.m_LfgGroup.find(originalDungeonId)->second;
+        plr->m_lookingForGroup.m_LfgGroup.erase(originalDungeonId);
 
         plr->UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
         plr->ResetInstances(INSTANCE_RESET_GROUP_JOIN,false);
@@ -260,8 +271,8 @@ void LfgGroup::TeleportToDungeon()
         WorldLocation joinLoc;
         if (!plr->m_taxi.empty())
         {
-           taxi_start = m_taxi.GetTaxiSource();
-           taxi_end = m_taxi.GetTaxiDestination();
+           taxi_start = plr->m_taxi.GetTaxiSource();
+           taxi_end = plr->m_taxi.GetTaxiDestination();
            joinLoc = WorldLocation(plr->GetMapId(), plr->GetPositionX(), plr->GetPositionY(), plr->GetPositionZ(), plr->GetOrientation());
         }
         else
@@ -269,7 +280,7 @@ void LfgGroup::TeleportToDungeon()
             // Mount spell id storing
             if (plr->IsMounted())
             {
-                AuraList const& auras = plr->GetAurasByType(SPELL_AURA_MOUNTED);
+                Unit::AuraList const& auras = plr->GetAurasByType(SPELL_AURA_MOUNTED);
                 if (!auras.empty())
                     mount_spell = (*auras.begin())->GetId();
             }
@@ -291,19 +302,19 @@ void LfgGroup::TeleportToDungeon()
         plr->m_lookingForGroup.mount_spell = mount_spell;
 
         // resurrect the player
-        if (!_player->isAlive())
+        if (!plr->isAlive())
         {
             plr->ResurrectPlayer(1.0f);
             plr->SpawnCorpseBones();
         }
         // stop taxi flight at port
-        if (_player->isInFlight())
+        if (plr->isInFlight())
         {
             plr->GetMotionMaster()->MovementExpired(false);
             plr->m_taxi.ClearTaxiDestinations();
         }
         CharacterDatabase.PExecute("INSERT INTO group_member(groupId,memberGuid,assistant,subgroup,lfg_join_x,lfg_join_y,lfg_join_z,lfg_join_o,lfg_join_map,taxi_start,taxi_end,mount_spell) "
-            "VALUES('%u','%u','%u','%u','%f','%f','%f','%f','%u','%u','%u')",
+            "VALUES('%u','%u','%u','%u','%f','%f','%f','%f','%u','%u','%u','%u')",
             m_Id, GUID_LOPART(plr->GetGUID()), 0, 1, joinLoc.coord_x, joinLoc.coord_y, joinLoc.coord_z, joinLoc.orientation, joinLoc.mapid, taxi_start, taxi_end, mount_spell);
     }
     //Teleport
@@ -320,10 +331,10 @@ void LfgGroup::TeleportToDungeon()
         else if(m_heal == plr->GetGUID())
             roles |= HEALER;
         else if(dps->find(plr->GetGUID()) != dps->end())
-            roles |= DAMAG
+            roles |= DAMAGE;
         plr->m_lookingForGroup.roles = roles;
 
-        plr->ScheduleDelayedOperation(DELAYED_LFG_PARTY_UPDATE);
+        plr->ScheduleDelayedOperation(DELAYED_LFG_ENTER_DUNGEON);
 
         plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
             dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
@@ -427,7 +438,7 @@ void LfgGroup::SendUpdate()
 LfgLocksMap* LfgGroup::GetLocksList() const
 {
     LfgLocksMap *groupLocks = new LfgLocksMap();
-    for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+    for (GroupReference *itr = ((Group*)this)->GetFirstMember(); itr != NULL; itr = itr->next())
     {
         Player *plr = itr->getSource();
         LfgLocksList *playerLocks = sLfgMgr.GetDungeonsLock(plr);
@@ -524,9 +535,16 @@ void LfgGroup::SendProposalUpdate(uint8 state)
                     roles |= HEALER;
                 else if(dps->find(plr->GetGUID()) != dps->end())
                     roles |= DAMAGE;
+                //Something got wrong
+                if(roles == 0)
+                {
+                    sLog.outError("LfgMgr: Wrong role for player in SMSG_LFG_PROPOSAL_UPDATE");
+                    m_answers.insert(std::pair<uint64, uint8>(_player->GetGUID(), 0));
+                }
+
                 data << uint32(roles);
                 data << uint8((plr == plritr->getSource()));  // if its you, this is true
-                data << uint8(0); // InDungeon
+                data << uint8(m_inDungeon); // InDungeon
                 data << uint8(premadePlayers.find(plr->GetGUID()) != premadePlayers.end()); // Same group
                 //If player agrees with dungeon, these two are 1
                 if(m_answers.find(plr->GetGUID()) != m_answers.end())
@@ -603,11 +621,15 @@ void LfgMgr::AddToQueue(Player *player)
         for (LfgDungeonList::const_iterator it = player->m_lookingForGroup.queuedDungeons.begin(); it != player->m_lookingForGroup.queuedDungeons.end(); ++it)
         {
             uint8 side = (player->GetTeam() == ALLIANCE) ? LFG_ALLIANCE : LFG_HORDE;
+            error_log("queed %u", (*it)->ID);
             
             if(m_queuedDungeons[side].find((*it)->ID) != m_queuedDungeons[side].end())
-                m_queuedDungeons[side].find((*it)->ID)->second->players.insert(player->GetGUID());  //Insert player into queue, will be sorted on next queue update
-            else  // None player is qeued into this dungeon
             {
+                error_log("Uz existuje, pridavam do hracu jen %u", (*it)->ID);
+                m_queuedDungeons[side].find((*it)->ID)->second->players.insert(player->GetGUID());  //Insert player into queue, will be sorted on next queue update
+            }else  // None player is qeued into this dungeon
+            {
+                error_log("Delam novou %u", (*it)->ID);
                 QueuedDungeonInfo *newDungeonQueue = new QueuedDungeonInfo();
                 newDungeonQueue->dungeonInfo = *it;
                 newDungeonQueue->players.insert(player->GetGUID());
@@ -676,6 +698,7 @@ void LfgMgr::UpdateQueues()
         //dungeons...
         for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end(); ++itr)
         {
+            error_log("Dung %u", itr->second->dungeonInfo->ID);
             //Remove somehow unaviable players
             for(GroupsList::iterator grpitr1 = itr->second->groups.begin(); grpitr1 != itr->second->groups.end(); ++grpitr1)
                 (*grpitr1)->RemoveOfflinePlayers();
@@ -745,11 +768,11 @@ void LfgMgr::UpdateQueues()
             for(PlayerList::iterator plritr = itr->second->players.begin(); plritr != itr->second->players.end(); ++plritr)
             {
                 Player *player = sObjectMgr.GetPlayer(*plritr);
+                error_log("player %s", player->GetName());
                 bool getIntoGroup = false;
                 //Try to put him into any incomplete group
                 for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr != itr->second->groups.end(); ++grpitr)
                 {
-                    (*grpitr)->
                     //Check level, this is needed only for Classic and BC normal I think...
                     if(!(*grpitr)->HasCorrectLevel(player->getLevel()))
                         continue;
@@ -780,6 +803,9 @@ void LfgMgr::UpdateQueues()
                     }
                     if(!getIntoGroup)
                         error_log("player %s nejde do grupy", player->GetName());
+                    //Found group, so break
+                    if(getIntoGroup)
+                        break;
                 }
                 //Failed, so create new LfgGroup
                 if(!getIntoGroup)
@@ -931,6 +957,7 @@ void LfgMgr::UpdateFormedGroups()
                     for (GroupReference *plritr = (*grpitr)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
                     {
                         SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_GROUP_FOUND);
+                        SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
                         
                         //I think this is useless when you are not in group, but its sent by retail serverse anyway...
                         SendLfgUpdateParty(plritr->getSource(), LFG_UPDATETYPE_REMOVED_FROM_QUEUE);       
@@ -1067,8 +1094,8 @@ void LfgMgr::BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr)
         data << uint32(0);             // ???
     data << uint32(reward->questInfo->GetRewOrReqMoney());
     data << uint32((plr->getLevel() == sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)) ? 0 : reward->questInfo->XPValue( plr ));
-    data << uint32(reward->questInfo->GetRewMoneyMaxLevel());                                      // some "variable" money?
-    data << uint32((plr->getLevel() == sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)) ? 0 : reward->questInfo->XPValue( plr ));// some "variable" xp?
+    data << uint32(0);                                      // some "variable" money?
+    data << uint32(0);                                      // some "variable" xp?
     
     ItemPrototype const *rewItem = sObjectMgr.GetItemPrototype(reward->questInfo->RewItemId[0]);   // Only first item is for dungeon finder
     if(!rewItem)
@@ -1243,6 +1270,19 @@ void LfgMgr::LoadDungeonsInfo()
 {
     // In case of reload
     m_dungeonInfoMap.clear();
+
+    //Fill locked for dungeons without info in db
+    LFGDungeonEntry const *currentRow;
+    for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
+    {
+        currentRow = sLFGDungeonStore.LookupEntry(i);
+        if(!currentRow)
+            continue;
+        DugeonInfo *info = new DugeonInfo();
+        info->ID = currentRow->ID;
+        info->locked = true;
+        m_dungeonInfoMap.insert(std::make_pair<uint32, DugeonInfo*>(info->ID, info));
+    }
     uint32 count = 0;
     //                                                0   1     2           3          4        5        6        7        8
     QueryResult *result = WorldDatabase.Query("SELECT ID, name, lastBossId, start_map, start_x, start_y, start_z, start_o, locked  FROM lfg_dungeon_info");
@@ -1279,7 +1319,7 @@ void LfgMgr::LoadDungeonsInfo()
             delete info;
             continue;
         }
-        m_dungeonInfoMap.insert(std::make_pair<uint32, DugeonInfo*>(info->ID, info));
+        m_dungeonInfoMap.find(info->ID)->second = info;
         ++count;
     } while( result->NextRow() );
 

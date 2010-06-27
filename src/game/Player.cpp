@@ -2002,7 +2002,7 @@ void Player::ProcessDelayedOperations()
         }
     }
     
-    if (m_DelayedOperations & DELAYED_LFG_PARTY_UPDATE)
+    if (m_DelayedOperations & DELAYED_LFG_ENTER_DUNGEON)
     {
         if(Group *group = GetGroup())
         {
@@ -2011,6 +2011,7 @@ void Player::ProcessDelayedOperations()
             SetGroupUpdateFlag(GROUP_UPDATE_FULL);
             group->UpdatePlayerOutOfRange(this);   
         }
+        CastSpell(this, LFG_BOOST, true);
     }
 
     if (m_DelayedOperations & DELAYED_LFG_MOUNT_RESTORE)
@@ -16332,7 +16333,7 @@ void Player::_LoadGroup(QueryResult *result)
     if (result)
     {
         uint32 groupId    = (*result)[0].GetUInt32();
-        WorldLoc joinLoc  = WorldLoc((*result)[5].GetUInt32(), (*result)[1].GetFloat(), (*result)[2].GetFloat(), (*result)[3].GetFloat(), (*result)[4].GetFloat());
+        WorldLocation joinLoc  = WorldLocation((*result)[5].GetUInt32(), (*result)[1].GetFloat(), (*result)[2].GetFloat(), (*result)[3].GetFloat(), (*result)[4].GetFloat());
         uint32 taxi_start = (*result)[6].GetUInt32();
         uint32 taxi_end   = (*result)[7].GetUInt32();
         uint32 mount_spell= (*result)[8].GetUInt32();
