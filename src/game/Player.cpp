@@ -6628,8 +6628,12 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 void Player::RewardRandomBattlegroud(bool win)
 {
     RewardHonor(NULL, 1, win ? GetBGWinExtraHonor() : GetBGLoseExtraHonor());
-    if(win && GetBGWinExtraAP())
-        ModifyArenaPoints(GetBGWinExtraAP());
+    if(win)
+    {
+        if(GetBGWinExtraAP())
+            ModifyArenaPoints(GetBGWinExtraAP());
+        SetRandomBGDone();
+    }
 }
 
 void Player::ModifyHonorPoints( int32 value )
@@ -22788,4 +22792,17 @@ void Player::KnockWithAngle(float angle, float horizontalSpeed, float verticalSp
     data << float(horizontalSpeed);                     // Horizontal speed
     data << float(-verticalSpeed);                      // Z Movement speed (vertical)
     GetSession()->SendPacket(&data);
+}
+
+uint32 Player::GetBGWinExtraHonor()
+{
+    return MaNGOS::Honor::hk_honor_at_level(getLevel(), RandomBGDone() ? 15 : 30);
+}
+uint32 Player::GetBGWinExtraAP()
+{
+    return getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL) && !RandomBGDone() ? 25 : 0;
+}
+uint32 Player::GetBGLoseExtraHonor()
+{
+    return MaNGOS::Honor::hk_honor_at_level(getLevel(), 5);
 }

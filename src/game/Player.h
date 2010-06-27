@@ -37,7 +37,6 @@
 #include "ReputationMgr.h"
 #include "BattleGround.h"
 #include "DBCEnums.h"
-#include "Formulas.h"
 
 #include<string>
 #include<vector>
@@ -2200,9 +2199,9 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_FirstRBDone = true;
         }
         void ResetBGStatus() { m_FirstRBTime = 0; }
-        uint32 GetBGWinExtraHonor() {return MaNGOS::Honor::hk_honor_at_level(getLevel(), RandomBGDone() ? 15 : 30); }
-        uint32 GetBGWinExtraAP() {return RandomBGDone() ? 0 : 25; }
-        uint32 GetBGLoseExtraHonor() {return MaNGOS::Honor::hk_honor_at_level(getLevel(), 5); }
+        uint32 GetBGWinExtraHonor();
+        uint32 GetBGWinExtraAP();
+        uint32 GetBGLoseExtraHonor();
 
         /*********************************************************/
         /***                    REST SYSTEM                    ***/
