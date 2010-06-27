@@ -6627,29 +6627,9 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
 void Player::RewardRandomBattlegroud(bool win)
 {
-    uint32 hk = 0;
-    bool ap = false;
-    if(!win)
-        hk = 5;
-
-    else
-    {
-        if(RandomBGDone())
-            hk = 15;
-        else
-        {
-            hk = 30;
-            if(getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
-                ap = true;
-            SetRandomBGDone();
-        }
-    }
-
-    if(hk)
-        RewardHonor(NULL, 1, MaNGOS::Honor::hk_honor_at_level(getLevel(),hk));
-    if(ap)
-        ModifyArenaPoints(25);
-
+    RewardHonor(NULL, 1, win ? GetBGWinExtraHonor() : GetBGLoseExtraHonor());
+    if(win && GetBGWinExtraAP())
+        ModifyArenaPoints(GetBGWinExtraAP());
 }
 
 void Player::ModifyHonorPoints( int32 value )

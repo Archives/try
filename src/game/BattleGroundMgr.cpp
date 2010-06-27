@@ -43,7 +43,6 @@
 #include "World.h"
 #include "WorldPacket.h"
 #include "GameEventMgr.h"
-#include "Formulas.h"
 
 #include "Policies/SingletonImp.h"
 
@@ -1863,10 +1862,6 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint6
     if (!plr)
         return;
 
-    uint32 win = MaNGOS::Honor::hk_honor_at_level(plr->getLevel(), plr->RandomBGDone() ? 15 : 30);
-    uint32 ap = plr->RandomBGDone() ? 0 : 25;
-    uint32 loss = MaNGOS::Honor::hk_honor_at_level(plr->getLevel(), 5);
-
     data->Initialize(SMSG_BATTLEFIELD_LIST);
     *data << uint64(guid);                                  // battlemaster guid
     *data << uint8(fromWhere);                              // from where you joined
@@ -1876,18 +1871,18 @@ void BattleGroundMgr::BuildBattleGroundListPacket(WorldPacket *data, const uint6
 
     // Rewards
     *data << uint8(plr->RandomBGDone());                    // 3.3.3 hasWin
-    *data << uint32(win);                                   // 3.3.3 winHonor
-    *data << uint32(ap);                                    // 3.3.3 winArena
-    *data << uint32(loss);                                  // 3.3.3 lossHonor
+    *data << uint32(plr->GetBGWinExtraHonor());             // 3.3.3 winHonor
+    *data << uint32(plr->GetBGWinExtraAP());                // 3.3.3 winArena
+    *data << uint32(plr->GetBGLoseExtraHonor());            // 3.3.3 lossHonor
 
     *data << uint8(bgTypeId == BATTLEGROUND_RB);            // 3.3.3 isRandom
     if(bgTypeId == BATTLEGROUND_RB)
     {
         // Rewards (random)
         *data << uint8(plr->RandomBGDone());                // 3.3.3 hasWin_Random
-        *data << uint32(win);                               // 3.3.3 winHonor_Random
-        *data << uint32(ap);                                // 3.3.3 winArena_Random
-        *data << uint32(loss);                              // 3.3.3 lossHonor_Random
+        *data << uint32(plr->GetBGWinExtraHonor());         // 3.3.3 winHonor_Random
+        *data << uint32(plr->GetBGWinExtraAP());            // 3.3.3 winArena_Random
+        *data << uint32(plr->GetBGLoseExtraHonor());        // 3.3.3 lossHonor_Random
     }
 
     if(bgTypeId == BATTLEGROUND_AA)                         // arena
