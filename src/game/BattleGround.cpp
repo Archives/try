@@ -1313,11 +1313,11 @@ void BattleGround::AddPlayer(Player *plr)
                 if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_WSG))
                     isAllowed = true;
                 break;
-            case BATTLEGROUND_RB:
-                if(sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_RANDOM))
-                    isAllowed = true;
-                break;
         }
+        // for random battlegrounds
+        if(IsRandom() && sWorld.getConfig(CONFIG_BOOL_TEAM_BG_ALLOW_RANDOM))
+            isAllowed = true;
+
         //Set faction and apply mark buffs
         if(isAllowed)
         {
