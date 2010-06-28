@@ -751,6 +751,7 @@ struct Position
     Position() : x(0.0f), y(0.0f), z(0.0f), o(0.0f) {}
     float x, y, z, o;
 };
+typedef std::map<uint32, Position*> SplineWayPointMap;
 
 class MovementInfo
 {
@@ -1442,6 +1443,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // if used additional args in ... part then floats must explicitly casted to double
         void SendMonsterMove(float x, float y, float z, SplineType type, SplineFlags flags, uint32 Time, Player* player = NULL, ...);
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
+        void SendSplineMove(SplineWayPointMap *pWps, SplineType type, SplineFlags flags, uint32 time, Player* player, ...);
 
         template<typename PathElem, typename PathNode>
         void SendMonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, SplineFlags flags);

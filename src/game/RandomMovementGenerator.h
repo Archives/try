@@ -22,6 +22,7 @@
 #include "MovementGenerator.h"
 #include "DestinationHolder.h"
 #include "Traveller.h"
+#include "Unit.h"
 
 template<class T>
 class MANGOS_DLL_SPEC RandomMovementGenerator
@@ -48,6 +49,33 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
 
         DestinationHolder< Traveller<T> > i_destinationHolder;
         uint32 i_nextMove;
+};
+
+
+template<class T>
+class MANGOS_DLL_SPEC RandomCircleMovementGenerator
+: public MovementGeneratorMedium< T, RandomCircleMovementGenerator<T> >
+{
+    public:
+        explicit RandomCircleMovementGenerator(const Unit &) : i_nextMoveTime(0) {}
+
+        void fillSplineWayPoints(T &);
+        void Initialize(T &);
+        void Finalize(T &);
+        void Interrupt(T &);
+        void Reset(T &);
+        bool Update(T &, const uint32 &);
+        MovementGeneratorType GetMovementGeneratorType() const { return RANDOM_CIRCLE_MOTION_TYPE; }
+
+        bool GetResetPosition(T&, float& x, float& y, float& z);
+        uint32 GetCurrentWp() const { return i_wpId; };
+        SplineWayPointMap *GetSplineMap() const { return &m_splineMap; };
+    private:
+        TimeTrackerSmall i_nextMoveTime;
+
+        uint32 i_wpId;
+        SplineWayPointMap m_splineMap;
+        bool m_bClockWise;
 };
 
 #endif

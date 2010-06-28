@@ -95,6 +95,9 @@ class MANGOS_DLL_SPEC MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             return (static_cast<D*>(this))->GetResetPosition(*((T*)&u), x, y, z);
         }
+        uint32 GetCurrentWp() const = 0;  
+        SplineWayPointMap *GetSplineMap() const = 0;
+
     public:
         // will not link if not overridden in the generators
         void Initialize(T &u);

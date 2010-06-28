@@ -431,7 +431,55 @@ void Unit::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTim
     SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
     SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, flags, transitTime, player);
 }
+void Unit::SendSplineMove(SplineWayPointMap *pWps, SplineType type, SplineFlags flags, uint32 time, Player* player, ...)
+{
+    va_list vargs;
+    va_start(vargs,player);
+    float moveTime = (float)Time;
 
+    WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
+    data << GetPackGUID();
+    data << uint8(0);                                       // new in 3.1 bool, used to toggle MOVEFLAG2_UNK4 = 0x0040 on client side
+    data << GetPositionX() << GetPositionY() << GetPositionZ();
+    data << uint32(getMSTime());
+
+    data << uint8(type);
+    switch(type)
+    {
+        case SPLINETYPE_NORMAL:                             // normal packet
+            break;
+        case SPLINETYPE_STOP:                               // stop packet (raw pos?)
+            va_end(vargs);
+            SendMessageToSet( &data, true );
+            return;
+        case SPLINETYPE_FACINGSPOT:                         // facing spot, not used currently
+        {
+            data << float(va_arg(vargs,double));
+            data << float(va_arg(vargs,double));
+            data << float(va_arg(vargs,double));
+            break;
+        }
+        case SPLINETYPE_FACINGTARGET:
+            data << uint64(va_arg(vargs,uint64));
+            break;
+        case SPLINETYPE_FACINGANGLE:                        // not used currently
+            data << float(va_arg(vargs,double));            // facing angle
+            break;
+    }
+    data << uint32(flags);                                  // splineflags
+    data << uint32(moveTime);                               // Time in between points
+    data << uint32(pWps->size());
+    for(SplineWayPointMap::iterator itr = pWps->begin(); itr != pWps->end(); ++itr)
+    {
+        data << itr->second->x;
+        data << itr->second->y;
+        data << itr->second->z;
+    }
+    if(player)
+        player->GetSession()->SendPacket(&data);
+    else
+        SendMessageToSet( &data, true );
+}
 void Unit::BuildHeartBeatMsg(WorldPacket *data) const
 {
     data->Initialize(MSG_MOVE_HEARTBEAT);

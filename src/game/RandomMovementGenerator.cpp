@@ -195,3 +195,183 @@ bool RandomMovementGenerator<Creature>::GetResetPosition(Creature& c, float& x, 
 
     return true;
 }
+
+
+// random circles
+template<>
+void
+RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
+{
+    m_splineMap.clear();
+    float spawnX, spawnY, spawnZ, spawnO, spawnDist, x, y, z;
+    creature.GetRespawnCoord(spawnX, spawnY, spawnZ, &spawnO, &spawnDist);
+    creature.GetPosition(x,y,z);
+    //Add first waypoint
+   /* SplineWayPointInfo *firstwp = new SplineWayPointInfo();
+    firstwp->x = x;
+    firstwp->y = y;
+    firstwp->z = z;
+    m_splineMap.insert(std::make_pair<uint32, SplineWayPointInfo*>(0, firstwp)); */
+
+    //calculate other ones
+    float distanceToCenter = creature.GetDistance2d(spawnX, spawnY);
+    float m_fLenght = 2*M_PI_F*m_fDistance;
+
+    float m_fAngle = (M_PI_F - ((2*M_PI_F) / m_fLenght)) / 2;
+
+    if(m_bClockWise)
+        m_fAngle += ((2*M_PI_F) / m_fLenght) + creature.GetAngle(spawnX, spawnY);
+    else
+        m_fAngle = creature.GetAngle(spawnX, spawnY) - m_fAngle - ((2*M_PI_F) / m_fLenght);
+    //because it cant be lower than 0 or bigger than 2*PI
+    m_fAngle = (m_fAngle >= 0) ? m_fAngle : 2 * M_PI_F + m_fAngle;
+    m_fAngle = (m_fAngle <= 2*M_PI_F) ? m_fAngle : m_fAngle - 2 * M_PI_F;
+    float creature_speed = creature.GetSpeed(MOVE_FLIGHT) / 2;
+
+    float lastx = x
+    float lasty = y;
+    for(uint32 wpId = 0; wpId < 30; ++wpId)
+    {
+        bool canIncerase = true;
+        bool canDecerase = true;
+        if(m_fDistance > spawnDist)
+            canIncerase = false;
+        if(m_fDistance < 1)
+            canDecerase = false;
+        uint8 tmp = urand(0,2); // 0 nothing, 1 incerase, 2 decerase
+        if(tmp == 1 && canIncerase)
+            m_fDistance += 0.5f;
+        else if(tmp == 2 && canDecerase)
+            m_fDistance -= 0.5f;
+
+        m_fLenght = 2*M_PI_F*m_fDistance;
+        float m_fRotateAngle = ((2*M_PI_F) / m_fLenght); // Moving by half of speed every 500ms
+        if(m_bClockWise)
+            m_fAngle -= m_fRotateAngle;
+        else
+            m_fAngle += m_fRotateAngle;
+        //because it cant be lower than 0 or bigger than 2*PI
+        m_fAngle = (m_fAngle >= 0) ? m_fAngle : 2 * M_PI_F + m_fAngle;
+        m_fAngle = (m_fAngle <= 2*M_PI_F) ? m_fAngle : m_fAngle - 2 * M_PI_F;
+        lastx += cos(m_fAngle)*creature_speed;
+        lasty += sin(m_fAngle)*creature_speed;
+        MaNGOS::NormalizeMapCoord(lastx);
+        MaNGOS::NormalizeMapCoord(lasty);
+        Position *wp = new Position();
+        wp->x = lastx;
+        wp->y = lasty;
+        wp->z = z;
+        wp->o = m_fAngle;
+        m_splineMap.insert(std::make_pair<uint32, SplineWayPointInfo*>(wpId, wp));
+    }
+    i_nextMoveTime.Reset(500);
+}
+
+template<>
+void RandomCircleMovementGenerator<Creature>::Initialize(Creature &creature)
+{
+    if (!creature.isAlive())
+        return;
+
+    if (creature.canFly() && !(creature.canWalk() &&
+        creature.IsAtGroundLevel(creature.GetPositionX(), creature.GetPositionY(), creature.GetPositionZ())))
+        creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+    else
+        creature.AddSplineFlag(SPLINEFLAG_WALKMODE);
+
+    creature.addUnitState(UNIT_STAT_ROAMING|UNIT_STAT_ROAMING_MOVE);
+    m_bClockWise = urand(0, 1) ? true : false;
+    i_wpId = 0;
+    fillSplineWayPoints(creature);
+    SplineFlags flags = (SPLINEFLAG_FORWARD | SPLINEFLAG_UNKNOWN7 | SPLINEFLAG_FLYING | creature.GetSplineFlags());
+    creature.SendSplineMove(m_splineMap, SPLINETYPE_NORMAL, flags, 500, NULL);
+}
+
+template<>
+void RandomCircleMovementGenerator<Creature>::Reset(Creature &creature)
+{
+    m_splineMap.clear();
+    creature.SendMonsterMove(0,0,0, SPLINETYPE_STOP, SPLINEFLAG_NONE, 500, NULL);
+    Initialize(creature);
+}
+
+template<>
+void RandomCircleMovementGenerator<Creature>::Interrupt(Creature &creature)
+{
+    creature.clearUnitState(UNIT_STAT_ROAMING|UNIT_STAT_ROAMING_MOVE);
+    m_splineMap.clear();
+    creature.SendMonsterMove(0,0,0, SPLINETYPE_STOP, SPLINEFLAG_NONE, 500, NULL);
+}
+
+template<>
+void RandomCircleMovementGenerator<Creature>::Finalize(Creature &creature)
+{
+    creature.clearUnitState(UNIT_STAT_ROAMING|UNIT_STAT_ROAMING_MOVE);
+    m_splineMap.clear();
+    creature.SendMonsterMove(0,0,0, SPLINETYPE_STOP, SPLINEFLAG_NONE, 500, NULL);
+}
+
+template<>
+bool RandomCircleMovementGenerator<Creature>::Update(Creature &creature, const uint32 &diff)
+{   
+    if (creature.hasUnitState(UNIT_STAT_NOT_MOVE | UNIT_STAT_ON_VEHICLE))
+    {
+        i_nextMoveTime.Update(i_nextMoveTime.GetExpiry());  // Expire the timer
+        creature.clearUnitState(UNIT_STAT_ROAMING_MOVE);
+        return true;
+    }
+
+    i_nextMoveTime.Update(diff);
+
+    if (!creature.IsStopped() && !creature.canFly())
+        creature.clearUnitState(UNIT_STAT_ROAMING_MOVE);
+
+    if (creature.IsStopped())
+        creature.addUnitState(UNIT_STAT_ROAMING_MOVE);
+
+    if (!IsActive(creature))                        // force stop processing (movement can move out active zone with cleanup movegens list)
+    {
+        Interrupt(creature);
+        return true;
+    }
+
+    if(m_splineMap.empty())
+    {
+        Reset(creature);
+        return true;
+    }
+
+    if (i_nextMoveTime.Passed())
+    {
+        if(m_splineMap.find(i_wpId) == m_splineMap.end())
+        {
+            Reset(creature);
+            return true;
+        }
+        SplineWayPointMap::iterator wp = m_splineMap.find(i_wpId);
+        //rellocate but not send
+        creature.Relocate(wp->second->x, wp->second->y, wp->second->z, wp->second->o); 
+        if(i_wpId == 29) // not last wp
+        {
+            Initialize(creature);
+            return true;
+        }
+        i_wpId++;
+        i_nextMoveTime.Reset(500);
+    }
+    return true;
+}
+
+template<>
+bool RandomCircleMovementGenerator<Creature>::GetResetPosition(Creature& c, float& x, float& y, float& z)
+{
+    float radius;
+    c.GetRespawnCoord(x, y, z, NULL, &radius);
+
+    // use current if in range
+    if (c.IsWithinDist2d(x,y,radius))
+        c.GetPosition(x,y,z);
+
+    return true;
+}
+

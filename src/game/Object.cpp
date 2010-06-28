@@ -288,6 +288,13 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 if(unit->GetVehicleGUID())
                    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
 
+                if(unit->GetMotionMaster()->GetCurrentMovementGeneratorType() == RANDOM_CIRCLE_MOTION_TYPE)
+                {
+                    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
+                    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_SPLINE_ENABLED);
+                    unit->m_movementInfo.AddMovementFlag(MOVEFLAG_FORWARD);
+                }
+
             }
             break;
             case TYPEID_PLAYER:
@@ -336,80 +343,132 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
         {
             if(GetTypeId() != TYPEID_PLAYER)
             {
-                DEBUG_LOG("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED for non-player");
-                return;
-            }
-
-            Player *player = ((Player*)unit);
-
-            if(!player->isInFlight())
-            {
-                DEBUG_LOG("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED but not in flight");
-                return;
-            }
-
-            ASSERT(player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
-
-            FlightPathMovementGenerator *fmg = (FlightPathMovementGenerator*)(player->GetMotionMaster()->top());
-
-            uint32 flags3 = SPLINEFLAG_WALKMODE | SPLINEFLAG_FLYING;
-
-            *data << uint32(flags3);                        // splines flag?
-
-            if(flags3 & SPLINEFLAG_FINALFACING)             // may be orientation
-            {
-                *data << float(0);
-            }
-            else
-            {
-                if(flags3 & SPLINEFLAG_FINALTARGET)         // probably guid there
+                uint32 flags3 = SPLINEFLAG_FORWARD | SPLINEFLAG_FLYING;
+                *data << uint32(flags3);                        // splines flag?
+                if(flags3 & SPLINEFLAG_FINALFACING)             // may be orientation
                 {
-                    *data << uint64(0);
+                    *data << float(0);
                 }
                 else
                 {
-                    if(flags3 & SPLINEFLAG_FINALPOINT)      // probably x,y,z coords there
+                    if(flags3 & SPLINEFLAG_FINALTARGET)         // probably guid there
                     {
-                        *data << float(0);
-                        *data << float(0);
-                        *data << float(0);
+                        *data << uint64(0);
+                    }
+                    else
+                    {
+                        if(flags3 & SPLINEFLAG_FINALPOINT)      // probably x,y,z coords there
+                        {
+                            *data << float(0);
+                            *data << float(0);
+                            *data << float(0);
+                        }
                     }
                 }
+                uint32 inflighttime = (unit->GetMotionMaster()->top()->GetCurrentWp()+1)*500)
+                uint32 traveltime = 30*500;
+                *data << uint32(inflighttime);                  // passed move time?
+                *data << uint32(traveltime);                    // full move time?
+                *data << uint32(0);                             // sequenceId
+
+                *data << float(0);                              // added in 3.1
+                *data << float(0);                              // added in 3.1
+                *data << float(0);                              // added in 3.1
+
+                *data << uint32(0);                             // added in 3.1
+
+                SplineWayPointMap *wpMap = unit->GetMotionMaster()->top()->GetSplineMap();
+                *data << uint32(wpMap->size());                      // points count
+
+                for(uint32 i = 0; i < wpMap->size(); ++i)
+                {
+                    SplineWayPointMap::iterator wp = wpMap->find(i);
+                    *data << float(wpMap[i]->x);
+                    *data << float(wpMap[i]->y);
+                    *data << float(wpMap[i]->z);
+                }
+
+                *data << uint8(0);                              // splineMode
+
+                *data << float(wpMap[wpMap->size()-1]->x);
+                *data << float(wpMap[wpMap->size()-1]->y);
+                *data << float(wpMap[wpMap->size()-1]->z);                
             }
-
-            TaxiPathNodeList const& path = fmg->GetPath();
-
-            float x, y, z;
-            player->GetPosition(x, y, z);
-
-            uint32 inflighttime = uint32(path.GetPassedLength(fmg->GetCurrentNode(), x, y, z) * 32);
-            uint32 traveltime = uint32(path.GetTotalLength() * 32);
-
-            *data << uint32(inflighttime);                  // passed move time?
-            *data << uint32(traveltime);                    // full move time?
-            *data << uint32(0);                             // sequenceId
-
-            *data << float(0);                              // added in 3.1
-            *data << float(0);                              // added in 3.1
-            *data << float(0);                              // added in 3.1
-
-            *data << uint32(0);                             // added in 3.1
-
-            uint32 poscount = uint32(path.size());
-            *data << uint32(poscount);                      // points count
-
-            for(uint32 i = 0; i < poscount; ++i)
+            else
             {
-                *data << float(path[i].x);
-                *data << float(path[i].y);
-                *data << float(path[i].z);
+
+                Player *player = ((Player*)unit);
+
+                if(!player->isInFlight())
+                {
+                    DEBUG_LOG("_BuildMovementUpdate: MOVEFLAG_SPLINE_ENABLED but not in flight");
+                    return;
+                }
+
+                ASSERT(player->GetMotionMaster()->GetCurrentMovementGeneratorType() == FLIGHT_MOTION_TYPE);
+
+                FlightPathMovementGenerator *fmg = (FlightPathMovementGenerator*)(player->GetMotionMaster()->top());
+
+                uint32 flags3 = SPLINEFLAG_WALKMODE | SPLINEFLAG_FLYING;
+
+                *data << uint32(flags3);                        // splines flag?
+
+                if(flags3 & SPLINEFLAG_FINALFACING)             // may be orientation
+                {
+                    *data << float(0);
+                }
+                else
+                {
+                    if(flags3 & SPLINEFLAG_FINALTARGET)         // probably guid there
+                    {
+                        *data << uint64(0);
+                    }
+                    else
+                    {
+                        if(flags3 & SPLINEFLAG_FINALPOINT)      // probably x,y,z coords there
+                        {
+                            *data << float(0);
+                            *data << float(0);
+                            *data << float(0);
+                        }
+                    }
+                }
+
+                TaxiPathNodeList const& path = fmg->GetPath();
+
+                float x, y, z;
+                player->GetPosition(x, y, z);
+
+                uint32 inflighttime = uint32(path.GetPassedLength(fmg->GetCurrentNode(), x, y, z) * 32);
+                uint32 traveltime = uint32(path.GetTotalLength() * 32);
+
+                *data << uint32(inflighttime);                  // passed move time?
+                *data << uint32(traveltime);                    // full move time?
+                *data << uint32(0);                             // sequenceId
+
+                *data << float(0);                              // added in 3.1
+                *data << float(0);                              // added in 3.1
+                *data << float(0);                              // added in 3.1
+
+                *data << uint32(0);                             // added in 3.1
+
+                uint32 poscount = uint32(path.size());
+                *data << uint32(poscount);                      // points count
+
+                for(uint32 i = 0; i < poscount; ++i)
+                {
+                    *data << float(path[i].x);
+                    *data << float(path[i].y);
+                    *data << float(path[i].z);
+                }
+
+                *data << uint8(0);                              // splineMode
+
+                *data << float(path[poscount-1].x);
+                *data << float(path[poscount-1].y);
+                *data << float(path[poscount-1].z);
+            
             }
-
-            *data << uint8(0);                              // splineMode
-
-            *data << float(path[poscount-1].x);
-            *data << float(path[poscount-1].y);
-            *data << float(path[poscount-1].z);
         }
     }
     else
