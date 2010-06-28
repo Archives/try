@@ -680,7 +680,6 @@ class MANGOS_DLL_SPEC WorldSession
         //void HandleSearchLfgLeaveOpcode(WorldPacket& recv_data);
         //void HandleLfgClearOpcode(WorldPacket& recv_data);
         //void HandleLfmClearOpcode(WorldPacket& recv_data);
-        //void HandleLfgSetRoles(WorldPacket& recv_data);
         void HandleSetTitleOpcode(WorldPacket& recv_data);
         void HandleRealmSplitOpcode(WorldPacket& recv_data);
         void HandleTimeSyncResp(WorldPacket& recv_data);
@@ -696,6 +695,7 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleLfgProposalResult(WorldPacket& recv_data);
         void HandleLfgTeleport(WorldPacket& recv_data);
         void HandleSetLfgCommentOpcode(WorldPacket& recv_data);
+        void HandleLfgSetRoles(WorldPacket& recv_data);
 
         // Arena Team
         void HandleInspectArenaTeamsOpcode(WorldPacket& recv_data);

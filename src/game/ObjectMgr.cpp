@@ -3227,14 +3227,29 @@ void ObjectMgr::LoadGroups()
         bar.step();
         Field *fields = result->Fetch();
         ++count;
-        Group *group = new Group;
-        if (!group->LoadGroupFromDB(fields))
+        //LfgGroup
+        if(fields[14].GetUInt8() & GROUPTYPE_LFD)
         {
-            group->Disband();
-            delete group;
-            continue;
+            LfgGroup *group = new LfgGroup;
+            if (!group->LoadGroupFromDB(fields))
+            {
+                group->Disband();
+                delete group;
+                continue;
+            }
+            AddGroup(group);
         }
-        AddGroup(group);
+        else
+        {
+            Group *group = new Group;
+            if (!group->LoadGroupFromDB(fields))
+            {
+                group->Disband();
+                delete group;
+                continue;
+            }
+            AddGroup(group);
+        }
     }while( result->NextRow() );
 
     delete result;

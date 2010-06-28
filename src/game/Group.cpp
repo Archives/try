@@ -162,15 +162,6 @@ bool Group::LoadGroupFromDB(Field* fields)
     for(int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = fields[6+i].GetUInt64();
 
-    //Set Lfg group info
-    if(m_groupType & GROUPTYPE_LFD)
-    {
-        ((LfgGroup*)this)->SetTank(m_mainTank);
-        ((LfgGroup*)this)->SetHeal(fields[1].GetUInt64());
-        ((LfgGroup*)this)->SetDungeonInfo(sLFGDungeonStore.LookupEntry(fields[19].GetUInt32()));
-        ((LfgGroup*)this)->SetInstanceStatus(fields[20].GetUInt8());
-    }
-
     return true;
 }
 
@@ -327,7 +318,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
 uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
 {
     // remove member and change leader (if need) only if strong more 2 members _before_ member remove
-    if(GetMembersCount() > uint32(isBGGroup() ? 1 : 2))           // in BG group case allow 1 members group
+    if(GetMembersCount() > uint32((isBGGroup() || isLfgGroup()) ? 1 : 2))           // in BG and Lfg group case allow 1 members group
     {
         bool leaderChanged = _removeMember(guid);
 

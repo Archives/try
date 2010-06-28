@@ -105,6 +105,17 @@ enum LfgProposalStatus
     LFG_PROPOSAL_FAILED            = 1,
     LFG_PROPOSAL_SUCCESS           = 2,
 };
+
+enum LfgRoleCheckResult
+{
+    LFG_ROLECHECK_FINISHED     = 1,                         // Role check finished
+    LFG_ROLECHECK_INITIALITING = 2,                         // Role check begins
+    LFG_ROLECHECK_MISSING_ROLE = 3,                         // Someone didn't selected a role after 2 mins
+    LFG_ROLECHECK_WRONG_ROLES  = 4,                         // Can't form a group with that role selection
+    LFG_ROLECHECK_ABORTED      = 5,                         // Someone leave the group
+    LFG_ROLECHECK_NO_ROLE      = 6,                         // Someone selected no role
+};
+
 enum LfgLockStatusType
 {
     LFG_LOCKSTATUS_OK                        = 0,           // Internal use only
@@ -228,11 +239,13 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
 
         void SetGroupId(uint32 newid) { m_Id = newid; }
         uint32 GetKilledBosses() { return m_killedBosses; }
+        bool LoadGroupFromDB(Field *fields);
 
         void SendLfgPartyInfo(Player *plr);
         void SendLfgQueueStatus();
         void SendGroupFormed();
         void SendProposalUpdate(uint8 state);
+        void SendRoleCheckUpdate();
         LfgLocksMap *GetLocksList() const;
         
         //Override these methods
@@ -244,6 +257,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint64 GetHeal() const { return m_heal; };
         PlayerList *GetDps() { return dps; };
         ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
+        ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
 
         void SetTank(uint64 tank) { m_tank = tank; }
         void SetHeal(uint64 heal) { m_heal = heal; }
@@ -260,6 +274,17 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
         uint8 GetInstanceStatus() const { return m_instanceStatus; }
         bool IsRandom() const { return m_isRandom; }
+        uint8 GetPlayerRole(uint64 guid, bool withLeader = true) const
+        {
+            uint8 roles = (m_leaderGuid == guid && withLeader) ? LEADER : 0;
+            if(m_tank == guid)
+                roles |= TANK;
+            else if(m_heal == guid)
+                roles |= HEALER;
+            else if(dps->find(guid) != dps->end())
+                roles |= DAMAGE;
+            return roles;        
+        }
         
     private:
         uint64 m_tank;
@@ -268,6 +293,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         LFGDungeonEntry const *m_dungeonInfo;
         std::set<uint64> premadePlayers;
         ProposalAnswersMap m_answers;
+        ProposalAnswersMap m_rolesProposal;
+        uint8 m_membersBeforeRoleCheck;
 
         uint32 m_killedBosses;
         uint32 m_readycheckTimer;

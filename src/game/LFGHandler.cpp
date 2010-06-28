@@ -219,3 +219,23 @@ void WorldSession::HandleSetLfgCommentOpcode(WorldPacket& recv_data)
     _player->m_lookingForGroup.comment = comment;
 }
 
+void WorldSession::HandleLfgSetRoles(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_SET_ROLES");
+    uint8 roles;
+    recv_data >> roles;
+    _player->m_lookingForGroup.roles = roles;
+
+    if(Group *group = _player->GetGroup())
+    {
+        if(group->isLfgGroup())
+        {
+            ((LfgGroup*)group)->GetRoleAnswers()->insert(std::make_pair<uint64, uint8>(_player->GetGUID(), roles));
+            uint8 status = 
+            if(((LfgGroup*)group)->GetRoleAnswers()->size() == group->GetMembersCount())
+                
+            ((LfgGroup*)group)->SendRoleCheckUpdate(
+        }
+    } 
+}
+
