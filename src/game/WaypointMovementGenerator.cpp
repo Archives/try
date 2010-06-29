@@ -316,7 +316,7 @@ void FlightPathMovementGenerator::Finalize(Player & player)
     player.clearUnitState(UNIT_STAT_IN_FLIGHT);
 
     float x, y, z;
-    i_destinationHolder.GetLocationNow(player.GetBaseMap(), x, y, z);
+    i_destinationHolder.GetDestination(x,y,z);//GetLocationNow(player.GetBaseMap(), x, y, z);
     player.SetPosition(x, y, z, player.GetOrientation());
 
     player.Unmount();
@@ -347,7 +347,9 @@ void FlightPathMovementGenerator::Reset(Player & player)
     player.SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
     Traveller<Player> traveller(player);
     // do not send movement, it was sent already
-    //i_destinationHolder.SetDestination(traveller, (*i_path)[i_currentNode].x, (*i_path)[i_currentNode].y, (*i_path)[i_currentNode].z, false); <-- Segfault :o
+    const TaxiPathNodeList* debug_path = i_path;
+    if(i_path)
+        i_destinationHolder.SetDestination(traveller, (*i_path)[i_currentNode].x, (*i_path)[i_currentNode].y, (*i_path)[i_currentNode].z, false); <-- Segfault :o
 
     player.SendMonsterMoveByPath(GetPath(),GetCurrentNode(),GetPathAtMapEnd(), SplineFlags(SPLINEFLAG_WALKMODE|SPLINEFLAG_FLYING));
 }

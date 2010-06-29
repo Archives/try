@@ -25,6 +25,7 @@
 #include "Dynamic/FactoryHolder.h"
 #include "Common.h"
 #include "MotionMaster.h"
+#include "Unit.h"
 
 class Unit;
 
@@ -59,6 +60,9 @@ class MANGOS_DLL_SPEC MovementGenerator
         // used for check from Update call is movegen still be active (top movement generator)
         // after some not safe for this calls
         bool IsActive(Unit& u);
+
+        virtual uint32 GetCurrentWp() const { return 0; };  
+        virtual SplineWayPointMap *GetSplineMap() { return NULL; }
 };
 
 template<class T, class D>
@@ -95,8 +99,6 @@ class MANGOS_DLL_SPEC MovementGeneratorMedium : public MovementGenerator
             //u->AssertIsType<T>();
             return (static_cast<D*>(this))->GetResetPosition(*((T*)&u), x, y, z);
         }
-        uint32 GetCurrentWp() const = 0;  
-        SplineWayPointMap *GetSplineMap() const = 0;
 
     public:
         // will not link if not overridden in the generators

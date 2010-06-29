@@ -2925,7 +2925,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
             target = ObjectAccessor::GetUnit(*m_caster, ((Player*)m_caster)->GetSelection());
         
             float behind_x, behind_y, behind_z;
-            target->GetClosePoint(behind_x, behind_y, behind_z, target->GetObjectSize(), CONTACT_DISTANCE, M_PI_F);
+            target->GetClosePoint(behind_x, behind_y, behind_z, target->GetObjectBoundingRadius(), CONTACT_DISTANCE, M_PI_F);
             angle = m_caster->GetAngle(behind_x, behind_y);
             //m_caster->SetOrientation(target->GetOrientation());
             //huh wtf?

@@ -149,7 +149,7 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
     {
         float x, y, z;
         i_destinationHolder.GetDestination(x,y,z);
-        creature.GetMap()->CreatureRelocation(creature, x, y, z,  creature.GetOrientation());
+        creature.GetMap()->CreatureRelocation(&creature, x, y, z,  creature.GetOrientation());
     }
 
     CreatureTraveller traveller(creature);
@@ -214,7 +214,7 @@ RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
     m_splineMap.insert(std::make_pair<uint32, SplineWayPointInfo*>(0, firstwp)); */
 
     //calculate other ones
-    float distanceToCenter = creature.GetDistance2d(spawnX, spawnY);
+    float m_fDistance = creature.GetDistance2d(spawnX, spawnY);
     float m_fLenght = 2*M_PI_F*m_fDistance;
 
     float m_fAngle = (M_PI_F - ((2*M_PI_F) / m_fLenght)) / 2;
@@ -228,7 +228,7 @@ RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
     m_fAngle = (m_fAngle <= 2*M_PI_F) ? m_fAngle : m_fAngle - 2 * M_PI_F;
     float creature_speed = creature.GetSpeed(MOVE_FLIGHT) / 2;
 
-    float lastx = x
+    float lastx = x;
     float lasty = y;
     for(uint32 wpId = 0; wpId < 30; ++wpId)
     {
@@ -262,7 +262,7 @@ RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
         wp->y = lasty;
         wp->z = z;
         wp->o = m_fAngle;
-        m_splineMap.insert(std::make_pair<uint32, SplineWayPointInfo*>(wpId, wp));
+        m_splineMap.insert(std::make_pair<uint32, Position*>(wpId, wp));
     }
     i_nextMoveTime.Reset(500);
 }
@@ -283,8 +283,8 @@ void RandomCircleMovementGenerator<Creature>::Initialize(Creature &creature)
     m_bClockWise = urand(0, 1) ? true : false;
     i_wpId = 0;
     fillSplineWayPoints(creature);
-    SplineFlags flags = (SPLINEFLAG_FORWARD | SPLINEFLAG_UNKNOWN7 | SPLINEFLAG_FLYING | creature.GetSplineFlags());
-    creature.SendSplineMove(m_splineMap, SPLINETYPE_NORMAL, flags, 500, NULL);
+    SplineFlags flags = SplineFlags(SPLINEFLAG_FORWARD | SPLINEFLAG_UNKNOWN7 | SPLINEFLAG_FLYING | creature.GetSplineFlags());
+    creature.SendSplineMove(&m_splineMap, SPLINETYPE_NORMAL, flags, 500, NULL);
 }
 
 template<>

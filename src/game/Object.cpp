@@ -373,7 +373,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                         }
                     }
                 }
-                uint32 inflighttime = (unit->GetMotionMaster()->top()->GetCurrentWp()+1)*500)
+                uint32 inflighttime = (unit->GetMotionMaster()->top()->GetCurrentWp()+1)*500;
                 uint32 traveltime = 30*500;
                 *data << uint32(inflighttime);                  // passed move time?
                 *data << uint32(traveltime);                    // full move time?
@@ -391,16 +391,16 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 for(uint32 i = 0; i < wpMap->size(); ++i)
                 {
                     SplineWayPointMap::iterator wp = wpMap->find(i);
-                    *data << float(wpMap[i]->x);
-                    *data << float(wpMap[i]->y);
-                    *data << float(wpMap[i]->z);
+                    *data << float(wp->second->x);
+                    *data << float(wp->second->y);
+                    *data << float(wp->second->z);
                 }
 
                 *data << uint8(0);                              // splineMode
-
-                *data << float(wpMap[wpMap->size()-1]->x);
-                *data << float(wpMap[wpMap->size()-1]->y);
-                *data << float(wpMap[wpMap->size()-1]->z);                
+                SplineWayPointMap::iterator wp = wpMap->find(wpMap->size()-1);
+                *data << float(wp->second->x);
+                *data << float(wp->second->y);
+                *data << float(wp->second->z);                
             }
             else
             {
@@ -1778,7 +1778,7 @@ Vehicle* WorldObject::SummonVehicle(uint32 id, float x, float y, float z, float 
     }
 
     if (x == 0.0f && y == 0.0f && z == 0.0f)
-        GetClosePoint(x, y, z, v->GetObjectSize());
+        GetClosePoint(x, y, z, v->GetObjectBoundingRadius());
 
     v->Relocate(x, y, z, ang);
 

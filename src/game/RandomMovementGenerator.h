@@ -69,7 +69,7 @@ class MANGOS_DLL_SPEC RandomCircleMovementGenerator
 
         bool GetResetPosition(T&, float& x, float& y, float& z);
         uint32 GetCurrentWp() const { return i_wpId; };
-        SplineWayPointMap *GetSplineMap() const { return &m_splineMap; };
+        SplineWayPointMap *GetSplineMap() { return &m_splineMap; };
     private:
         TimeTrackerSmall i_nextMoveTime;
 

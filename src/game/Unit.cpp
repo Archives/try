@@ -435,7 +435,7 @@ void Unit::SendSplineMove(SplineWayPointMap *pWps, SplineType type, SplineFlags 
 {
     va_list vargs;
     va_start(vargs,player);
-    float moveTime = (float)Time;
+    float moveTime = (float)time;
 
     WorldPacket data( SMSG_MONSTER_MOVE, (41 + GetPackGUID().size()) );
     data << GetPackGUID();
@@ -14667,9 +14667,9 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
         return;
 
     m_movementInfo.SetTransportData(v->GetGUID(),
-        (veSeat->m_attachmentOffsetX + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
-        (veSeat->m_attachmentOffsetY + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
-        (veSeat->m_attachmentOffsetZ + v->GetObjectSize()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        (veSeat->m_attachmentOffsetX + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        (veSeat->m_attachmentOffsetY + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+        (veSeat->m_attachmentOffsetZ + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
         veSeat->m_passengerYaw, v->GetCreationTime(), seat_id, veSeat->m_ID,
         sObjectMgr.GetSeatFlags(veSeat->m_ID), v->GetVehicleFlags());
 
@@ -14720,7 +14720,7 @@ void Unit::ExitVehicle()
                     vehicle->SetSpawnDuration(1);
                 }
             }
-            v_size = vehicle->GetObjectSize();
+            v_size = vehicle->GetObjectBoundingRadius();
             vehicle->RemovePassenger(this);
         }
         SetVehicleGUID(0);
