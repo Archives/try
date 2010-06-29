@@ -897,7 +897,7 @@ bool Pet::UpdateStats(Stats stat)
                scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
            // Glyph of Ghoul
            if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
-               scale_coeff += glyph->GetModifier()->m_amount;
+               scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
              value += float(owner->GetStat(stat)) * scale_coeff;
        }
     }
@@ -926,7 +926,7 @@ bool Pet::UpdateStats(Stats stat)
                             scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;       
                         // Glyph of Ghoul
                         if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
-                            scale_coeff += glyph->GetModifier()->m_amount;
+                            scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
                     }
                     break; 
             }
