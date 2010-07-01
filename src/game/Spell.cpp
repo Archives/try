@@ -5027,6 +5027,11 @@ SpellCastResult Spell::CheckCast(bool strict)
             return castResult;
     }
 
+    // Shadowstep
+    if(m_spellInfo->Id == 36554)
+        if (m_caster->hasUnitState(UNIT_STAT_ROOT))
+            return SPELL_FAILED_ROOTED;
+
     for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         // for effects of spells that have only one target
