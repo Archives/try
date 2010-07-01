@@ -2956,8 +2956,8 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     int32 attackerWeaponSkill = int32(GetWeaponSkillValue(attType,pVictim));
 
     // Only for hunters/warriors, other classes do not have ranged attack that would benefit from ranged weapon skill
-    if(spell->SpellFamilyName != SPELLFAMILY_HUNTER ||
-       spell->SpellFamilyName != SPELLFAMILY_WARRIOR ||
+    if(spell->SpellFamilyName != SPELLFAMILY_HUNTER &&
+       spell->SpellFamilyName != SPELLFAMILY_WARRIOR &&
        spell->SpellFamilyName != SPELLFAMILY_GENERIC)
         attackerWeaponSkill = int32(GetWeaponSkillValue(BASE_ATTACK,pVictim));
 
