@@ -649,8 +649,7 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
         time_t next_reset = today + period + diff;        
         // update it in the DB
         CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%d' AND difficulty = '%d'", (uint64)next_reset, mapid, difficulty);
-        SetResetTimeFor(mapid,difficulty,(uint64)next_reset);
-        GetScheduler().SetResetTimeFor(mapid, difficulty,(uint64)next_reset)
+        GetScheduler().SetResetTimeFor(mapid, difficulty,(uint64)next_reset);
         GetScheduler().ScheduleReset(true, next_reset-3600, InstanceResetEvent(1, mapid, difficulty, -1));
     }
 
