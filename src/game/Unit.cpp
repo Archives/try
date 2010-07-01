@@ -2959,35 +2959,13 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     if(spell->SpellFamilyName != SPELLFAMILY_HUNTER ||
        spell->SpellFamilyName != SPELLFAMILY_WARRIOR ||
        spell->SpellFamilyName != SPELLFAMILY_GENERIC)
-        attackerWeaponSkill = int32(GetWeaponSkillValue(BASE_ATTACK,pVictim));
-
-    // Probably not needed after [pr456]
-    /*if ( spell->SpellFamilyName == SPELLFAMILY_PALADIN )
     {
-        // Hammer of Wrath
-        if ( spell->SpellFamilyFlags & UI64LIT(0x0000008000000000) )
-            attackerWeaponSkill = this->GetMaxSkillValueForLevel();
-        // Shield of Righteousness
-        else if ( spell->SpellFamilyFlags & UI64LIT(0x0010000000000000) )
-            attackerWeaponSkill = this->GetMaxSkillValueForLevel();
-        // Avenger's Shield
-        else if ( spell->SpellFamilyFlags & UI64LIT(0x0000000000004000) )
-            attackerWeaponSkill = this->GetMaxSkillValueForLevel();
-        // Judgement ( seal trigger )
-        else if ( spell->Category == SPELLCATEGORY_JUDGEMENT )
-            attackerWeaponSkill = this->GetMaxSkillValueForLevel();
-        // Judgement debuff and damage
-        else if ( GetSpellSpecific( spell->Id ) == SPELL_JUDGEMENT )
-            return SPELL_MISS_NONE;
-        // some Judgement other damage
+        // fake ranged get full weapon skill
+        if(spell && (spell->Attributes & SPELL_ATTR_RANGED))
+            attackerWeaponSkill = int32(GetMaxSkillValueForLevel());
         else
-            switch ( spell->Id )
-            {
-                case 20425: // Judgement of Command
-                case 54158: // Judgement
-                    return SPELL_MISS_NONE;
-            }
-    }*/
+            attackerWeaponSkill = int32(GetWeaponSkillValue(BASE_ATTACK,pVictim));
+    } 
 
     int32 skillDiff = attackerWeaponSkill - int32(pVictim->GetMaxSkillValueForLevel(this));
     int32 fullSkillDiff = attackerWeaponSkill - int32(pVictim->GetDefenseSkillValue(this));
@@ -3138,9 +3116,10 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     // Reduce spell hit chance for Area of effect spells from victim SPELL_AURA_MOD_AOE_AVOIDANCE aura
     if (IsAreaOfEffectSpell(spell))
         modHitChance-=pVictim->GetTotalAuraModifier(SPELL_AURA_MOD_AOE_AVOIDANCE);
+    // IMPORTANT: implemented in Spell::EffectDispel and Spell::EffectStealBeneficialBuff 
     // Reduce spell hit chance for dispel mechanic spells from victim SPELL_AURA_MOD_DISPEL_RESIST
-    if (IsDispelSpell(spell))
-        modHitChance-=pVictim->GetTotalAuraModifier(SPELL_AURA_MOD_DISPEL_RESIST);
+    //if (IsDispelSpell(spell))
+    //    modHitChance-=pVictim->GetTotalAuraModifier(SPELL_AURA_MOD_DISPEL_RESIST);
     // Chance resist mechanic (select max value from every mechanic spell effect)
     int32 resist_mech = 0;
     // Get effects mechanic and chance
@@ -10319,16 +10298,6 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                     }
                 }
             }
-            // Judgement of Command proc always crits on stunned target
-            else if(spellProto->SpellFamilyName == SPELLFAMILY_PALADIN)
-            {
-                if(spellProto->SpellFamilyFlags & 0x0000000000800000LL && spellProto->SpellIconID == 561)
-                {
-                    if(pVictim->hasUnitState(UNIT_STAT_STUNNED))
-                        return true;
-                }
-            }
-            break;
         }
         default:
             return false;
