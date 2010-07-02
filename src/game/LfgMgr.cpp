@@ -809,30 +809,59 @@ void LfgMgr::UpdateQueues()
             //First, try to merge groups
             for(GroupsList::iterator grpitr1 = itr->second->groups.begin(); grpitr1 != itr->second->groups.end(); ++grpitr1)
             {
+                //We can expect that there will be less tanks and healers than dps
+                for (GroupReference *plritr = (*grpitr1)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
+                {
+                    Player *plr = plritr->getSource();
+                    uint8 rolesCount = 0;
+                    uint8 playerRoles = plr->m_lookingForGroup.roles;
+                    if(playerRoles & LEADER)
+                        playerRoles--;
+                    playerRoles -= (*grpitr1)->GetPlayerRole(plr->GetGUID(), false);
+
+                    if(playerRoles == 0)
+                        continue;
+                    //Try to move from dps to tank
+                    if((playerRoles & TANK) && (*grpitr1)->GetTank() == 0 && plr->GetGUID() != (*grpitr1)->GetHeal())
+                    {
+                        (*grpitr1)->GetDps()->erase(plr->GetGUID());
+                        (*grpitr1)->SetTank(plr->GetGUID());
+                    }
+                    //Try to move from dps to heal
+                    if((playerRoles & HEALER) && (*grpitr1)->GetHeal() == 0 && plr->GetGUID() != (*grpitr1)->GetTank())
+                    {
+                        (*grpitr1)->GetDps()->erase(plr->GetGUID());
+                        (*grpitr1)->SetHeal(plr->GetGUID());
+                    }
+
+                }
                 for(GroupsList::iterator grpitr2 = itr->second->groups.begin(); grpitr2 != itr->second->groups.end(); ++grpitr2)
                 {
                     if((*grpitr1) == (*grpitr2) || !(*grpitr1) || (*grpitr2))
                         continue;
-                    error_log("Try tom merge");
-                    //Try to move tank
-                    if(!(*grpitr1)->GetTank() && (*grpitr2)->GetTank() && (*grpitr2)->GetPremadePlayers().find((*grpitr2)->GetTank()) == (*grpitr2)->GetPremadePlayers().end())
+                     error_log("Try tom merge");
+                    for (GroupReference *plritr = (*grpitr2)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
                     {
-                        Player *tank = sObjectMgr.GetPlayer((*grpitr2)->GetTank());
-                        if(!(*grpitr1)->HasCorrectLevel(tank->getLevel()))
+                        Player *plr = plritr->getSource();
+                        uint8 rolesCount = 0;
+                        uint8 playerRoles = plr->m_lookingForGroup.roles;
+
+                        if((*grpitr2)->GetMembersCount() > (*grpitr1)->GetMembersCount() || !(*grpitr1)->HasCorrectLevel(plr->getLevel()))
                             continue;
-                        (*grpitr2)->RemoveMember((*grpitr2)->GetTank(), 0);
-                        (*grpitr1)->AddMember(tank->GetGUID(), tank->GetName());
-                        (*grpitr1)->SetTank(tank->GetGUID());
-                    }
-                    //Try to move heal
-                    if(!(*grpitr1)->GetHeal() && (*grpitr2)->GetHeal() && (*grpitr2)->GetPremadePlayers().find((*grpitr2)->GetHeal()) == (*grpitr2)->GetPremadePlayers().end())
-                    {
-                        Player *heal = sObjectMgr.GetPlayer((*grpitr2)->GetHeal());
-                        if(!(*grpitr1)->HasCorrectLevel(heal->getLevel()))
-                            continue;
-                        (*grpitr2)->RemoveMember((*grpitr2)->GetHeal(), 0);
-                        (*grpitr1)->AddMember(heal->GetGUID(), heal->GetName());
-                        (*grpitr1)->SetHeal(heal->GetGUID());
+
+                        if((playerRoles & TANK) && (*grpitr1)->GetTank() == 0 && plr->GetGUID() != (*grpitr2)->GetHeal())
+                        {
+                            (*grpitr2)->RemoveMember(plr->GetGUID(), 0);
+                            (*grpitr1)->AddMember(plr->GetGUID(), plr->GetName());
+                            (*grpitr1)->SetTank(plr->GetGUID());
+                        }
+                        if((playerRoles & HEALER) && (*grpitr1)->GetHeal() == 0 && plr->GetGUID() != (*grpitr2)->GetTank())
+                        {
+                            (*grpitr2)->RemoveMember(plr->GetGUID(), 0);
+                            (*grpitr1)->AddMember(plr->GetGUID(), plr->GetName());
+                            (*grpitr1)->SetHeal(plr->GetGUID());
+                        }
+
                     }
                     // ..and DPS
                     if((*grpitr1)->GetDps()->size() != LFG_DPS_COUNT && !(*grpitr2)->GetDps()->empty())
@@ -859,20 +888,7 @@ void LfgMgr::UpdateQueues()
                                 (*grpitr2)->GetDps()->erase(*dps);
                         }
                     }
-                    //Also try another thing, if player has more roles..
-                    for (GroupReference *plritr = (*grpitr1)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
-                    {
-                        Player *plr = plritr->getSource();
-                        uint8 rolesCount = 0;
-                        uint8 playerRoles = plr->m_lookingForGroup.roles;
-                        if(playerRoles & LEADER)
-                            playerRoles--;
-                        playerRoles -= (*grpitr1)->GetPlayerRole(plr->GetGUID(), false);
-
-                        if(playerRoles == 0)
-                            continue;
-
-                    }
+                    
                     //Delete empty groups
                     if((*grpitr2)->GetMembersCount() == 0)
                     { 
