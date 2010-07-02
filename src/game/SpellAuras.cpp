@@ -4300,9 +4300,6 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
     else
         ((Player *)target)->SetRegularAttackTime();
 
-    //if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND ))
-      //  ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_MAINHAND, !apply);
-
     m_target->UpdateDamagePhysical(BASE_ATTACK);
 }
 
@@ -4316,7 +4313,16 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
 
     // not sure for it's correctness
     if(apply)
+    {
         m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
+        
+        // Remove all auras which requires Shields
+        Unit::AuraMap const& auras = m_target->GetAuras();
+        for(Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+            if(itr->second->GetSpellProto()->EquippedItemClass == ITEM_CLASS_ARMOR)
+                m_target->RemoveAurasDueToSpell(itr->second->GetSpellProto()->Id);
+    }
+
     else
         m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
 
@@ -4332,9 +4338,6 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
         m_target->SetAttackTime(OFF_ATTACK, BASE_ATTACK_TIME);
     else
         ((Player *)m_target)->SetRegularAttackTime();
-
-   // if(Item *_item = ((Player*)m_target)->GetItemByPos( INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND ))
-     //   ((Player*)m_target)->_ApplyItemMods(_item, EQUIPMENT_SLOT_OFFHAND, !apply);
 
     m_target->UpdateDamagePhysical(OFF_ATTACK);
 }
