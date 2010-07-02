@@ -7591,12 +7591,56 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
                 if(IsPositiveSpell(pEnchant->spellid[s]))
                     CastSpell(this, pEnchant->spellid[s], true, item);
                 else
+                {
+                    // if target have 5 stack of Deadly poison proc from other weapon
+                    if (spellInfo->SpellFamilyFlags == 0x10000 && spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE)
+                    {
+                        AuraList const& mAura = GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+                        for (AuraList::const_iterator itr = mAura.begin(); itr != mAura.end(); ++itr)
+                        {
+                            if ((*itr)->GetSpellProto()->SpellFamilyFlags == 0x10000 &&
+                                (*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE &&
+                                (*itr)->GetCasterGUID() == GetGUID() && 
+                                (*itr)->GetStackAmount() >= 5)
+                                if(CastItemCombatSpellFromOtherWeapon(Target, attType))
+                                    return;
+                        }
+                    }
                     CastSpell(Target, pEnchant->spellid[s], true, item);
+                }
             }
         }
     }
 }
 
+bool Player::CastItemCombatSpellFromOtherWeapon(Unit* Target, WeaponAttackType attType)
+{
+    Item *item = GetWeaponForAttack(attType == BASE_ATTACK ? OFF_ATTACK : BASE_ATTACK, true, false);
+    if(!item)
+        return false;
+
+    ItemPrototype const *proto = item->GetProto();
+    if(!proto)
+        return false;
+
+    bool spellcasted = false;
+    // item combat enchantments
+    for(int e_slot = 0; e_slot < MAX_ENCHANTMENT_SLOT; ++e_slot)
+    {
+        uint32 enchant_id = item->GetEnchantmentId(EnchantmentSlot(e_slot));
+        SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+        if(!pEnchant) continue;
+        for (int s = 0; s < 3; ++s)
+        {
+            if (pEnchant->type[s]!=ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                continue;
+            
+            CastSpell(this, pEnchant->spellid[s], true, item);
+            spellcasted = true;
+        }
+    }
+    return spellcasted;
+}
 void Player::CastItemUseSpell(Item *item,SpellCastTargets const& targets,uint8 cast_count, uint32 glyphIndex)
 {
     ItemPrototype const* proto = item->GetProto();
