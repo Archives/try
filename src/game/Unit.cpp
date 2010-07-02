@@ -842,6 +842,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
             ((Creature*)this)->AI()->KilledUnit(pVictim);
 
+        // Remove Shadow Word: Death aura
+        if(GetTypeId() == TYPEID_PLAYER && ((Player*)this)->getClass() == CLASS_PRIEST && HasAura(32409))
+            RemoveAurasDueToSpell(32409);
+            
         // achievement stuff
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
         {
