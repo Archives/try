@@ -1996,10 +1996,26 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_PARTY_AROUND_CASTER_2:
         case TARGET_ALL_PARTY:
         {
-            if(m_spellInfo->Id == 59754)					// Rune Tap triggered by Glyph of Rune Tap (does not include caster)
-                FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
-            else
-                FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
+            switch(m_spellInfo->Id)
+            {
+                case 70893:                                 // Culling the Herd
+                case 53434:                                 // Call of the Wild
+                {
+                    if (Unit *owner = m_caster->GetOwner())
+                        targetUnitMap.push_back(owner);
+                    break;
+                }
+                case 59754:                                 // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
+                    break;
+                }
+                default:
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
+                    break;
+                }
+            }
             break;
         }
         case TARGET_ALL_RAID_AROUND_CASTER:
@@ -2987,12 +3003,15 @@ void Spell::cast(bool skipCheck)
             break;
         case SPELLFAMILY_HUNTER:
         {
-            // Deterrence
-            if (m_spellInfo->Id == 19263)
-                AddTriggeredSpell(67801);                   // Deterrence
-            // Lock and Load 
-            else if (m_spellInfo->Id == 56453) 
-                AddPrecastSpell(67544);                     // Lock and Load Marker
+            switch(m_spellInfo->Id)
+            {
+                case 19263:                        // Deterrence
+                    AddTriggeredSpell(67801);
+                    break;
+                case 56453:                        // Lock and Load Marker
+                    AddPrecastSpell(67544);
+                    break;
+            }
             break;
         }
         case SPELLFAMILY_PALADIN:

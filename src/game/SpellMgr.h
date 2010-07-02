@@ -103,7 +103,7 @@ enum SpellSpecific
     SPELL_FOOD              = 20,
     SPELL_DRINK             = 21,
     SPELL_FOOD_AND_DRINK    = 22,
-    SPELL_MAGE_BOMB         = 23,
+    SPELL_MAGE_BOMB         = 23,    SPELL_UA_IMMOLATE       = 24,                           // Unstable Affliction and Immolate
 };
 
 SpellSpecific GetSpellSpecific(uint32 spellId);
