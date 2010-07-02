@@ -5020,6 +5020,17 @@ bool Unit::HasAura(uint32 spellId) const
     return false;
 }
 
+bool Unit::HasAuras(SpellFamilyNames familyName, uint64 familyFlags) const
+{
+    Unit::AuraMap const& targetauras = GetAuras();
+    for(Unit::AuraMap::const_iterator i = targetauras.begin(); i != targetauras.end(); ++i)
+    {
+        if (i->second->GetSpellProto()->SpellFamilyName == familyName &&
+            i->second->GetSpellProto()->SpellFamilyFlags == familyFlags)
+            return true;
+    }
+    return false;					
+}
 void Unit::AddDynObject(DynamicObject* dynObj)
 {
     m_dynObjGUIDs.push_back(dynObj->GetGUID());

@@ -35,6 +35,7 @@
 #include "Path.h"
 #include "WorldPacket.h"
 #include "Timer.h"
+#include "SpellMgr.h"
 #include <list>
 
 enum SpellInterruptFlags
@@ -1387,6 +1388,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             return m_Auras.find(spellEffectPair(spellId, effIndex)) != m_Auras.end();
         }
         bool HasAura(uint32 spellId) const;
+        bool HasAuras(SpellFamilyNames familyName, uint64 familyFlags) const;
 
         const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
         void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
