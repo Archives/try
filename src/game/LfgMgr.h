@@ -234,6 +234,7 @@ typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
     public:
+        typedef std::map<char*, DungeonEncounterEntry const*> DungeonEncounterMap;
         LfgGroup();
         ~LfgGroup();
 
@@ -285,6 +286,11 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
                 roles |= DAMAGE;
             return roles;        
         }
+        void KilledCreature(Creature *creature)
+        {
+            KilledCreature(const_cast<char*>(creature->GetName()));
+        }
+        void KilledCreature(char *name);
         
     private:
         uint64 m_tank;
@@ -302,6 +308,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint8 m_instanceStatus;
         bool m_inDungeon;
         bool m_isRandom;
+        DungeonEncounterMap m_dungeonBosses;
+        uint32 randomDungeonEntry;
 };
 
 typedef std::set<LfgGroup*> GroupsList;
@@ -346,14 +354,14 @@ class MANGOS_DLL_SPEC LfgMgr
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
         void AddGroupToDelete(LfgGroup *group);
         uint32 GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
+        LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
 
     private:
         void UpdateQueues();
         void UpdateFormedGroups();
 
         LfgRewardList m_rewardsList;
-        DungeonInfoMap m_dungeonInfoMap;
-        LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
+        DungeonInfoMap m_dungeonInfoMap;       
         LfgDungeonList *GetRandomDungeons(Player *plr);
 
         QueuedDungeonsMap m_queuedDungeons[MAX_LFG_FACTION];

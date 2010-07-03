@@ -764,6 +764,20 @@ struct CurrencyTypesEntry
     uint32    BitIndex;                                     // 3        bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
 };
 
+struct DungeonEncounterEntry
+{
+    uint32    ID;                                           // 0        
+    uint32    Map;                                          // 1        used as real index
+    uint32    heroic;                                       // 2        may be category
+    int32     unk1;                                         // 3        some reference to boss order? minibosses have - values
+    uint32    order;                                        // 4        Order of boss in dungeon
+    char*     Name[16];                                     // 5-20     CreatureName
+    //uint32    unk2;                                       // 21       No idea
+    //uint32    unk3;                                       // 22       No idea
+
+    bool IsHeroic() const { return heroic == 1; };
+};
+
 struct DurabilityCostsEntry
 {
     uint32    Itemlvl;                                      // 0

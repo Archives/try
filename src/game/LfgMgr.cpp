@@ -48,6 +48,7 @@ LfgGroup::LfgGroup() : Group()
     m_isRandom = false;
     m_dungeonInfo = NULL;
     m_membersBeforeRoleCheck = 0;
+    randomDungeonEntry = 0;
 }
 LfgGroup::~LfgGroup()
 {
@@ -144,6 +145,41 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
     }
     return false;
 }
+
+void LfgGroup::KilledCreature(char *name)
+{
+    if(m_dungeonBosses.find(name) == m_dungeonBosses.end())
+        return;
+    DungeonEncounterMap::iterator itr = m_dungeonBosses.find(name);
+    m_killedBosses++;
+    //Last boss
+    if(sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID)->lastBossId == itr->second->ID)
+    {
+        m_instanceStatus = INSTANCE_COMPLETED;
+        //Reward here
+        for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+        {
+            Player *plr = itr->getSource();
+            if(!plr)
+                continue;
+            WorldPacket data(SMSG_LFG_PLAYER_REWARD);
+            data << uint32(randomDungeonEntry == 0 ? m_dungeonInfo->Entry() : randomDungeonEntry);
+            data << uint32(m_dungeonInfo->Entry());
+            sLfgMgr.BuildRewardBlock(data, (randomDungeonEntry & 0x00FFFFFF), plr);
+            plr->GetSession()->SendPacket(&data);
+            LfgReward *reward = sLfgMgr.GetDungeonReward((randomDungeonEntry & 0x00FFFFFF), plr->m_lookingForGroup.DoneDungeon((randomDungeonEntry & 0x00FFFFFF)), plr->getLevel());
+            if (!reward)
+                return;
+            reward->questInfo->SetFlag(QUEST_FLAGS_AUTO_REWARDED);
+            plr->CompleteQuest(reward->questInfo->GetQuestId());
+        }
+    }
+    else
+        m_instanceStatus = INSTANCE_SAVED;
+
+    SendUpdate();
+}
+
 bool LfgGroup::UpdateCheckTimer(uint32 time)
 {
     m_readycheckTimer += time;
@@ -157,6 +193,7 @@ void LfgGroup::TeleportToDungeon()
     uint32 originalDungeonId = m_dungeonInfo->ID;
     if(m_dungeonInfo->type == LFG_TYPE_RANDOM)
     {
+        randomDungeonEntry = m_dungeonInfo->Entry();
         m_isRandom = true;
         LfgLocksMap *groupLocks = GetLocksList();
         std::vector<LFGDungeonEntry const*> options;
@@ -204,6 +241,18 @@ void LfgGroup::TeleportToDungeon()
         uint32 tmp = urand(0, options.size()-1);
         m_dungeonInfo = options[tmp];
     }
+    //Fill dungeon bosses info
+    m_dungeonBosses.clear();
+    DungeonEncounterEntry const* currentRow;
+    for (uint32 i = 0; i < sDungeonEncounterStore.GetNumRows(); ++i)
+    {
+        currentRow = sDungeonEncounterStore.LookupEntry(i);
+        if(!currentRow)
+            continue;
+        if(currentRow->Map == m_dungeonInfo->map && m_dungeonInfo->isHeroic() == currentRow->IsHeroic())
+            m_dungeonBosses.insert(std::make_pair<char*, DungeonEncounterEntry const*>(currentRow->Name[0], currentRow));
+    }
+
     error_log("TELEPORT");
     DugeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID);
     if(m_groupType == GROUPTYPE_LFD)
@@ -252,7 +301,6 @@ void LfgGroup::TeleportToDungeon()
             GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, m_instanceStatus);    
     }
     //sort group members...
-
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         error_log("Do grupy");
@@ -667,6 +715,7 @@ void LfgMgr::AddToQueue(Player *player)
     //Already checked that group is fine
     if(Group *group = player->GetGroup())
     {
+        /*
         if(!group->isLfgGroup())
         {
         
@@ -712,7 +761,11 @@ void LfgMgr::AddToQueue(Player *player)
                 data << uint32(0);
                 data << uint8(leader->getLevel());
             }
-        }
+        } */
+        WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+        data << uint32(LFG_JOIN_INTERNAL_ERROR);                                  
+        data << uint32(0);
+        player->GetSession()->SendPacket(&data);
     }
     else
     {
@@ -810,7 +863,7 @@ void LfgMgr::UpdateQueues()
             for(GroupsList::iterator grpitr1 = itr->second->groups.begin(); grpitr1 != itr->second->groups.end(); ++grpitr1)
             {
                 //We can expect that there will be less tanks and healers than dps
-                for (GroupReference *plritr = (*grpitr1)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
+              /*  for (GroupReference *plritr = (*grpitr1)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
                 {
                     Player *plr = plritr->getSource();
                     uint8 rolesCount = 0;
@@ -834,7 +887,7 @@ void LfgMgr::UpdateQueues()
                         (*grpitr1)->SetHeal(plr->GetGUID());
                     }
 
-                }
+                } */
                 for(GroupsList::iterator grpitr2 = itr->second->groups.begin(); grpitr2 != itr->second->groups.end(); ++grpitr2)
                 {
                     if((*grpitr1) == (*grpitr2) || !(*grpitr1) || (*grpitr2))
@@ -1452,6 +1505,12 @@ void LfgMgr::LoadDungeonsInfo()
             sLog.outErrorDb("Entry listed in 'lfg_dungeon_info' has non-exist LfgDungeon.dbc id %u, skipping.", info->ID);
             delete info;
             continue;
+        }
+        if(!sDungeonEncounterStore.LookupEntry(info->lastBossId) && info->lastBossId != 0)
+        {
+            sLog.outErrorDb("Entry listed in 'lfg_dungeon_info' has non-exist DungeonEncounter.dbc id %u, skipping.", info->lastBossId);
+            delete info;
+            continue;   
         }
         m_dungeonInfoMap.find(info->ID)->second = info;
         ++count;
