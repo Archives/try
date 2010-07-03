@@ -9226,6 +9226,13 @@ void Aura::HandleAuraSafeFall( bool Apply, bool Real )
 
 bool Aura::IsCritFromAbilityAura(Unit* caster, uint32& damage)
 {
+    // Rupture ( no affecting spell so ... )
+    if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x000000000000100000))
+    {
+        damage = caster->SpellCriticalDamageBonus(GetSpellProto(), damage, GetTarget());
+        return true;
+    }
+
     Unit::AuraList const& auras = caster->GetAurasByType(SPELL_AURA_ABILITY_PERIODIC_CRIT);
     for(Unit::AuraList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
     {
