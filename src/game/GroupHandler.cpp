@@ -651,6 +651,12 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
     if (mask & GROUP_UPDATE_FLAG_PET_POWER_TYPE)            // same for pets
         mask |= (GROUP_UPDATE_FLAG_PET_CUR_POWER | GROUP_UPDATE_FLAG_PET_MAX_POWER);
 
+    Unit *pet = player->GetCharmOrPet();
+
+    //If no pet, then no pet update flags...
+    if(!pet && (mask & GROUP_UPDATE_FLAG_PET_GUID))
+        mask &= ~GROUP_UPDATE_PET;
+
     uint32 byteCount = 0;
     for (int i = 1; i < GROUP_UPDATE_FLAGS_COUNT; ++i)
         if (mask & (1 << i))
@@ -712,7 +718,6 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
         }
     }
 
-    Unit *pet = player->GetCharmOrPet();
     if (mask & GROUP_UPDATE_FLAG_PET_GUID)
     {
         if(pet)
