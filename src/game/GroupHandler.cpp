@@ -654,8 +654,29 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
     Unit *pet = player->GetCharmOrPet();
 
     //If no pet, then no pet update flags...
-    if(!pet && (mask & GROUP_UPDATE_FLAG_PET_GUID))
-        mask &= ~GROUP_UPDATE_PET;
+    if(!pet)
+    {
+        if(mask & GROUP_UPDATE_FLAG_PET_GUID)
+            mask &= ~GROUP_UPDATE_FLAG_PET_GUID;
+        if(mask & GROUP_UPDATE_FLAG_PET_NAME)
+            mask &= ~GROUP_UPDATE_FLAG_PET_NAME;
+        if(mask & GROUP_UPDATE_FLAG_PET_MODEL_ID)
+            mask &= ~GROUP_UPDATE_FLAG_PET_MODEL_ID;
+        if(mask & GROUP_UPDATE_FLAG_PET_CUR_HP)
+            mask &= ~GROUP_UPDATE_FLAG_PET_CUR_HP;
+        if(mask & GROUP_UPDATE_FLAG_PET_MAX_HP)
+            mask &= ~GROUP_UPDATE_FLAG_PET_MAX_HP;
+        if(mask & GROUP_UPDATE_FLAG_PET_POWER_TYPE)
+            mask &= ~GROUP_UPDATE_FLAG_PET_POWER_TYPE;
+        if(mask & GROUP_UPDATE_FLAG_PET_CUR_POWER)
+            mask &= ~GROUP_UPDATE_FLAG_PET_CUR_POWER;
+        if(mask & GROUP_UPDATE_FLAG_PET_MAX_POWER)
+            mask &= ~GROUP_UPDATE_FLAG_PET_MAX_POWER;
+        if(mask & GROUP_UPDATE_FLAG_PET_AURAS)
+            mask &= ~GROUP_UPDATE_FLAG_PET_AURAS;
+        if(mask & GROUP_UPDATE_FLAG_VEHICLE_SEAT)
+            mask &= ~GROUP_UPDATE_FLAG_VEHICLE_SEAT;
+    }
 
     uint32 byteCount = 0;
     for (int i = 1; i < GROUP_UPDATE_FLAGS_COUNT; ++i)
@@ -781,6 +802,11 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
         else
             *data << uint16(0);
     }
+    
+    if (mask & GROUP_UPDATE_FLAG_VEHICLE_SEAT)
+    {
+        *data << (uint32) player->m_movementInfo.GetTransportDBCSeat();
+    }
 
     if (mask & GROUP_UPDATE_FLAG_PET_AURAS)
     {
@@ -799,11 +825,6 @@ void WorldSession::BuildPartyMemberStatsChangedPacket(Player *player, WorldPacke
         }
         else
             *data << uint64(0);
-    }
-
-    if (mask & GROUP_UPDATE_FLAG_VEHICLE_SEAT)
-    {
-        *data << (uint32) player->m_movementInfo.GetTransportDBCSeat();
     }
 }
 
@@ -832,7 +853,7 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode( WorldPacket &recv_data )
     data << uint8(0);                                       // only for SMSG_PARTY_MEMBER_STATS_FULL, probably arena/bg related
     data << player->GetPackGUID();
 
-    uint32 mask1 = 0x00040BFF;                              // common mask, real flags used 0x000040BFF
+    uint32 mask1 = 0x00000BFF;//0x00040BFF;                              // common mask, real flags used 0x000040BFF
     if(pet)
         mask1 = 0xFFFFFFFF;                                 // for hunters and other classes with pets
 
@@ -875,6 +896,8 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode( WorldPacket &recv_data )
         data << uint16(pet->GetPower(petpowertype));        // GROUP_UPDATE_FLAG_PET_CUR_POWER
         data << uint16(pet->GetMaxPower(petpowertype));     // GROUP_UPDATE_FLAG_PET_MAX_POWER
 
+        data << uint32(player->m_movementInfo.GetTransportDBCSeat());
+
         uint64 petauramask = 0;
         size_t petMaskPos = data.wpos();
         data << uint64(petauramask);                        // placeholder
@@ -888,13 +911,9 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode( WorldPacket &recv_data )
             }
         }
         data.put<uint64>(petMaskPos, petauramask);          // GROUP_UPDATE_FLAG_PET_AURAS
-        data << (uint32) player->m_movementInfo.GetTransportDBCSeat();
     }
     else
-    {
         data << uint8(0);                                   // GROUP_UPDATE_FLAG_PET_NAME
-        data << uint64(0);                                  // GROUP_UPDATE_FLAG_PET_AURAS
-    }
 
     SendPacket(&data);
 }
