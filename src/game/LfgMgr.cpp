@@ -123,16 +123,13 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
 
 bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after check
 {
+    if(m_memberSlots.empty())
+    {
+        sLfgMgr.AddGroupToDelete(this);
+        return true;
+    }
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
-        if(!citr)
-            continue;
-        if(!citr->guid)
-        {
-            m_memberSlots.erase(citr);
-            continue;
-        }
-
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
         if(!plr ||!plr->GetSession())
             RemoveMember(citr->guid, 0);
@@ -148,6 +145,7 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
 
 void LfgGroup::KilledCreature(char *name)
 {
+    error_log("Killed creature %s", name);
     if(m_dungeonBosses.find(name) == m_dungeonBosses.end())
         return;
     DungeonEncounterMap::iterator itr = m_dungeonBosses.find(name);
@@ -205,7 +203,10 @@ void LfgGroup::TeleportToDungeon()
             if(!currentRow)
                 continue;
             if(currentRow->type != LFG_TYPE_RANDOM && currentRow->grouptype == m_dungeonInfo->grouptype)
+            {
+                error_log("Adding random id %u", currentRow->ID);
                 options.push_back(currentRow);
+            }
         }
         //And now get only without locks
         for(LfgLocksMap::iterator itr = groupLocks->begin(); itr != groupLocks->end(); ++itr)
@@ -249,8 +250,12 @@ void LfgGroup::TeleportToDungeon()
         currentRow = sDungeonEncounterStore.LookupEntry(i);
         if(!currentRow)
             continue;
+        error_log("Add boss %s", currentRow->Name[0]);
         if(currentRow->Map == m_dungeonInfo->map && m_dungeonInfo->isHeroic() == currentRow->IsHeroic())
+        {
+            error_log("Add boss %s 2", currentRow->Name[0]);
             m_dungeonBosses.insert(std::make_pair<char*, DungeonEncounterEntry const*>(currentRow->Name[0], currentRow));
+        }
     }
 
     error_log("TELEPORT");
@@ -578,7 +583,7 @@ void LfgGroup::SendProposalUpdate(uint8 state)
                 if(roles < 2)
                 {
                     sLog.outError("LfgMgr: Wrong role for player in SMSG_LFG_PROPOSAL_UPDATE");
-                    m_answers.insert(std::pair<uint64, uint8>(_player->GetGUID(), 0));
+                    m_answers.insert(std::pair<uint64, uint8>(plr->GetGUID(), 0));
                 }
 
                 data << uint32(roles);
@@ -617,7 +622,7 @@ void LfgGroup::SendRoleCheckUpdate()
         uint8 roles[3] = {0,0,0};
         for(ProposalAnswersMap::iterator itr = m_rolesProposal.begin(); itr != m_rolesProposal.end(); ++itr)
         {
-            if(itr->second & TANK)
+         /*   if(itr->second & TANK)
                 roles[0]++;
             if(itr->second & HEALER)
                 roles[1]++;
@@ -630,17 +635,17 @@ void LfgGroup::SendRoleCheckUpdate()
                 state = LFG_ROLECHECK_NO_ROLE;
                 break;
             }
-            if(possibleRoles == 1)
+            if(possibleRoles == 1) */
         }
     }
 
-    Player *leader = sObjectMgr.GetPlayer(group->GetLeaderGUID());
+    Player *leader = sObjectMgr.GetPlayer(GetLeaderGUID());
     if(!leader)
         return;
-    WorldPacket data(SMSG_LFG_ROLE_CHECK_UPDATE, 6 + leader->m_lookingForGroup.queuedDungeons.size * 4 + 1 + GetMembersCount() * 14);
+    WorldPacket data(SMSG_LFG_ROLE_CHECK_UPDATE, 6 + leader->m_lookingForGroup.queuedDungeons.size() * 4 + 1 + GetMembersCount() * 14);
     data << uint32(state);
     data << uint8(state == LFG_ROLECHECK_INITIALITING); // begining
-    data << uint8(leader->m_lookingForGroup.queuedDungeons.size);
+    data << uint8(leader->m_lookingForGroup.queuedDungeons.size());
     for (LfgDungeonList::const_iterator it = leader->m_lookingForGroup.queuedDungeons.begin(); it != leader->m_lookingForGroup.queuedDungeons.end(); ++it)
         data << uint32((*it)->Entry());
     data << uint8(GetMembersCount());
@@ -658,10 +663,10 @@ void LfgGroup::SendRoleCheckUpdate()
         data << uint32(0); //roles
     }
     data << uint8(leader->getLevel());
-    for (GroupReference *itr2 = group->GetFirstMember(); itr2 != NULL; itr2 = itr2->next())
+    for (GroupReference *itr2 = GetFirstMember(); itr2 != NULL; itr2 = itr2->next())
     {
         Player *member = itr2->getSource();
-        if(member->GetGUID() == group->GetLeaderGUID())
+        if(member->GetGUID() == GetLeaderGUID())
             continue;
         data << uint64(member->GetGUID());
         data << uint8(0);
