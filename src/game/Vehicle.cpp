@@ -494,7 +494,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             allowMove = 0;
 
         ((Player*)unit)->SetMover(this);
-        ((Player*)unit)->SetClientControl(this, 1);
+        ((Player*)unit)->SetClientControl(this, allowMove);
         ((Player*)unit)->GetCamera().SetView(this);
     }
     if(seat->second.vs_flags & SF_MAIN_RIDER)
@@ -510,12 +510,9 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
             {
                 WorldPacket data3(SMSG_MOVE_SET_CAN_FLY, 12);
                 data3 << GetPackGUID();
-                data3 << (uint32)(0);
-                SendMessageToSet(&data3,false);
+                data3 << uint32(1);
+                unit->SendMessageToSet(&data3,true);
             }
-            //Make vehicle fly
-            if(GetVehicleFlags() & VF_FLYING)
-                CastSpell(this, 49303, false);
         }
 
         SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(GetEntry());
@@ -583,6 +580,11 @@ void Vehicle::RemovePassenger(Unit *unit)
                     ((Player*)unit)->SetMover(unit);
                     ((Player*)unit)->SetClientControl(unit, 1);
                     ((Player*)unit)->RemovePetActionBar();
+
+                    WorldPacket data3(SMSG_MOVE_SET_CAN_FLY, 12);
+                    data3 << GetPackGUID();
+                    data3 << uint32(2);
+                    unit->SendMessageToSet(&data3,true);
 
                     if(((Player*)unit)->GetGroup())
                         ((Player*)unit)->SetGroupUpdateFlag(GROUP_UPDATE_VEHICLE);
