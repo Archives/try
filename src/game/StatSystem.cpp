@@ -39,7 +39,7 @@ bool Player::UpdateStats(Stats stat)
 
     SetStat(stat, int32(value));
 
-    if(stat == STAT_STAMINA || stat == STAT_INTELLECT)
+    if(stat == STAT_STRENGTH || stat == STAT_STAMINA || stat == STAT_INTELLECT)
     {
         Pet *pet = GetPet();
         if(pet)
@@ -98,7 +98,11 @@ void Player::ApplySpellPowerBonus(int32 amount, bool apply)
     // For speed just update for client
     ApplyModUInt32Value(PLAYER_FIELD_MOD_HEALING_DONE_POS, amount, apply);
     for(int i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
-        ApplyModUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, amount, apply);;
+        ApplyModUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, amount, apply);
+
+    Pet *pet = GetPet();
+    if(pet)
+        pet->UpdateAttackPowerAndDamage();
 }
 
 void Player::UpdateSpellDamageAndHealingBonus()
@@ -110,6 +114,10 @@ void Player::UpdateSpellDamageAndHealingBonus()
     // Get damage bonus for all schools
     for(int i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
         SetStatInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, SpellBaseDamageBonusDone(SpellSchoolMask(1 << i)));
+
+    Pet *pet = GetPet();
+    if(pet)
+        pet->UpdateAttackPowerAndDamage();
 }
 
 bool Player::UpdateAllStats()
@@ -392,10 +400,6 @@ void Player::UpdateAttackPowerAndDamage(bool ranged )
     if(ranged)
     {
         UpdateDamagePhysical(RANGED_ATTACK);
-
-        Pet *pet = GetPet();                                //update pet's AP
-        if(pet)
-            pet->UpdateAttackPowerAndDamage();
     }
     else
     {
@@ -403,6 +407,10 @@ void Player::UpdateAttackPowerAndDamage(bool ranged )
         if(CanDualWield() && haveOffhandWeapon())           //allow update offhand damage only if player knows DualWield Spec and has equipped offhand weapon
             UpdateDamagePhysical(OFF_ATTACK);
     }
+
+    Pet *pet = GetPet();                                //update pet's AP
+    if(pet)
+        pet->UpdateAttackPowerAndDamage();
 }
 
 void Player::UpdateShieldBlockValue()
@@ -886,60 +894,81 @@ bool Pet::UpdateStats(Stats stat)
     CreatureInfo const *cinfo = GetCreatureInfo(); 
 
     Unit *owner = GetOwner();
-    if (stat == STAT_STRENGTH && owner && owner->getClass() == CLASS_DEATH_KNIGHT)
+    if (owner && owner->GetTypeId() == TYPEID_PLAYER)
     {
-        // only for Risen Ghoul and Army of Ghouls            
-        if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
+        float scale_coeff = 0.0f;
+        switch(stat)
         {
-            float scale_coeff = 0.7f;
-            // Ravenous Dead
-            if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
-               scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
-           // Glyph of Ghoul
-           if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
-               scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
-             value += float(owner->GetStat(stat)) * scale_coeff;
-       }
-    }
-    else if ( stat == STAT_STAMINA ) 
-    {
-        if(owner)
-        {
-            float scale_coeff = 0.3f;
-            switch (owner->getClass())
+            case STAT_STRENGTH:
             {
-                case CLASS_HUNTER:
-                    scale_coeff = 0.45f;
-                    // HERE comes Wild Hunt
-                    break;
-                case CLASS_WARLOCK:
-                    scale_coeff = 0.75f;
-                    break;
-                case CLASS_DEATH_KNIGHT:
-                    // only for Risen Ghoul and Army of Ghouls
-                    if(cinfo->Entry == 24207 || cinfo->Entry == 26125)
+                if(owner->getClass() == CLASS_DEATH_KNIGHT)
+                {
+                    if(getPetType() == SUMMON_PET)
                     {
-                        // base coeff
-                        scale_coeff = 0.30f;
+                        scale_coeff = 0.7f;
                         // Ravenous Dead
                         if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
-                            scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;       
+                            scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
                         // Glyph of Ghoul
-                        if (Aura *glyph = owner->GetAura(58686, EFFECT_INDEX_0))
+                        if (Aura *glyph = owner->GetDummyAura(58686))
                             scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
                     }
-                    break; 
+                }
+                break;
             }
-            value += float(owner->GetStat(stat)) * scale_coeff;
+            case STAT_STAMINA:
+            {
+                scale_coeff = 0.3f;
+                switch (owner->getClass())
+                {
+                    case CLASS_HUNTER:
+                    {
+                        scale_coeff = 0.45f;
+                        //Wild Hunt
+                        uint32 bonus_id = 0;
+                        if (HasSpell(62762))
+                            bonus_id = 62762;
+                        else if(HasSpell(62758))
+                            bonus_id = 62758;
+                        if (const SpellEntry *bonusProto = sSpellStore.LookupEntry(bonus_id)) 
+                            scale_coeff *= 1 + bonusProto->CalculateSimpleValue(EFFECT_INDEX_0) / 100.0f;
+                        break;
+                    }
+                    case CLASS_WARLOCK:
+                    {
+                        scale_coeff = 0.75f;
+                        break;
+                    }
+                    case CLASS_DEATH_KNIGHT:
+                    {
+                        if(getPetType() == SUMMON_PET)
+                        {
+                            // Ravenous Dead
+                            if (owner->GetTypeId() == TYPEID_PLAYER)
+                                if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
+                                    scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
+                            // Glyph of Ghoul
+                            if (Aura *glyph = owner->GetDummyAura(58686))
+                                scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
+                        }
+                        break; 
+                    }
+                }
+                break;
+            }
+            case STAT_INTELLECT:
+            {
+                //warlock's and mage's pets gain 30% of owner's intellect
+                if (getPetType() == SUMMON_PET)
+                {
+                    if(owner && (owner->getClass() == CLASS_WARLOCK || owner->getClass() == CLASS_MAGE) )
+                        scale_coeff = 0.3f;
+                }
+                break;
+            }
         }
+        value += float(owner->GetStat(stat)) * scale_coeff;
     }
-                                                            //warlock's and mage's pets gain 30% of owner's intellect
-    else if ( stat == STAT_INTELLECT && getPetType() == SUMMON_PET )
-    {
-        if(owner && (owner->getClass() == CLASS_WARLOCK || owner->getClass() == CLASS_MAGE) )
-            value += float(owner->GetStat(stat)) * 0.3f;
-    }
-
     SetStat(stat, int32(value));
 
     switch(stat)
@@ -994,13 +1023,14 @@ void Pet::UpdateArmor()
     UnitMods unitMod = UNIT_MOD_ARMOR;
 
     Unit *owner = GetOwner();
-    // hunter and warlock pets gain 35% of owner's armor value
-    if(owner && (getPetType() == HUNTER_PET || (getPetType() == SUMMON_PET && owner->getClass() == CLASS_WARLOCK)))
+    // hunter and warlock and shaman pets gain 35% of owner's armor value
+    if(owner && (getPetType() == HUNTER_PET || (getPetType() == SUMMON_PET 
+        && (owner->getClass() == CLASS_WARLOCK || owner->getClass() == CLASS_SHAMAN))))
         bonus_armor = 0.35f * float(owner->GetArmor());
 
     value  = GetModifierValue(unitMod, BASE_VALUE);
     value *= GetModifierValue(unitMod, BASE_PCT);
-    value += GetStat(STAT_AGILITY) * 2.0f;
+    value += GetStat(STAT_AGILITY);
     value += GetModifierValue(unitMod, TOTAL_VALUE) + bonus_armor;
     value *= GetModifierValue(unitMod, TOTAL_PCT);
 
@@ -1048,32 +1078,62 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
     val = GetStat(STAT_STRENGTH) - 20.0f; 
 
     Unit* owner = GetOwner();
-    if( owner && owner->GetTypeId()==TYPEID_PLAYER)
+    if (owner && owner->GetTypeId()==TYPEID_PLAYER)
     {
-        if(getPetType() == HUNTER_PET)                      //hunter pets benefit from owner's attack power
+        if (getPetType() == HUNTER_PET)                      //hunter pets benefit from owner's attack power
         {
-            // HERE comes Wild Hunt
-            bonusAP = owner->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.22f;
-            SetBonusDamage( int32(owner->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.1287f));
-        }
-        //demons benefit from warlocks shadow or fire damage
-        else if(getPetType() == SUMMON_PET && owner->getClass() == CLASS_WARLOCK)
+            float ap_coeff = 0.22f;
+            float sp_coeff = 0.1287f;
+            //Wild Hunt
+            uint32 bonus_id = 0;
+            if (HasSpell(62762))
+                bonus_id = 62762;
+            else if(HasSpell(62758))
+                bonus_id = 62758;
+            if (const SpellEntry *bonusProto = sSpellStore.LookupEntry(bonus_id))
+            {
+                ap_coeff *= 1 + bonusProto->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
+                sp_coeff *= 1 + bonusProto->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
+            }
+
+            bonusAP = owner->GetTotalAttackPowerValue(RANGED_ATTACK) * ap_coeff;
+            SetBonusDamage( int32(owner->GetTotalAttackPowerValue(RANGED_ATTACK) * sp_coeff));
+        }      
+        else if (getPetType() == SUMMON_PET)
         {
-            int32 fire  = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_FIRE);
-            int32 shadow = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_SHADOW);
-            int32 maximum  = (fire > shadow) ? fire : shadow;
-            if(maximum < 0)
-                maximum = 0;
-            SetBonusDamage( int32(maximum * 0.15f));
-            bonusAP = maximum * 0.57f;
-        }
-        //water elementals benefit from mage's frost damage
-        else if(getPetType() == SUMMON_PET && owner->getClass() == CLASS_MAGE)
-        {
-            int32 frost = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FROST)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_FROST);
-            if(frost < 0)
-                frost = 0;
-            SetBonusDamage( int32(frost * 0.4f));
+            switch(owner->getClass())
+            {
+                case CLASS_WARLOCK:
+                {
+                    //demons benefit from warlocks shadow or fire damage
+                    int32 fire  = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_FIRE);
+                    int32 shadow = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_SHADOW);
+                    int32 maximum  = (fire > shadow) ? fire : shadow;
+                    if(maximum < 0)
+                        maximum = 0;
+                    SetBonusDamage(int32(maximum * 0.15f));
+                    bonusAP = maximum * 0.57f;
+                    break;
+                }
+                case CLASS_MAGE:
+                {
+                    //water elementals benefit from mage's frost damage
+                    int32 frost = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FROST)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_FROST);
+                    if(frost < 0)
+                        frost = 0;
+                    SetBonusDamage(int32(frost * 0.4f));
+                    break;
+                }
+                case CLASS_SHAMAN:
+                {
+                    float coeff = 0.3f;
+                    //Glyph of Feral Spirit
+                    if(Aura *glyph = owner->GetDummyAura(63271))
+                        coeff += glyph->GetModifier()->m_amount / 100.0f;
+                    bonusAP += coeff * owner->GetTotalAttackPowerValue(BASE_ATTACK);
+                    break;
+                }
+            }
         }
     }
 
@@ -1112,9 +1172,6 @@ void Pet::UpdateDamagePhysical(WeaponAttackType attType)
     float weapon_mindamage = GetWeaponDamageRange(BASE_ATTACK, MINDAMAGE);
     float weapon_maxdamage = GetWeaponDamageRange(BASE_ATTACK, MAXDAMAGE);
 
-    float mindamage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct;
-    float maxdamage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct;
-
     //  Pet's base damage changes depending on happiness
     if (getPetType() == HUNTER_PET && attType == BASE_ATTACK)
     {
@@ -1122,19 +1179,26 @@ void Pet::UpdateDamagePhysical(WeaponAttackType attType)
         {
             case HAPPY:
                 // 125% of normal damage
-                mindamage = mindamage * 1.25f;
-                maxdamage = maxdamage * 1.25f;
+                total_pct *= 1.25f;
                 break;
             case CONTENT:
                 // 100% of normal damage, nothing to modify
                 break;
             case UNHAPPY:
                 // 75% of normal damage
-                mindamage = mindamage * 0.75f;
-                maxdamage = maxdamage * 0.75f;
+                total_pct *= 0.75f;
                 break;
         }
     }
+    else if(getPetType() == SUMMON_PET)
+    {    
+        Unit* owner = GetOwner();
+        if (owner && owner->getClass() == CLASS_PRIEST)
+            total_value += 0.3f * owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW);
+    }
+
+    float mindamage = ((base_value + weapon_mindamage) * base_pct + total_value) * total_pct;
+    float maxdamage = ((base_value + weapon_maxdamage) * base_pct + total_value) * total_pct;
 
     SetStatFloatValue(UNIT_FIELD_MINDAMAGE, mindamage);
     SetStatFloatValue(UNIT_FIELD_MAXDAMAGE, maxdamage);

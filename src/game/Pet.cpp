@@ -205,6 +205,8 @@ bool Pet::LoadPetFromDB( Player* owner, uint32 petentry, uint32 petnumber, bool 
             SetUInt32Value(UNIT_FIELD_BYTES_0, 2048);
             SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
                                                             // this enables popup window (pet dismiss, cancel)
+            if (owner->getClass() == CLASS_DEATH_KNIGHT)
+                setPowerType(POWER_ENERGY);
             break;
         case HUNTER_PET:
             SetUInt32Value(UNIT_FIELD_BYTES_0, 0x02020100);
@@ -880,48 +882,18 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                 {
                     switch(owner->getClass())
                     {
-                        case CLASS_WARLOCK:
-                        {
-                            //the damage bonus used for pets is either fire or shadow damage, whatever is higher
-                            uint32 fire  = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FIRE);
-                            uint32 shadow = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW);
-                            uint32 val  = (fire > shadow) ? fire : shadow;
-
-                            SetBonusDamage(int32 (val * 0.15f));
-                            //bonusAP += val * 0.57;
-                            break;
-                        }
-                        case CLASS_MAGE:
-                        {
-                                                                //40% damage bonus of mage's frost damage
-                            float val = owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_FROST) * 0.4f;
-                            if(val < 0)
-                                val = 0;
-                            SetBonusDamage( int32(val));
-                            break;
-                        }
                         case CLASS_PRIEST:
-                        {
-                            int32 spellpower = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW));
-                            int32 bonusmelee = int32(spellpower * 0.3f);
-                            mindmg += int32(spellpower * 0.3f);
-                            maxdmg += int32(spellpower * 0.3f);
                             SetAttackTime(BASE_ATTACK, 1500);
                             break;
-                        }
+
                         case CLASS_SHAMAN:
-                        {
-                            float armor = float(owner->GetArmor()) * 0.35;
-                            float attackpower = float(owner->GetTotalAttackPowerValue(BASE_ATTACK)) * 0.3;
-                            float stamina = float(owner->GetInt32Value(UNIT_FIELD_STAT2)) * 0.3;
                             SetAttackTime(BASE_ATTACK, 1000);
-                            SetModifierValue(UNIT_MOD_ARMOR, BASE_VALUE, float(pInfo->armor) + armor);
-                            SetCreateStat(STAT_STAMINA, float(pInfo->stats[STAT_STAMINA]) + stamina);
-                            // pets do not have melee damage scaled with attack power, so damage must be add directly
-                            mindmg += attackpower / 3;
-                            maxdmg += attackpower / 3;
                             break;
-                        }
+
+                        case CLASS_DEATH_KNIGHT:
+                            setPowerType(POWER_ENERGY);
+                            break;
+
                         default:
                             break;
                     }
