@@ -369,9 +369,9 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     {
                         float distance = unitTarget->GetDistance2d(m_caster);
                         if(distance >= 25.0f)
-                            damage = 5000;
+                            damage = 10000;
                         else
-                            damage -= distance * float(1000);
+                            damage -= distance * float(500);
                         break;
                     }
                 }
