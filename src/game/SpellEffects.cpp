@@ -364,6 +364,16 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 67485:
                         damage += uint32(0.5f * m_caster->GetTotalAttackPowerValue(BASE_ATTACK));
                         break;
+                    // Lightning Nova (Damage scaling with distance)
+                    case 65279:
+                    {
+                        float distance = unitTarget->GetDistance2d(m_caster);
+                        if(distance >= 25.0f)
+                            damage = 5000;
+                        else
+                            damage -= distance * float(1000);
+                        break;
+                    }
                 }
                 break;
             }
