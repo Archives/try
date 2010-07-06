@@ -9550,8 +9550,8 @@ bool Player::HasItemOrGemWithLimitCategoryEquipped( uint32 limitCategory, uint32
             if( tempcount >= count )
                 return true;
         }
-
-        if( pProto->Socket[0].Color)
+        // THIS OPTIMALISATION CHECK CAN NOT BE ENABLED. It bugs check for prismatic blacksmith sockets for item without sockets
+        // if( pProto->Socket[0].Color)
         {
             tempcount += pItem->GetGemCountWithLimitCategory(limitCategory);
             if( tempcount >= count )
