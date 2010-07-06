@@ -7638,7 +7638,7 @@ bool Player::CastItemCombatSpellFromOtherWeapon(Unit* Target, WeaponAttackType a
             if (pEnchant->type[s]!=ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
                 continue;
             
-            CastSpell(this, pEnchant->spellid[s], true, item);
+            CastSpell(Target, pEnchant->spellid[s], true, item);
             spellcasted = true;
         }
     }
