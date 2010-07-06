@@ -5521,7 +5521,7 @@ void Spell::EffectInterruptCast(SpellEffectIndex eff_idx)
             // check if we can interrupt spell, we cannot interrupt spells without cast time
             if ((curSpellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_INTERRUPT) &&
                  curSpellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE &&
-                 (IsChanneledSpell(curSpellInfo) || GetSpellCastTime(curSpellInfo))
+                 (IsChanneledSpell(curSpellInfo) || GetSpellCastTime(curSpellInfo)))
             {
                 unitTarget->ProhibitSpellSchool(GetSpellSchoolMask(curSpellInfo), unitTarget->CalculateSpellDuration(m_spellInfo, eff_idx, unitTarget));
                 unitTarget->InterruptSpell(CurrentSpellTypes(i),false);

@@ -2560,7 +2560,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         else
                             continue;
 
-                        if (curSpellInfo && (GetSpellCastTime(curSpellInfo) || IsChanneledSpell(curSpellInfo))
+                        if (curSpellInfo && (GetSpellCastTime(curSpellInfo) || IsChanneledSpell(curSpellInfo)))
                             break;
                     }
 
@@ -9313,7 +9313,7 @@ void Aura::HandleAuraSafeFall( bool Apply, bool Real )
 bool Aura::IsCritFromAbilityAura(Unit* caster, uint32& damage)
 {
     // Rupture ( no affecting spell so ... )
-    if (GetSpellProto()->SpellFamilyName = SPELLFAMILY_ROGUE &&
+    if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE &&
         GetSpellProto()->SpellFamilyFlags & UI64LIT(0x000000000000100000))
     {
         if (!caster->IsSpellCrit(GetTarget(), GetSpellProto(), GetSpellSchoolMask(GetSpellProto())))
