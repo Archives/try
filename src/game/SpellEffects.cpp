@@ -2961,8 +2961,8 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
             //m_caster->SetOrientation(target->GetOrientation());
             //huh wtf?
             WorldPacket data;
-            ((Player*)unitTarget)->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
-            ((Player*)unitTarget)->GetSession()->SendPacket( &data );
+            ((Player*)m_caster)->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
+            ((Player*)m_caster)->GetSession()->SendPacket( &data );
             ((Player*)m_caster)->SetPosition(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation(), false);
             normalized_d = m_caster->GetDistance(behind_x, behind_y, behind_z);
         }
@@ -2978,9 +2978,9 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
         x = m_caster->GetPositionX();
         y = m_caster->GetPositionY();
         z = m_caster->GetPositionZ()+1;
-        o = unitTarget->GetOrientation();
-        ((Creature*)unitTarget)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)unitTarget)->GetSplineFlags(), 1);
-        unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget,x,y,z,o);		
+        o = target->GetOrientation();
+        ((Creature*)target)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)target)->GetSplineFlags(), 1);
+        target->GetMap()->CreatureRelocation((Creature*)target,x,y,z,o);		
     }
 }
 
