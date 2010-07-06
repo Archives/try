@@ -9315,6 +9315,9 @@ bool Aura::IsCritFromAbilityAura(Unit* caster, uint32& damage)
     // Rupture ( no affecting spell so ... )
     if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x000000000000100000))
     {
+        if (!caster->IsSpellCrit(GetTarget(), GetSpellProto(), GetSpellSchoolMask(GetSpellProto())))
+            return false;
+
         damage = caster->SpellCriticalDamageBonus(GetSpellProto(), damage, GetTarget());
         return true;
     }
