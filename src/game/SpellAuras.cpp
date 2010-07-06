@@ -2560,11 +2560,11 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         else
                             continue;
 
-                        if (curSpellInfo && GetSpellCastTime(curSpellInfo))
+                        if (curSpellInfo && (GetSpellCastTime(curSpellInfo) || IsChanneledSpell(curSpellInfo))
                             break;
                     }
 
-                    if(!curSpellInfo || !GetSpellCastTime(curSpellInfo))
+                    if(!curSpellInfo || (!GetSpellCastTime(curSpellInfo) && !IsChanneledSpell(curSpellInfo)))
                         return;
 
                     Unit* caster = GetCaster();
