@@ -907,7 +907,7 @@ bool Pet::UpdateStats(Stats stat)
                     {
                         scale_coeff = 0.7f;
                         // Ravenous Dead
-                        if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
+                        if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(1934))
                             scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
                         // Glyph of Ghoul
                         if (Aura *glyph = owner->GetDummyAura(58686))
@@ -945,7 +945,7 @@ bool Pet::UpdateStats(Stats stat)
                         {
                             // Ravenous Dead
                             if (owner->GetTypeId() == TYPEID_PLAYER)
-                                if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(48965))
+                                if (SpellEntry const* spell = ((Player*)owner)->GetKnownTalentRankById(1934))
                                     scale_coeff *= 1.0f + spell->CalculateSimpleValue(EFFECT_INDEX_1) / 100.0f;
                             // Glyph of Ghoul
                             if (Aura *glyph = owner->GetDummyAura(58686))
