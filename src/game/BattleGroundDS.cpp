@@ -98,10 +98,7 @@ void BattleGroundDS::Update(uint32 diff)
                 WaterfallActivated = false;
             }
             else
-            {
-                SpawnEvent(WATERFALL_EVENT, 0, true);
-                WaterfallActivated = true;
-            }
+                WaterfallSpawn();
             m_uiWaterfall = urand(30,45)*IN_MILLISECONDS;
 
         }else m_uiWaterfall -= diff;
@@ -118,7 +115,21 @@ void BattleGroundDS::StartingEventOpenDoors()
     OpenDoorEvent(BG_EVENT_DOOR);
 }
 
-
+void BattleGroundDS::WaterfallSpawn()
+{
+    SpawnEvent(WATERFALL_EVENT, 0, true);
+    for(BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+    {
+        Player * plr = sObjectMgr.GetPlayer(itr->first);
+        float x, y, angle;
+        x = 1291.02f;
+        y = 790.42f;
+        angle = plr->GetAngle(x,y)+M_PI_F;
+        if (plr->GetDistance2d(x, y) <= 5)
+            plr->KnockWithAngle(angle, 35.0f, 7.0f);
+    }
+    WaterfallActivated = true;
+}
 void BattleGroundDS::DespawnEvent(uint8 event1, uint8 event2)
 {
     BGObjects::const_iterator itr2 = m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.begin();

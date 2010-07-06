@@ -53,6 +53,7 @@ class BattleGroundDS : public BattleGround
     private:
         virtual void Reset();
         virtual void FillInitialWorldStates(WorldPacket &d, uint32& count);
+        void WaterfallSpawn();
         void HandleKillPlayer(Player* player, Player *killer);
         bool HandlePlayerUnderMap(Player * plr);
         bool KnockbackCheck;
