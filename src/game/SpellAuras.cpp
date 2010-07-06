@@ -9313,7 +9313,8 @@ void Aura::HandleAuraSafeFall( bool Apply, bool Real )
 bool Aura::IsCritFromAbilityAura(Unit* caster, uint32& damage)
 {
     // Rupture ( no affecting spell so ... )
-    if (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x000000000000100000))
+    if (GetSpellProto()->SpellFamilyName = SPELLFAMILY_ROGUE &&
+        GetSpellProto()->SpellFamilyFlags & UI64LIT(0x000000000000100000))
     {
         if (!caster->IsSpellCrit(GetTarget(), GetSpellProto(), GetSpellSchoolMask(GetSpellProto())))
             return false;
