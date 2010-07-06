@@ -54,14 +54,16 @@ class BattleGroundDS : public BattleGround
         virtual void Reset();
         virtual void FillInitialWorldStates(WorldPacket &d, uint32& count);
         void WaterfallSpawn();
+        void KnockOutOfTubes();
         void HandleKillPlayer(Player* player, Player *killer);
         bool HandlePlayerUnderMap(Player * plr);
-        bool KnockbackCheck;
+        bool Knocked;
         bool KnockbackSpam;
         bool DoorsDespawned;
         bool WaterfallActivated;
-        uint32 m_uiKnockback;
+        uint32 m_uiKnock;
         uint32 m_uiKnockSpam;
         uint32 m_uiWaterfall;
+        std::list<uint64> m_lPlrInTube;
 };
 #endif

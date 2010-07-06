@@ -48,46 +48,9 @@ void BattleGroundDS::Update(uint32 diff)
     BattleGround::Update(diff);
     if (GetStatus() == STATUS_IN_PROGRESS)
     {
-        // despawn doors just for make a sure players don't get stuck behind it
-        if(!DoorsDespawned)
-        {
-            DespawnEvent(DOORS_EVENT, 0);
-            DoorsDespawned = true;
-        }
-
-        // knocking out of tube
-        if(KnockbackCheck)
-        {
-            if(m_uiKnockback < diff || KnockbackSpam)
-            {
-                for(BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
-                {
-                    Player * plr = sObjectMgr.GetPlayer(itr->first);
-                    if (plr->GetTeam() == ALLIANCE && plr->GetDistance2d(1214, 765) <= 50 && plr->GetPositionZ() > 10)
-                        plr->KnockWithAngle(6.05f, 35.0f, 7.0f);
-                    if (plr->GetTeam() == HORDE && plr->GetDistance2d(1369, 817) <= 50 && plr->GetPositionZ() > 10)
-                        plr->KnockWithAngle(3.03f, 35.0f, 7.0f);
-                }
-                if(!KnockbackSpam)
-                {
-                    m_uiKnockSpam = 5000;
-                    KnockbackSpam = true;
-
-                    // Remove Demonic Circle
-                    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
-                        if (Player *plr = sObjectMgr.GetPlayer(itr->first))
-                            if(GameObject* obj = plr->GetGameObject(48018))
-                                obj->Delete();
-                }
-            }else m_uiKnockback -= diff;
-            
-            if(KnockbackSpam)
-            {
-                if(m_uiKnockSpam < diff)
-                    KnockbackCheck = false;
-                else m_uiKnockSpam -= diff;
-            }
-        }
+        if(m_uiKnock < diff && !Knocked)
+            KnockOutOfTubes();
+        else m_uiKnock -= diff;
 
         // Waterfall
         if(m_uiWaterfall < diff)
@@ -113,8 +76,31 @@ void BattleGroundDS::StartingEventCloseDoors()
 void BattleGroundDS::StartingEventOpenDoors()
 {
     OpenDoorEvent(BG_EVENT_DOOR);
+    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+        m_lPlrInTube.push_back(itr->first);
 }
 
+void BattleGroundDS::KnockOutOfTubes()
+{
+    DespawnEvent(DOORS_EVENT, 0);
+    for(std::list<uint64>::const_iterator iter = m_lPlrInTube.begin(); iter != m_lPlrInTube.end(); ++iter)
+    {
+//    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+//    {
+        Player * plr = sObjectMgr.GetPlayer(*iter);
+        if (plr->GetTeam() == ALLIANCE && plr->GetDistance2d(1214, 765) <= 50 && plr->GetPositionZ() > 10)
+            plr->KnockWithAngle(6.05f, 35.0f, 7.0f);
+        if (plr->GetTeam() == HORDE && plr->GetDistance2d(1369, 817) <= 50 && plr->GetPositionZ() > 10)
+            plr->KnockWithAngle(3.03f, 35.0f, 7.0f);
+
+        // Remove Demonic Circle
+        if (plr->getClass() == CLASS_WARLOCK)
+            if (GameObject* obj = plr->GetGameObject(48018))
+                obj->Delete();
+    }
+    if(m_lPlrInTube.empty())
+        Knocked = true;
+}
 void BattleGroundDS::WaterfallSpawn()
 {
     SpawnEvent(WATERFALL_EVENT, 0, true);
@@ -192,7 +178,7 @@ void BattleGroundDS::HandleAreaTrigger(Player *Source, uint32 Trigger)
     {
         case 5347:
         case 5348:
-            break;
+            m_lPlrInTube.remove(Source->GetGUID());
         default:
             sLog.outError("WARNING: Unhandled AreaTrigger in Battleground: %u", Trigger);
             Source->GetSession()->SendAreaTriggerMessage("Warning: Unhandled AreaTrigger in Battleground: %u", Trigger);
@@ -214,10 +200,9 @@ void BattleGroundDS::Reset()
 {
     //call parent's class reset
     BattleGround::Reset();
-    m_uiKnockback = 5000;
-    KnockbackSpam = false;
-    KnockbackCheck = true;
-    DoorsDespawned = false;
+    m_lPlrInTube.clear();
+    m_uiKnock = urand(10,15)*IN_MILLISECONDS;
+    Knocked = true;
     WaterfallActivated = false;
 }
 
