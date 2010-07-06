@@ -2533,17 +2533,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 }
                 break;
             }
-            case SPELLFAMILY_ROGUE:
-            {
-                // Tricks of Trade
-                if (m_spellProto->Id == 57934)
-                {
-                    if (Spell* tot = m_target->FindCurrentSpellBySpellId(57934))
-                        if(Unit* altTarget = tot->m_targets.getUnitTarget())
-                            m_modifier.m_miscvalue = altTarget->GetGUID();
-                }
-                break;
-            }
             case SPELLFAMILY_WARRIOR:
             {
                 // Overpower
@@ -2595,6 +2584,32 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 }
                 break;
             }
+            case SPELLFAMILY_ROGUE:
+            {
+                // Tricks of Trade
+                if (m_spellProto->Id == 57934)
+                {
+                    if (Spell* tot = m_target->FindCurrentSpellBySpellId(57934))
+                        if(Unit* altTarget = tot->m_targets.getUnitTarget())
+                            m_modifier.m_miscvalue = altTarget->GetGUID();
+                }
+                break;
+            }
+            case SPELLFAMILY_HUNTER:
+            {
+                // Kill Command
+                if (GetId() == 34026)
+                {
+                    // apply max stack bufs
+                    SpellEntry const* buffEntry = sSpellStore.LookupEntry(34027);
+                    if (!buffEntry)
+                        return;
+
+                    for(uint32 k = 0; k < buffEntry->StackAmount; ++k)
+                        target->CastSpell(target, buffEntry, true, NULL, this);
+                }
+                break;
+            } 
             case SPELLFAMILY_SHAMAN:
             {
                 // Tidal Force
@@ -7246,6 +7261,13 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
                 if (apply && m_target->GetTypeId()==TYPEID_PLAYER)
                     ((Player*)m_target)->RemoveSpellCooldown(61848);
             }
+            // Kill Command
+            else if(GetId() == 34027)
+            {
+                //remove main aura
+               if(!apply)
+                    spellId1 = 34026;
+            } 
             else
                 return;
             break;

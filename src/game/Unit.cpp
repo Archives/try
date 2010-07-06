@@ -5892,6 +5892,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     target = this;
                     break;
                 }
+                // Kill Command (remove stack)
+                case 58914:
+                {
+                    if(Unit *owner = GetOwner())
+                        owner->RemoveSingleSpellAurasFromStack(34027);
+                    return true;
+                } 
                 // Shadowfiend Death (Gain mana if pet dies with Glyph of Shadowfiend)
                 case 57989:
                 {
