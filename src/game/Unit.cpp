@@ -9959,24 +9959,6 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
 
     // Done fixed damage bonus auras
     int32 DoneAdvertisedBenefit = SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto));
-    // ..done custom 
-    if (GetTypeId() == TYPEID_PLAYER) 
-    { 
-        // Impurity 
-        uint32 impurityId = 0; 
-        if (HasSpell(49638)) 
-            impurityId = 49638; 
-        else if (HasSpell(49636)) 
-            impurityId = 49636; 
-        else if (HasSpell(49635)) 
-            impurityId = 49635; 
-        else if (HasSpell(49633)) 
-            impurityId = 49633; 
-        else if (HasSpell(49220)) 
-            impurityId = 49220; 
-        if (const SpellEntry *i_spellProto = sSpellStore.LookupEntry(impurityId)) 
-             bonusApCoeff += float(i_spellProto->CalculateSimpleValue(EFFECT_INDEX_0)) / 100.0f; 
-    } 
 
     // Pets just add their bonus damage to their spell damage
     // note that their spell damage is just gain of their own auras
@@ -10906,25 +10888,6 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
             }
         }
     }
-    // ..done custom 
-    if (GetTypeId() == TYPEID_PLAYER) 
-    { 
-        // Impurity 
-        uint32 impurityId = 0; 
-        if (HasSpell(49638)) 
-           impurityId = 49638; 
-        else if (HasSpell(49636)) 
-           impurityId = 49636; 
-        else if (HasSpell(49635)) 
-           impurityId = 49635; 
-        else if (HasSpell(49633)) 
-           impurityId = 49633; 
-        else if (HasSpell(49220)) 
-           impurityId = 49220; 
- 
-        if (const SpellEntry *i_spellProto = sSpellStore.LookupEntry(impurityId)) 
-           bonusApCoeff += float(i_spellProto->CalculateSimpleValue(EFFECT_INDEX_0)) / 100.0f; 
-    } 
  
     // .. taken pct: SPELL_AURA_284 
     AuraList const& mAuraListAura284 = pVictim->GetAurasByType(SPELL_AURA_284); 
