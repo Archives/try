@@ -14,9 +14,9 @@
 
 ## Prelude, basic settings for Autoconf
 #  PACKAGE:            mangos
-#  VERSION:            0.16.1
+#  VERSION:            0.17.0 (trunk)
 #  BUG-REPORT-ADDRESS: mangos-devs@lists.sourceforge.net
-AC_INIT( [mangos], [0.16.1], [mangos-devs@lists.sourceforge.net])
+AC_INIT( [mangos], [0.17.0], [mangos-devs@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([src/shared/Common.h])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -156,6 +156,7 @@ fi
 #  Use libc-malloc or libtbb-malloc?
 AC_MSG_CHECKING(whether to use libc malloc)
 MANGOSD_STD_MALLOC=no
+TBB_LIBS="-L\$(top_builddir)/dep/tbb -ltbb -ltbbmalloc"
 AC_ARG_WITH(std-malloc,
 [
 Memory allocation options:
@@ -166,6 +167,7 @@ Memory allocation options:
         CFLAGS="-DUSE_STANDARD_MALLOC $CFLAGS"
         CXXFLAGS="-DUSE_STANDARD_MALLOC $CXXFLAGS"
         MANGOSD_STD_MALLOC=yes
+        TBB_LIBS=""
     elif test "$withval" != "no" ; then
         AC_MSG_ERROR(Please choose yes or no)
     fi
