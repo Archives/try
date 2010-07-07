@@ -3568,7 +3568,7 @@ void Spell::finish(bool ok)
         {
             if(m_caster->GetTypeId() == TYPEID_PLAYER)
                 ((Player*)m_caster)->ClearComboPoints();
-            else
+            else if(m_caster->GetCharmer() && m_caster->GetCharmer()->GetTypeId() == TYPEID_PLAYER)
                 ((Player*)m_caster->GetCharmer())->ClearComboPoints();
         }
     }

@@ -279,7 +279,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                     if (!((Creature*)unit)->hasUnitState(UNIT_STAT_MOVING))
                     {
                         // (ok) possibly some "hover" mode
-                        unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
+                        //unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT); //problems sometimes...
                     }
                     else
                     {
@@ -1181,7 +1181,7 @@ void WorldObject::Relocate(float x, float y, float z, float orientation)
     if(isType(TYPEMASK_UNIT))
     {
         ((Unit*)this)->m_movementInfo.ChangePosition(x, y, z, orientation);
-        if(((Creature*)this)->isVehicle() && GetMap())
+        if(GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isVehicle())
             ((Vehicle*)this)->RellocatePassengers(GetMap());
     }
 }
@@ -1195,7 +1195,7 @@ void WorldObject::Relocate(float x, float y, float z)
     if(isType(TYPEMASK_UNIT))
     {
         ((Unit*)this)->m_movementInfo.ChangePosition(x, y, z, GetOrientation());
-        if(((Creature*)this)->isVehicle() && GetMap())
+        if(GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isVehicle())
             ((Vehicle*)this)->RellocatePassengers(GetMap());
     }
 }
