@@ -3073,6 +3073,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 }
                 else
                 {
+                    if(Pet *eye = caster->FindGuardianWithEntry(GetSpellProto()->EffectMiscValue[EFFECT_INDEX_0]))
+                    {
+                        caster->RemoveGuardian(eye);
+                        eye->CombatStop();
+                        eye->AddObjectToRemoveList();
+                    }
                     caster->InterruptSpell(CURRENT_CHANNELED_SPELL);  // the spell is not automatically canceled when interrupted, do it now
                     caster->SetCharm(NULL);
 
@@ -3085,14 +3091,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     // on delete only do caster related effects
                     if(m_removeMode == AURA_REMOVE_BY_DELETE)
                         return;
-
-                    if(Pet *eye = caster->FindGuardianWithEntry(GetSpellProto()->EffectMiscValue[EFFECT_INDEX_0]))
-                    {
-                        caster->RemoveGuardian(eye);
-                        eye->ForcedDespawn();
-                    }
                 }
-                
             }
             break;
         }
