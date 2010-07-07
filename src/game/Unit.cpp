@@ -10299,6 +10299,7 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                     }
                 }
             }
+            break;
         }
         default:
             return false;
