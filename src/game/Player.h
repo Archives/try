@@ -1952,7 +1952,7 @@ class MANGOS_DLL_SPEC Player : public Unit
                 m_DelayedOperations |= operation;
         }
 
-        void CheckExploreSystem(void);
+        void CheckAreaExploreAndOutdoor(void);
 
         static uint32 TeamForRace(uint8 race);
         uint32 GetTeam() const;

@@ -4835,6 +4835,20 @@ void Unit::RemoveAurasWithInterruptFlags(uint32 flags)
     }
 }
 
+void Unit::RemoveAurasWithAttribute(uint32 flags)
+{
+    for (SpellAuraHolderMap::iterator iter = m_spellAuraHolders.begin(); iter != m_spellAuraHolders.end(); )
+    {
+        if (iter->second->GetSpellProto()->Attributes & flags)
+        {
+            RemoveSpellAuraHolder(iter->second);
+            iter = m_spellAuraHolders.begin();
+        }
+        else
+            ++iter;
+    }
+}
+
 void Unit::RemoveNotOwnSingleTargetAuras(uint32 newPhase)
 {
     // single target auras from other casters
@@ -11970,7 +11984,7 @@ void Unit::SetVisibility(UnitVisibility x)
     {
         // some auras requires visible target
         if(m_Visibility == VISIBILITY_GROUP_NO_DETECT || m_Visibility == VISIBILITY_OFF)
-        {   
+        {
             static const AuraType auratypes[] = {SPELL_AURA_BIND_SIGHT, SPELL_AURA_FAR_SIGHT, SPELL_AURA_NONE};
             for (AuraType const* type = &auratypes[0]; *type != SPELL_AURA_NONE; ++type)
             {
