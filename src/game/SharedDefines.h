@@ -2746,4 +2746,30 @@ enum TradeStatus
 // that it not have expansion installed and reject
 #define MAX_EXPANSION 2
 
+enum RandomDungeon
+{
+    RandomDungeon_Daily_Ingvar          = 60,
+    RandomDungeon_Daily_Keristrasza     = 61,
+    RandomDungeon_Daily_Leyguard	    = 62,
+    RandomDungeon_Daily_KingYmiron      = 63,
+    RandomDungeon_Daily_ProphetTharon	= 64,
+    RandomDungeon_Daily_Galdarah	    = 65,
+    RandomDungeon_Daily_Malganis        = 66,
+    RandomDungeon_Daily_Sjonnir         = 67,
+    RandomDungeon_Daily_Loken           = 68,
+    RandomDungeon_Daily_Anubarak        = 69,
+    RandomDungeon_Daily_Herald          = 70,
+    RandomDungeon_Daily_Cyanigosa       = 71,
+};
+#define MAX_RandomDungeon_Daily_EVENT       12
+
+enum RandomTimearForesees
+{
+    RandomTimearForesees_Daily_Centrifuge     = 72,
+    RandomTimearForesees_Daily_Ymirjar        = 73,
+    RandomTimearForesees_Daily_Infinite	      = 74,
+    RandomTimearForesees_Daily_Titanium       = 75,
+};
+#define MAX_RandomTimearForesees_Daily_EVENT       4
+
 #endif

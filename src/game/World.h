@@ -643,6 +643,8 @@ class World
         void ResetDailyQuests();
         void ResetBGDaily();
         void ResetWeeklyQuests();
+        void SelectRandomDungeonDaily();
+        void SelectRandomTimearForeseesDaily();
     private:
         void setConfig(eConfigUInt32Values index, char const* fieldname, uint32 defvalue);
         void setConfig(eConfigInt32Values index, char const* fieldname, int32 defvalue);
