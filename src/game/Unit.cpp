@@ -255,6 +255,7 @@ Unit::Unit()
 
     m_auraUpdateMask = 0;
     m_vehicleGUID = 0;
+    m_fearDispelHp = 0;
 }
 
 Unit::~Unit()
@@ -532,11 +533,24 @@ void Unit::RemoveSpellbyDamageTaken(AuraType auraType, uint32 damage)
     if(!HasAuraType(auraType))
         return;
 
-    // The chance to dispel an aura depends on the damage taken with respect to the casters level.
-    uint32 max_dmg = getLevel() > 8 ? 25 * getLevel() - 150 : 50;
-    float chance = float(damage) / max_dmg * 100.0f;
-    if (roll_chance_f(chance))
-        RemoveSpellsCausingAura(auraType);
+    //Fear dispels after 10% of hp are damaged
+    if(auraType == SPELL_AURA_MOD_FEAR)
+    {
+        m_fearDispelHp -= damage;
+        if(m_fearDispelHp <= 0)
+        {
+            RemoveSpellsCausingAura(auraType);
+            m_fearDispelHp = 0;
+        }
+    }
+    else
+    {
+        // The chance to dispel an aura depends on the damage taken with respect to the casters level.
+        uint32 max_dmg = getLevel() > 8 ? 25 * getLevel() - 150 : 50;
+        float chance = float(damage) / max_dmg * 100.0f;
+        if (roll_chance_f(chance))
+            RemoveSpellsCausingAura(auraType);
+    }
 }
 
 void Unit::DealDamageMods(Unit *pVictim, uint32 &damage, uint32* absorb)
@@ -13813,6 +13827,8 @@ void Unit::SetFeared(bool apply, uint64 const& casterGUID, uint32 spellID, uint3
         Unit* caster = ObjectAccessor::GetUnit(*this,casterGUID);
 
         GetMotionMaster()->MoveFleeing(caster, time);       // caster==NULL processed in MoveFleeing
+        //Set 10% of hp
+        m_fearDispelHp = int32(float(GetHealth())/10.0f);
     }
     else
     {
@@ -13833,6 +13849,7 @@ void Unit::SetFeared(bool apply, uint64 const& casterGUID, uint32 spellID, uint3
             if(caster && ((Creature*)this)->AI())
                 ((Creature*)this)->AI()->AttackedBy(caster);
         }
+        m_fearDispelHp = 0;
     }
 
     if (GetTypeId() == TYPEID_PLAYER && !GetVehicleGUID())

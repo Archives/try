@@ -1945,6 +1945,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         float m_lastAuraProcRoll;
         uint64  m_auraUpdateMask;
         uint64 m_vehicleGUID;
+        int32 m_fearDispelHp;                              // hold hp remaining to fear dispel, filled in SetFeared(), calculating in RemoveSpellbyDamageTaken()
 
     private:
         void CleanupDeletedAuras();
