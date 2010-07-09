@@ -45,6 +45,22 @@ BattleGroundRV::~BattleGroundRV()
 void BattleGroundRV::Update(uint32 diff)
 {
     BattleGround::Update(diff);
+
+    if (GetStatus() != STATUS_IN_PROGRESS)
+        return;
+
+    if (m_uiPillarChanging < diff)
+        ChangeActivePillars();
+    else m_uiPillarChanging -= diff;
+
+    if (m_uiTexturesCheck < diff)
+    {
+        for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+            if (Player* plr = sObjectMgr.GetPlayer(itr->first))
+                if (plr->GetPositionZ() < 25.0f)
+                    HandlePlayerUnderMap(plr);
+        m_uiTexturesCheck = 10*IN_MILLISECONDS;
+    }else m_uiTexturesCheck -= diff;
 }
 
 void BattleGroundRV::StartingEventCloseDoors()
@@ -54,6 +70,27 @@ void BattleGroundRV::StartingEventCloseDoors()
 void BattleGroundRV::StartingEventOpenDoors()
 {
     OpenDoorEvent(BG_EVENT_DOOR);
+
+    // teleport players few yards above
+    for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+        if (Player* plr = sObjectMgr.GetPlayer(itr->first))
+            plr->TeleportTo(plr->GetMapId(), plr->GetPositionX(), plr->GetPositionY(), plr->GetPositionZ()+5.0f, plr->GetOrientation(), TELE_TO_NOT_LEAVE_TRANSPORT);
+}
+
+void BattleGroundRV::ChangeActivePillars()
+{
+    for(uint8 event1 = BATTLEGROUND_RV_EVENT_PILLARS; event1 <= BATTLEGROUND_RV_EVENT_PILLARS_EQUIPMENT; ++event1)
+        for(uint8 event2 = BATTLEGROUND_RV_SUBEVENT_PILLARS_FAR; event2 <= BATTLEGROUND_RV_SUBEVENT_PILLARS_NEAR; ++event2)
+            ClickEvent(event1, event2);
+
+    m_uiPillarChanging = urand(25,35)*IN_MILLISECONDS;
+}
+
+void BattleGroundRV::ClickEvent(uint8 event1, uint8 event2 /*=0*/)
+{
+    BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.begin();
+    for(; itr != m_EventObjects[MAKE_PAIR32(event1, event2)].gameobjects.end(); ++itr)
+        DoorOpen(*itr);
 }
 
 void BattleGroundRV::AddPlayer(Player *plr)
@@ -122,6 +159,8 @@ void BattleGroundRV::Reset()
     //call parent's class reset
     BattleGround::Reset();
     m_uiTeleport = 22000;
+    m_uiPillarChanging = urand(25,35)*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
+    m_uiTexturesCheck = 10*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
 }
 
 void BattleGroundRV::FillInitialWorldStates(WorldPacket &data, uint32& count)
