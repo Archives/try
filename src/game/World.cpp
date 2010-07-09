@@ -1438,6 +1438,8 @@ void World::Update(uint32 diff)
     {
         ResetDailyQuests();
         ResetBGDaily();
+        SelectRandomDungeonDaily();
+        SelectRandomTimearForeseesDaily();
     }
 
     /// Handle weekly quests reset time
@@ -2074,6 +2076,42 @@ void World::ResetWeeklyQuests()
 
     m_NextWeeklyQuestReset = time_t(m_NextWeeklyQuestReset + WEEK);
     CharacterDatabase.PExecute("UPDATE saved_variables SET NextWeeklyQuestResetTime = '"UI64FMTD"'", uint64(m_NextWeeklyQuestReset));
+}
+
+void World::SelectRandomDungeonDaily()
+{
+	//Delay all events
+	for(uint8 eventId = 0; eventId < MAX_RandomDungeon_Daily_EVENT; ++eventId)
+    {
+        sGameEventMgr.StopEvent(RandomDungeon_Daily_Ingvar+eventId);
+        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %u", RandomDungeon_Daily_Ingvar+eventId);
+    }
+    //Start new event  
+    uint8 random;
+
+    while (1)
+    {
+        random = urand(0,11);
+        if (random==0 || random == 1 || random == 4 || random == 5 || random == 8 || random == 9 || random == 10 || random == 11)
+            break;
+    }
+        
+    sGameEventMgr.StartEvent(RandomDungeon_Daily_Ingvar+random);
+    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", RandomDungeon_Daily_Ingvar+random);
+}
+
+void World::SelectRandomTimearForeseesDaily()
+{
+	//Delay all events
+	for(uint8 eventId = 0; eventId < MAX_RandomTimearForesees_Daily_EVENT; ++eventId)
+    {
+        sGameEventMgr.StopEvent(RandomTimearForesees_Daily_Centrifuge+eventId);
+        WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %u",RandomTimearForesees_Daily_Centrifuge+eventId);
+    }
+    //Start new event  
+    uint8 random = /*urand(0,3)*/3;
+    sGameEventMgr.StartEvent(RandomTimearForesees_Daily_Centrifuge+random);
+    WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", RandomTimearForesees_Daily_Centrifuge+random);
 }
 
 void World::SetPlayerLimit( int32 limit, bool needUpdate )
