@@ -3266,6 +3266,9 @@ void Spell::EffectPowerDrain(SpellEffectIndex eff_idx)
 
         m_caster->EnergizeBySpell(m_caster, m_spellInfo->Id, gain, POWER_MANA);
     }
+    //"Mana Burn will instantly break Fear, Hex and Psychic Scream."
+    unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_FEAR);
+    unitTarget->RemoveAurasDueToSpell(51514); // Hex
 }
 
 void Spell::EffectSendEvent(SpellEffectIndex effectIndex)

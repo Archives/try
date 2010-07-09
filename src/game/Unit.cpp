@@ -626,11 +626,18 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         return 0;
     }
+    uint32 removeDamageValue = 0;
+    if(damagetype == DOT)
+    {
+        //Limit DOTs somehow
+        removeDamageValue = uint32(float(damage+absorb)*0.33f);
+    }else removeDamageValue = damage + absorb;
+
     if (!spellProto || !IsSpellHaveAura(spellProto,SPELL_AURA_MOD_FEAR))
-        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_FEAR, damage + absorb);
+        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_FEAR, removeDamageValue);
     // root type spells do not dispel the root effect
     if (!spellProto || !(spellProto->Mechanic == MECHANIC_ROOT || IsSpellHaveAura(spellProto,SPELL_AURA_MOD_ROOT)))
-        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_ROOT, damage + absorb);
+        pVictim->RemoveSpellbyDamageTaken(SPELL_AURA_MOD_ROOT, removeDamageValue);
 
     WeaponAttackType attType = GetWeaponAttackType(spellProto);
     
