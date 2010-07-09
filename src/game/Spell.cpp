@@ -2555,8 +2555,47 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 m_caster->GetClosePoint(_target_x, _target_y, _target_z, m_caster->GetObjectBoundingRadius(), dist);
                 m_targets.setDestination(_target_x, _target_y, _target_z);
             }
-
             targetUnitMap.push_back(m_caster);
+            break;
+        }
+        case TARGET_BASE_VEHICLE:
+        {
+            if(m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->isVehicle())
+            {
+                Unit *baseVeh = m_caster;
+                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID())
+                {
+                    //Find lowest level of vehicle
+                    for(Vehicle *curVeh = ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()); curVeh != NULL; curVeh = ObjectAccessor::GetVehicle(curVeh->GetVehicleGUID()))
+                        baseVeh = (Unit*)curVeh;
+                }
+                targetUnitMap.push_back(baseVeh);
+            }else
+                targetUnitMap.push_back(m_caster);
+            break;
+        }
+        case TARGET_NEXT_PASSENGER:
+        {
+            if(m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->isVehicle())
+            {
+                Vehicle *baseVeh = (Vehicle*)m_caster;
+                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID())
+                {
+                    //Find lowest level of vehicle
+                    for(Vehicle *curVeh = ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()); curVeh != NULL; curVeh = ObjectAccessor::GetVehicle(curVeh->GetVehicleGUID()))
+                        baseVeh = curVeh;
+                }
+
+                for(uint8 i = 0; i < MAX_SEAT; ++i)
+                {
+                    if(Unit *passenger = baseVeh->GetGetPassenger(i))
+                    {
+                        //Should be check here..
+                        targetUnitMap.push_back(passenger);
+                    }
+                }
+            }else
+                targetUnitMap.push_back(m_caster);
             break;
         }
         case TARGET_EFFECT_SELECT:

@@ -77,4 +77,30 @@ void SpellMgr::ApplySpellHacks()
     sfix8->EffectMiscValueB[EFFECT_INDEX_1] = 0;
     sfix8->EffectTriggerSpell[EFFECT_INDEX_0] = 57988;
     sfix8->EffectTriggerSpell[EFFECT_INDEX_1] = 0;
+
+    //Hurl Boulder
+    SpellEntry *sfix9 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62307));
+    sfix9->EffectImplicitTargetA[EFFECT_INDEX_0] = 16;
+    sfix9->EffectImplicitTargetA[EFFECT_INDEX_2] = 16;
+    sfix9->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+
+    //Hurl Pyrite boulder
+    SpellEntry *sfix10 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62489));
+    sfix10->EffectImplicitTargetA[EFFECT_INDEX_0] = 16;
+    sfix10->EffectImplicitTargetA[EFFECT_INDEX_1] = 16;
+    sfix10->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+
+    //Anti-air rocket
+    SpellEntry *sfix11 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62363));
+    sfix11->EffectImplicitTargetA[EFFECT_INDEX_0] = 16;
+    sfix11->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+    
+    //Mortar
+    SpellEntry *sfix12 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62635));
+    sfix12->EffectImplicitTargetA[EFFECT_INDEX_0] = 16;
+    sfix12->EffectImplicitTargetA[EFFECT_INDEX_1] = 52;
+    sfix12->EffectImplicitTargetA[EFFECT_INDEX_2] = 16;
+    sfix12->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+    sfix12->EffectImplicitTargetB[EFFECT_INDEX_1] = 0;
+    sfix12->EffectImplicitTargetB[EFFECT_INDEX_2] = 0;
 }
