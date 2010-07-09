@@ -354,6 +354,10 @@ void Creature::Update(uint32 diff)
             return;
     }
 
+    //Need to update objects even if they cant be seen by any player, need to know what will this do
+    if(!m_isActiveObject)
+        m_isActiveObject = true;
+
     switch( m_deathState )
     {
         case JUST_ALIVED:

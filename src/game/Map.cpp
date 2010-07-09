@@ -286,7 +286,7 @@ Map::EnsureGridCreated(const GridPair &p)
             // build a linkage between this map and NGridType
             buildNGridLinkage(getNGrid(p.x_coord, p.y_coord));
 
-            getNGrid(p.x_coord, p.y_coord)->SetGridState(GRID_STATE_IDLE);
+            getNGrid(p.x_coord, p.y_coord)->SetGridState(GRID_STATE_ACTIVE);
 
             //z coord
             int gx = (MAX_NUMBER_OF_GRIDS - 1) - p.x_coord;
