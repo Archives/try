@@ -44,6 +44,7 @@
 #include "VMapFactory.h"
 #include "BattleGround.h"
 #include "Util.h"
+#include "Vehicle.h"
 
 #define SPELL_CHANNEL_UPDATE_INTERVAL (1 * IN_MILLISECONDS)
 
@@ -2563,7 +2564,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->isVehicle())
             {
                 Unit *baseVeh = m_caster;
-                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID())
+                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()))
                 {
                     //Find lowest level of vehicle
                     for(Vehicle *curVeh = ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()); curVeh != NULL; curVeh = ObjectAccessor::GetVehicle(curVeh->GetVehicleGUID()))
@@ -2579,7 +2580,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->isVehicle())
             {
                 Vehicle *baseVeh = (Vehicle*)m_caster;
-                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID())
+                if(ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()))
                 {
                     //Find lowest level of vehicle
                     for(Vehicle *curVeh = ObjectAccessor::GetVehicle(m_caster->GetVehicleGUID()); curVeh != NULL; curVeh = ObjectAccessor::GetVehicle(curVeh->GetVehicleGUID()))
@@ -2588,7 +2589,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
                 for(uint8 i = 0; i < MAX_SEAT; ++i)
                 {
-                    if(Unit *passenger = baseVeh->GetGetPassenger(i))
+                    if(Unit *passenger = baseVeh->GetPassenger(i))
                     {
                         //Should be check here..
                         targetUnitMap.push_back(passenger);

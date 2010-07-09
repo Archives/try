@@ -14610,11 +14610,11 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     ExitVehicle();
 
     RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-    // NOTE : shapeshift too?
+    RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
 
     Vehicle *v = vehicle->FindFreeSeat(&seat_id, force);
     if(!v)
-        return;
+        return;   
 
     VehicleEntry const *ve = sVehicleStore.LookupEntry(v->GetVehicleId());
     if(!ve)
@@ -14624,12 +14624,21 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seat_id, bool force)
     if(!veSeat)
         return;
 
-    m_movementInfo.SetTransportData(v->GetGUID(),
-        (veSeat->m_attachmentOffsetX + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
-        (veSeat->m_attachmentOffsetY + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
-        (veSeat->m_attachmentOffsetZ + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
-        veSeat->m_passengerYaw, v->GetCreationTime(), seat_id, veSeat->m_ID,
-        sObjectMgr.GetSeatFlags(veSeat->m_ID), v->GetVehicleFlags());
+    if(v->GetVehicleGUID())
+    {
+        MovementInfo mi = v->m_movementInfo;
+        m_movementInfo.SetTransportData(mi.GetTransportGuid(), mi.GetTransportPos()->x, mi.GetTransportPos()->y, mi.GetTransportPos()->z, mi.GetTransportPos()->o,
+            mi.GetTransportTime(), mi.GetTransportSeat(), mi.GetTransportDBCSeat(), mi.GetVehicleSeatFlags(), mi.GetVehicleFlags()); 
+    }
+    else
+    {
+        m_movementInfo.SetTransportData(v->GetGUID(),
+            (veSeat->m_attachmentOffsetX + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+            (veSeat->m_attachmentOffsetY + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+            (veSeat->m_attachmentOffsetZ + v->GetObjectBoundingRadius()) * GetFloatValue(OBJECT_FIELD_SCALE_X),
+            veSeat->m_passengerYaw, v->GetCreationTime(), seat_id, veSeat->m_ID,
+            sObjectMgr.GetSeatFlags(veSeat->m_ID), v->GetVehicleFlags());
+    }
 
     addUnitState(UNIT_STAT_ON_VEHICLE);
     InterruptNonMeleeSpells(false);

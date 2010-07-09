@@ -604,13 +604,15 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     int8 seatId;
     recv_data >> seatId;
 
+    Vehicle *base = ObjectAccessor::GetVehicle(vehicleGUID);
+
     if(guid.GetRawValue() == guid2.GetRawValue())
         _player->ChangeSeat(seatId, false);
     else if(Vehicle *vehicle = ObjectAccessor::GetVehicle(guid2.GetRawValue()))
     {
-        if(vehicle->HasEmptySeat(seatId))
+        if(vehicle->HasEmptySeat(seatId) && base)
         {
-            _player->ExitVehicle();
+            base->RemovePassenger(_player);
             _player->EnterVehicle(vehicle, seatId);
         }
     }

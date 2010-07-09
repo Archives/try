@@ -771,7 +771,7 @@ void Vehicle::InstallAllAccessories()
         // ...and send update. Without this, client wont show this new creature/vehicle...
         WorldPacket data;
         pPassenger->BuildHeartBeatMsg(&data);
-        pPassenger->SendMessageToSet(&data, false);
+     //   pPassenger->SendMessageToSet(&data, false);
     }
 }
 Unit *Vehicle::GetPassenger(int8 seatId) const

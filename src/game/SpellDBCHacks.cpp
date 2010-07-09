@@ -103,4 +103,19 @@ void SpellMgr::ApplySpellHacks()
     sfix12->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
     sfix12->EffectImplicitTargetB[EFFECT_INDEX_1] = 0;
     sfix12->EffectImplicitTargetB[EFFECT_INDEX_2] = 0;
+
+    //Fire cannon 62357
+    SpellEntry *sfix13 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62357));
+    sfix13->EffectImplicitTargetA[EFFECT_INDEX_0] = 16;
+    sfix13->EffectImplicitTargetA[EFFECT_INDEX_2] = 16;
+    sfix13->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+
+    //Blue pyrite
+    SpellEntry *sfix14 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(68605));
+    sfix14->EffectImplicitTargetA[EFFECT_INDEX_0] = 8;
+
+    //Flames
+    SpellEntry *sfix15 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(65045));
+    sfix15->EffectImplicitTargetA[EFFECT_INDEX_0] = 8;
+    sfix15->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
 }
