@@ -602,6 +602,7 @@ class BattleGround
         bool   m_PrematureCountDown;
         uint32 m_PrematureCountDownTimer;
         bool   m_ArenaEnded;
+        uint32 m_ArenaDuration;
         char const *m_Name;
 
         /* Player lists */

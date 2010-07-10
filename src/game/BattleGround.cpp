@@ -267,10 +267,11 @@ BattleGround::BattleGround()
     m_TeamScores[BG_TEAM_ALLIANCE]      = 0;
     m_TeamScores[BG_TEAM_HORDE]         = 0;
 
-    m_PrematureCountDown = false;
-    m_PrematureCountDown = 0;
+    m_PrematureCountDown                = false;
+    m_PrematureCountDown                = 0;
 
-    m_ArenaEnded = false;
+    m_ArenaEnded                        = false;
+    m_ArenaDuration                     = 0;
 
     m_StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_2M;
     m_StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_1M;
@@ -545,6 +546,10 @@ void BattleGround::Update(uint32 diff)
         }
     }
 
+    // Arena duration
+    if(isArena() && isRated())
+        m_ArenaDuration += float(diff)/1000;
+    
     //update start time
     m_StartTime += diff;
 }
@@ -813,10 +818,13 @@ void BattleGround::EndBattleGround(uint32 winner)
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
             basic << "Bracket: " << winner_arena_team->GetType() << " Rating change: " << winner_change << "/" << loser_change ;
 
-            table << "bracket, date, rat_change, winner_team, loser_team, " ;
-            tabledata << winner_arena_team->GetType() << ", '" << sLog.GetTimestampStr().c_str() << "', '" << winner_change << "/" << loser_change << "', '" 
-                << winner_arena_team->GetName().c_str() << " (" << winner_rating << ")', '"
-                << loser_arena_team->GetName().c_str() << " (" << loser_rating << ")', ";
+            table << "rat_change, winner, winner_orig_rat, loser, loser_orig_rat, arena_duration" ;
+            tabledata << "'" << winner_change << "/" << loser_change << "', '" 
+                << winner_arena_team->GetName().c_str() << "', " 
+                << winner_rating << ", '"
+                << loser_arena_team->GetName().c_str() << "', " 
+                << loser_rating << "', "
+                << m_ArenaDuration << ", ";
         }
         else
         {
@@ -839,6 +847,8 @@ void BattleGround::EndBattleGround(uint32 winner)
                     winner_arena_team->OfflineMemberLost(itr->first, loser_rating);
                 else
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
+                char const* a = (team == winner) ? "win" : "lose";
+                sLog.outArenaLog(" LEAVER:: Player (GUID: %u) %s arena match, but not in arena during EndBattleGround", GUID_LOPART(itr->first), a);
             }
             continue;
         }
@@ -877,7 +887,12 @@ void BattleGround::EndBattleGround(uint32 winner)
         if (isArena() && isRated() && winner_arena_team && loser_arena_team)
         {
             int32 change;
-            QueryResult *result = LoginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow());
+            std::ostringstream getip;
+            if (QueryResult *result = LoginDatabase.PQuery("SELECT last_ip FROM realmd.account WHERE id in (SELECT account FROM characters.characters WHERE guid = %u)", plr->GetGUIDLow()))
+                getip << result->Fetch()[0].GetString();
+            else
+                getip << "ERROR: ip not found";
+
             if (team == winner)
             {
                 // update achievement BEFORE personal rating update
@@ -887,17 +902,17 @@ void BattleGround::EndBattleGround(uint32 winner)
 
                 change = winner_arena_team->MemberWon(plr,loser_rating);
 
-                table << "winner_member_" << winner_count << ", ";
-                
-                std::ostringstream memberdata;
-                memberdata << plr->GetName() << " [";
-                if(result)
-                    memberdata << result->Fetch()[0].GetString();
-                else
-                    memberdata << "ERROR: ip not found";
-                memberdata << "] (" << change;
-                winner_string << memberdata.str().c_str() << "), ";
-                tabledata << "'" << memberdata.str().c_str() << ")', ";
+                if (winner_count <= winner_arena_team->GetType())
+                {
+                    // log part      name                      ip                              personal change
+                    winner_string << plr->GetName() << " [" << getip.str().c_str() << "] (" << change << "), ";
+
+                    // DB part
+                    table << "winner_member_" << winner_count << ", "
+                          << "winner_member_" << winner_count << "_ip, ";
+                    //           name                       ip
+                    tabledata << plr->GetName() <<  ", " << getip.str().c_str() << ", ";
+                }
                 winner_count++;
             }
             else
@@ -907,17 +922,17 @@ void BattleGround::EndBattleGround(uint32 winner)
                 // Arena lost => reset the win_rated_arena having the "no_loose" condition
                 plr->GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA, ACHIEVEMENT_CRITERIA_CONDITION_NO_LOOSE);
  
-                table << "loser_member_" << loser_count << ", ";
-                
-                std::ostringstream memberdata;
-                memberdata << plr->GetName() << " [";
-                if(result)
-                    memberdata << result->Fetch()[0].GetString();
-                else
-                    memberdata << "ERROR: ip not found";
-                memberdata << "] (" << change;
-                loser_string << memberdata.str().c_str() << "), ";
-                tabledata << "'" << memberdata.str().c_str() << ")', ";
+                if (loser_count <= loser_arena_team->GetType())
+                {
+                    // log part      name                      ip                              personal change
+                    loser_string << plr->GetName() << " [" << getip.str().c_str() << "] (" << change << "), ";
+
+                    // DB part
+                    table << "loser_member_" << loser_count << ", "
+                          << "loser_member_" << loser_count << "_ip, ";
+                    //           name                       ip
+                    tabledata << plr->GetName() <<  ", " << getip.str().c_str() << ", ";
+                }
                 loser_count++;
             }
         }
@@ -953,10 +968,8 @@ void BattleGround::EndBattleGround(uint32 winner)
         winner_string << ")";
         loser_string << ")";
         sLog.outArenaLog("%s %s %s", basic.str().c_str(), winner_string.str().c_str(), loser_string.str().c_str());
-        table << "arena_duration";
-        tabledata << m_StartTime/1000 - 60;
         std::ostringstream dbstring;
-        dbstring << "INSERT INTO arena_log (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
+        dbstring << "INSERT INTO arena_log_" << winner_arena_team->GetType() << " (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
         CharacterDatabase.PExecute( dbstring.str().c_str() );
         sLog.outString( dbstring.str().c_str() );
     }
