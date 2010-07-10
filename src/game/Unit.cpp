@@ -6514,6 +6514,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     // triggered_spell_id in spell data
                     break;
                 }
+                case 55680:
+                {
+                    basepoints[0] = triggerAmount * damage / 50;
+                    target = this;
+                    triggered_spell_id = 56161;
+                    break;
+                }
             }
             break;
         }
