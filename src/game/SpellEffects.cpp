@@ -3701,6 +3701,9 @@ void Spell::EffectEnergize(SpellEffectIndex eff_idx)
         case 48542:                                         // Revitalize (mana restore case)
             damage = damage * unitTarget->GetMaxPower(POWER_MANA) / 100;
             break;
+        case 71132:
+            damage = m_caster->GetCreateMana() / 100;
+            break;
         default:
             break;
     }
