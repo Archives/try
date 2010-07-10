@@ -54,6 +54,7 @@ class BattleGroundRV : public BattleGround
         virtual void StartingEventCloseDoors();
         virtual void StartingEventOpenDoors();
 
+        bool ObjectInLOS(Unit* caster, Unit* target);
         void RemovePlayer(Player *plr, uint64 guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();

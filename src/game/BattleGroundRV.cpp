@@ -174,3 +174,26 @@ bool BattleGroundRV::SetupBattleGround()
 {
     return true;
 }
+
+bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
+{
+    for(uint8 i = 0; i < 2; ++i)
+    {
+        BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.begin();
+        for(; itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
+        {
+            GameObject *obj = GetBgMap()->GetGameObject(*itr);
+            if(!obj)
+                continue;
+            float a, b, c, v, r;
+            a = caster->GetDistance2d(obj);
+            b = target->GetDistance2d(obj);
+            c = caster->GetDistance2d(target);
+            v = (sqrt(-pow(a, 4) + 2*pow(a,2)*pow(b,2) + 2*pow(a,2)*pow(c,2) - pow(b,4) + 2*pow(b,2)*pow(c,2) - pow(c,4)))/(2*b);
+            r = obj->GetObjectBoundingRadius();
+            if(r > v)
+                return true;
+        }
+    }
+    return false;
+}
