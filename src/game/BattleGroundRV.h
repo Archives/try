@@ -19,6 +19,18 @@
 #define __BATTLEGROUNDRV_H
 
 class BattleGround;
+enum
+{
+    BATTLEGROUND_RV_EVENT_PILLARS               = 250,
+    BATTLEGROUND_RV_EVENT_PILLARS_EQUIPMENT     = 251,
+    BATTLEGROUND_RV_EVENT_BUFFS                 = 252,
+    BATTLEGROUND_RV_EVENT_ELEVATORS             = 254,
+    
+    BATTLEGROUND_RV_SUBEVENT_PILLARS_FAR        = 0,
+    BATTLEGROUND_RV_SUBEVENT_PILLARS_NEAR       = 1,
+
+    BATTLEGROUND_RV_ELEVATING_TIME              = 18000,
+};
 
 class BattleGroundRVScore : public BattleGroundScore
 {
@@ -50,6 +62,10 @@ class BattleGroundRV : public BattleGround
         void HandleKillPlayer(Player* player, Player *killer);
         bool HandlePlayerUnderMap(Player * plr);
     private:
+        void ChangeActivePillars();
+        void ClickEvent(uint8 event1, uint8 event2 /*=0*/);
         uint32 m_uiTeleport;
+        uint32 m_uiPillarChanging;
+        uint32 m_uiTexturesCheck;
 };
 #endif
