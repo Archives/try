@@ -1925,6 +1925,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if(m_spellInfo->Id == 62363)
             {
                 UnitList tempTargetUnitMap;
+                UnitList correctTargets;
                 //This will fill targets on angle only in 2d, must calculate height
                 SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
                 float range = srange->maxRange;
@@ -1934,23 +1935,20 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
                     {
                         if ((*iter)->GetTypeId() != TYPEID_UNIT)
-                        {
-                            tempTargetUnitMap.erase(iter);
                             continue;
-                        }
                         Unit *pTarget = (Unit*)(*iter);
                         float distance = pTarget->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY);
                         float diff = distance/(1/tan(m_targets.m_elevation));
                         float currentZdiff = fabs(pTarget->GetPositionZ() - m_targets.m_srcZ);
                         //Add some reserve and remove those which do not fit
-                        if(!(currentZdiff => diff-0.5f && currentZdiff <= diff+0.5f))
-                            tempTargetUnitMap.erase(iter);
+                        if(!(currentZdiff >= diff-0.5f && currentZdiff <= diff+0.5f))
+                            correctTargets.push_back(*iter);
                     }
-                    if (tempTargetUnitMap.empty())
+                    if (correctTargets.empty())
                         break;
                     //Find first in line
                     WorldObject *firstTarget = (*(tempTargetUnitMap.begin()));
-                    for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                    for (UnitList::const_iterator iter = correctTargets.begin(); iter != correctTargets.end(); ++iter)
                     {
                         float distance = (*iter)->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY);
                         if(distance < firstTarget->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY))
