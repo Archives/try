@@ -77,7 +77,8 @@ enum SpellNotifyPushType
     PUSH_IN_BACK,
     PUSH_SELF_CENTER,
     PUSH_DEST_CENTER,
-    PUSH_TARGET_CENTER
+    PUSH_TARGET_CENTER,
+    PUSH_LINE
 };
 
 bool IsQuestTameSpell(uint32 spellId);
@@ -702,7 +703,7 @@ namespace MaNGOS
         bool i_playerControled;
 
         SpellNotifierCreatureAndPlayer(Spell &spell, std::list<Unit*> &data, float radius, SpellNotifyPushType type,
-            SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY, WorldObject* originalCaster = NULL)
+            SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY, WorldObject* originalCaster = NULL, const Position *pos = NULL)
             : i_data(&data), i_spell(spell), i_push_type(type), i_radius(radius), i_TargetType(TargetType),
             i_originalCaster(originalCaster)
         {
@@ -801,6 +802,16 @@ namespace MaNGOS
                     case PUSH_TARGET_CENTER:
                         if(i_spell.m_targets.getUnitTarget()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
                             i_data->push_back(itr->getSource());
+                        break;
+                    case PUSH_LINE:
+                        if(i_spell.GetCaster()->HasInArc(M_PI, itr->getSource(), i_spell.m_targets.m_srcO) &&
+                            itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
+                        {
+                            float width = itr->getSource()->GetObjectBoundingRadius();
+                            float relativeAngle = itr->getSource()->GetAngle(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY) - itr->getSource()->GetOrientation();
+                            if(abs(sin(relativeAngle)) * itr->getSource()->GetDistance2d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY) < width)
+                                i_data->push_back(itr->getSource());
+                        }
                         break;
                 }
             }

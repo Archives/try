@@ -1921,6 +1921,48 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_AREAEFFECT_CUSTOM:
         case TARGET_AREAEFFECT_CUSTOM_2:
         {
+            //Anti-air rocket - trajectory type
+            if(m_spellInfo->Id == 62363)
+            {
+                UnitList tempTargetUnitMap;
+                //This will fill targets on angle only in 2d, must calculate height
+                SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
+                float range = srange->maxRange;
+                FillAreaTargets(tempTargetUnitMap, m_targets.m_destX, m_targets.m_destY, range, PUSH_LINE, SPELL_TARGETS_HOSTILE);
+                if (!tempTargetUnitMap.empty())
+                {
+                    for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                    {
+                        if ((*iter)->GetTypeId() != TYPEID_UNIT)
+                        {
+                            tempTargetUnitMap.erase(iter);
+                            continue;
+                        }
+                        Unit *pTarget = (Unit*)(*iter);
+                        float distance = pTarget->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY);
+                        float diff = distance/(1/tan(m_targets.m_elevation));
+                        float currentZdiff = fabs(pTarget->GetPositionZ() - m_targets.m_srcZ);
+                        //Add some reserve and remove those which do not fit
+                        if(!(currentZdiff => diff-0.5f && currentZdiff <= diff+0.5f))
+                            tempTargetUnitMap.erase(iter);
+                    }
+                    if (tempTargetUnitMap.empty())
+                        break;
+                    //Find first in line
+                    WorldObject *firstTarget = (*(tempTargetUnitMap.begin()));
+                    for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                    {
+                        float distance = (*iter)->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY);
+                        if(distance < firstTarget->GetDistance2d(m_targets.m_srcX, m_targets.m_srcY))
+                            firstTarget = *iter;
+                    }
+                    //Set destination and code below should do the rest
+                    m_targets.m_destX = firstTarget->GetPositionX();
+                    m_targets.m_destY = firstTarget->GetPositionY();
+                    m_targets.m_destZ = firstTarget->GetPositionZ();
+                }
+            }
+
             if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 break;
             else if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_SUMMON)
