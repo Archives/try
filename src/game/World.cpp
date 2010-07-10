@@ -2077,6 +2077,8 @@ void World::ResetWeeklyQuests()
     m_NextWeeklyQuestReset = time_t(m_NextWeeklyQuestReset + WEEK);
     CharacterDatabase.PExecute("UPDATE saved_variables SET NextWeeklyQuestResetTime = '"UI64FMTD"'", uint64(m_NextWeeklyQuestReset));
 }
+#define OpenedHCs       8
+#define OpenedNormals   1
 
 void World::SelectRandomDungeonDaily()
 {
@@ -2088,13 +2090,9 @@ void World::SelectRandomDungeonDaily()
     }
     //Start new event  
     uint8 random;
+    static uint8 ToSelect[OpenedHCs] = {0,1,4,5,8,9,10,11};
 
-    while (1)
-    {
-        random = urand(0,11);
-        if (random==0 || random == 1 || random == 4 || random == 5 || random == 8 || random == 9 || random == 10 || random == 11)
-            break;
-    }
+    random = ToSelect[urand(0,OpenedHCs-1)];
         
     sGameEventMgr.StartEvent(RandomDungeon_Daily_Ingvar+random);
     WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", RandomDungeon_Daily_Ingvar+random);
@@ -2109,7 +2107,11 @@ void World::SelectRandomTimearForeseesDaily()
         WorldDatabase.PExecute("UPDATE game_event SET occurence = 5184000 WHERE entry = %u",RandomTimearForesees_Daily_Centrifuge+eventId);
     }
     //Start new event  
-    uint8 random = /*urand(0,3)*/3;
+    uint8 random;
+    static uint8 ToSelect[OpenedNormals] = {3};
+
+    random = ToSelect[urand(0,OpenedNormals-1)];
+
     sGameEventMgr.StartEvent(RandomTimearForesees_Daily_Centrifuge+random);
     WorldDatabase.PExecute("UPDATE game_event SET occurence = 1400 WHERE entry = %u", RandomTimearForesees_Daily_Centrifuge+random);
 }
