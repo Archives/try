@@ -818,13 +818,12 @@ void BattleGround::EndBattleGround(uint32 winner)
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
             basic << "Bracket: " << winner_arena_team->GetType() << " Rating change: " << winner_change << "/" << loser_change ;
 
-            table << "rat_change, winner, winner_orig_rat, loser, loser_orig_rat, arena_duration" ;
+            table << "rat_change, winner, winner_orig_rat, loser, loser_orig_rat, " ;
             tabledata << "'" << winner_change << "/" << loser_change << "', '" 
                 << winner_arena_team->GetName().c_str() << "', " 
                 << winner_rating << ", '"
                 << loser_arena_team->GetName().c_str() << "', " 
-                << loser_rating << "', "
-                << m_ArenaDuration << ", ";
+                << loser_rating << ", ";
         }
         else
         {
@@ -910,8 +909,8 @@ void BattleGround::EndBattleGround(uint32 winner)
                     // DB part
                     table << "winner_member_" << winner_count << ", "
                           << "winner_member_" << winner_count << "_ip, ";
-                    //           name                       ip
-                    tabledata << plr->GetName() <<  ", " << getip.str().c_str() << ", ";
+                    //                  name                        ip
+                    tabledata << "'" << plr->GetName() << "', '" << getip.str().c_str() << "', ";
                 }
                 winner_count++;
             }
@@ -930,8 +929,8 @@ void BattleGround::EndBattleGround(uint32 winner)
                     // DB part
                     table << "loser_member_" << loser_count << ", "
                           << "loser_member_" << loser_count << "_ip, ";
-                    //           name                       ip
-                    tabledata << plr->GetName() <<  ", " << getip.str().c_str() << ", ";
+                    //                  name                        ip
+                    tabledata << "'" << plr->GetName() << "', '" << getip.str().c_str() << "', ";
                 }
                 loser_count++;
             }
@@ -968,6 +967,8 @@ void BattleGround::EndBattleGround(uint32 winner)
         winner_string << ")";
         loser_string << ")";
         sLog.outArenaLog("%s %s %s", basic.str().c_str(), winner_string.str().c_str(), loser_string.str().c_str());
+        table << "arena_duration";
+        tabledata << m_ArenaDuration;
         std::ostringstream dbstring;
         dbstring << "INSERT INTO arena_log_" << winner_arena_team->GetType() << " (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
         CharacterDatabase.PExecute( dbstring.str().c_str() );
