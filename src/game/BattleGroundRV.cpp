@@ -183,15 +183,19 @@ bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
         for(; itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
         {
             GameObject *obj = GetBgMap()->GetGameObject(*itr);
-            if(!obj)
+            if (!obj)
                 continue;
+
+            if (obj->GetGoState != GO_STATE_ACTIVE)
+                continue;
+
             float a, b, c, v, r;
             a = caster->GetDistance2d(obj);
-            b = target->GetDistance2d(obj);
-            c = caster->GetDistance2d(target);
+            b = caster->GetDistance2d(target);
+            c = target->GetDistance2d(obj);
             v = (sqrt(-pow(a, 4) + 2*pow(a,2)*pow(b,2) + 2*pow(a,2)*pow(c,2) - pow(b,4) + 2*pow(b,2)*pow(c,2) - pow(c,4)))/(2*b);
             r = obj->GetObjectBoundingRadius();
-            if(r > v)
+            if (r > v)
                 return true;
         }
     }
