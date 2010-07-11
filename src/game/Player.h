@@ -1859,6 +1859,12 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void UpdateDefenseBonusesMod();
         float GetMeleeCritFromAgility();
+        float GetDiminishedDodge();
+        float GetDiminishedParry();
+        float GetBaseDodge();
+        float GetDodgeCap();
+        float GetParryCap();
+        float GetAvoidanceCoefficient();
         float GetDodgeFromAgility();
         float GetSpellCritFromIntellect();
         float OCTRegenHPPerSpirit();

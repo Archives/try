@@ -3080,7 +3080,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     if (canDodge)
     {
         // Roll dodge
-        int32 dodgeChance = int32(pVictim->GetUnitDodgeChance()*100.0f) - skillDiff * 4;
+        int32 dodgeChance = int32(pVictim->GetUnitDodgeChance()*100.0f - skillDiff * 0.04f);
         // Reduce enemy dodge chance by SPELL_AURA_MOD_COMBAT_RESULT_CHANCE
         dodgeChance+= GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_COMBAT_RESULT_CHANCE, VICTIMSTATE_DODGE)*100;
         // Reduce dodge chance by attacker expertise rating
@@ -3099,7 +3099,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     if (canParry)
     {
         // Roll parry
-        int32 parryChance = int32(pVictim->GetUnitParryChance()*100.0f)  - skillDiff * 4;
+        int32 parryChance = int32(pVictim->GetUnitParryChance()*100.0f  - skillDiff * 0.04f);
         // Reduce parry chance by attacker expertise rating
         if (GetTypeId() == TYPEID_PLAYER)
             parryChance-=int32(((Player*)this)->GetExpertiseDodgeOrParryReduction(attType) * 100.0f);
@@ -3361,7 +3361,7 @@ float Unit::GetUnitDodgeChance() const
     if(hasUnitState(UNIT_STAT_STUNNED))
         return 0.0f;
     if( GetTypeId() == TYPEID_PLAYER )
-        return GetFloatValue(PLAYER_DODGE_PERCENTAGE);
+        return ((Player*)this)->GetDiminishedDodge();
     else
     {
         if(((Creature const*)this)->isTotem())
@@ -3392,7 +3392,7 @@ float Unit::GetUnitParryChance() const
                 tmpitem = player->GetWeaponForAttack(OFF_ATTACK,true,true);
 
             if(tmpitem)
-                chance = GetFloatValue(PLAYER_PARRY_PERCENTAGE);
+                chance = ((Player*)this)->GetDiminishedParry();
         }
     }
     else if(GetTypeId() == TYPEID_UNIT)

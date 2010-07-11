@@ -592,7 +592,8 @@ void Player::UpdateParryPercentage()
 void Player::UpdateDodgePercentage()
 {
     // Dodge from agility
-    float value = GetDodgeFromAgility();
+    float value = GetBaseDodge();
+    value += GetDodgeFromAgility();
     // Modify value from defense skill
     value += (int32(GetDefenseSkillValue()) - int32(GetMaxSkillValueForLevel())) * 0.04f;
     // Dodge from SPELL_AURA_MOD_DODGE_PERCENT aura

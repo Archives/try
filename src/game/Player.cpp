@@ -5109,22 +5109,144 @@ float Player::GetMeleeCritFromAgility()
     return crit*100.0f;
 }
 
-float Player::GetDodgeFromAgility()
+float Player::GetBaseDodge()
 {
     // Table for base dodge values
     float dodge_base[MAX_CLASSES] = {
-         0.0075f,   // Warrior
-         0.00652f,  // Paladin
+         0.034636f, // Warrior
+         0.032685f, // Paladin
         -0.0545f,   // Hunter
         -0.0059f,   // Rogue
          0.03183f,  // Priest
-         0.0114f,   // DK
+         0.034636f, // DK
          0.0167f,   // Shaman
          0.034575f, // Mage
-         0.02011f,  // Warlock
+         0.02035f,  // Warlock
          0.0f,      // ??
-        -0.0187f    // Druid
+         0.04951f   // Druid
     };
+
+    uint32 pclass = getClass();
+    if (pclass > MAX_CLASSES)
+        return 0.0f;
+    return 100.0f * dodge_base[pclass-1];
+}
+float Player::GetDodgeCap()
+{
+    // Table for dodge cap values
+    float dodge_cap[MAX_CLASSES] = {
+         0.88129021f,  // Warrior
+         0.88129021f,  // Paladin
+         1.45560408f,  // Hunter
+         1.45560408f,  // Rogue
+         1.50375940f,  // Priest
+         0.88129021f,  // DK
+         1.45560408f,  // Shaman
+         1.50375940f,  // Mage
+         1.50375940f,  // Warlock
+         0.0000f,      // ??
+         1.16890707f   // Druid
+    };
+    uint32 pclass = getClass();
+    if (pclass > MAX_CLASSES)
+        return 0.0f;
+    return 100.0f * dodge_cap[pclass-1];
+}
+float Player::GetParryCap()
+{
+    // Table for parry cap values
+    float parry_cap[MAX_CLASSES] = {
+         0.47003525f,  // Warrior
+         0.47003525f,  // Paladin
+         1.45560408f,  // Hunter
+         1.45560408f,  // Rogue
+         0.0000f,      // Priest
+         0.47003525f,  // DK
+         1.45560408f,  // Shaman
+         0.0000f,      // Mage
+         0.0000f,      // Warlock
+         0.0000f,      // ??
+         0.0000f       // Druid
+    };
+
+    uint32 pclass = getClass();
+    if (pclass > MAX_CLASSES)
+        return 0.0f;
+    return 100.0f * parry_cap[pclass-1];
+}
+float Player::GetAvoidanceCoefficient()
+{
+    // Table for avoidance coefficient values
+    float avoid_coeff[MAX_CLASSES] = {
+         0.9560f,   // Warrior
+         0.9560f,   // Paladin
+         0.9880f,   // Hunter
+         0.9880f,   // Rogue
+         0.9530f,   // Priest
+         0.9560f,   // DK
+         0.9880f,   // Shaman
+         0.9530f,   // Mage
+         0.9530f,   // Warlock
+         0.0000f,   // ??
+         0.9720f    // Druid
+    };
+
+    uint32 pclass = getClass();
+    if (pclass > MAX_CLASSES)
+        return 0.0f;
+    return avoid_coeff[pclass-1];
+}
+float Player::GetDiminishedParry()
+{
+    float coeff = GetAvoidanceCoefficient();
+    float cap = GetParryCap();
+
+    float value = 0.0f;
+    if (CanParry())
+    {
+        // diminished
+        // Parry from rating
+        value += GetRatingBonusValue(CR_PARRY);
+        // calculate DR
+        value = value = (value * cap) / (value + coeff * cap);
+        // undiminished
+        // base parry
+        value  += 5.0f; 
+        // Modify value from defense skill
+        value += (int32(GetDefenseSkillValue()) - int32(GetMaxSkillValueForLevel())) * 0.04f;
+        // Parry from SPELL_AURA_MOD_PARRY_PERCENT aura
+        value += GetTotalAuraModifier(SPELL_AURA_MOD_PARRY_PERCENT);
+        value = value < 0.0f ? 0.0f : value;
+    }
+    return value / 100.0f;
+}
+float Player::GetDiminishedDodge()
+{
+    float coeff = GetAvoidanceCoefficient();
+    float cap = GetDodgeCap();
+
+    float value = 0.0f;
+    // diminished
+    // dodge from rating
+    value += GetRatingBonusValue(CR_DODGE);
+    // dodge from agility
+    value += GetDodgeFromAgility();
+    // calculate DR
+    value = (value * cap) / (value + coeff * cap);
+    // undiminished
+    // modify value from defense skill
+    value += (int32(GetDefenseSkillValue()) - int32(GetMaxSkillValueForLevel())) * 0.04f;
+    // base dodge
+    value += GetBaseDodge();
+    // dodge from SPELL_AURA_MOD_DODGE_PERCENT aura
+    value += GetTotalAuraModifier(SPELL_AURA_MOD_DODGE_PERCENT);
+
+    value = value < 0.0f ? 0.0f : value;
+    return value / 100.0f;
+
+}
+float Player::GetDodgeFromAgility()
+{ 
     // Crit/agility to dodge/agility coefficient multipliers
     float crit_to_dodge[MAX_CLASSES] = {
          1.1f,      // Warrior
@@ -5150,7 +5272,7 @@ float Player::GetDodgeFromAgility()
     if (dodgeRatio==NULL || pclass > MAX_CLASSES)
         return 0.0f;
 
-    float dodge=dodge_base[pclass-1] + GetStat(STAT_AGILITY) * dodgeRatio->ratio * crit_to_dodge[pclass-1];
+    float dodge=GetStat(STAT_AGILITY) * dodgeRatio->ratio * crit_to_dodge[pclass-1];
     return dodge*100.0f;
 }
 
