@@ -5932,8 +5932,12 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         return false;
 
                     // Glyph of Shadowfiend (need cast as self cast for owner, no hidden cooldown)
-                    owner->CastSpell(owner,58227,true,castItem,triggeredByAura);
-                    return true;
+                    if (owner->HasAura(58228))
+                    {
+                        owner->CastSpell(owner,58227,true,castItem,triggeredByAura);
+                        return true;
+                    }
+                    else return false;
                 }
                 // Glyph of Life Tap
                 case 63320:
