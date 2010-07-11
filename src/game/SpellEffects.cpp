@@ -3418,6 +3418,16 @@ void Spell::EffectHeal(SpellEffectIndex /*eff_idx*/)
             }
         }
 
+        // Serendipity consumed by Prayer of Healing and Greater Heal
+        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_PRIEST && (m_spellInfo->SpellIconID == 540 || 
+            m_spellInfo->SpellIconID == 241))
+        {
+            if (Aura* pSeren = caster->GetAura(63734,EFFECT_INDEX_0))
+            {
+                pSeren->SetAuraDuration(0);
+            }
+        }
+
         addhealth = caster->SpellHealingBonusDone(unitTarget, m_spellInfo, addhealth, HEAL);
         addhealth = unitTarget->SpellHealingBonusTaken(caster, m_spellInfo, addhealth, HEAL);
 
