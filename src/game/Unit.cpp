@@ -829,6 +829,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             }
         }
 
+        //Shadowfiend death
+        if (pVictim->GetEntry() == 19668)
+            pVictim->CastSpell(pVictim,57989,true);
+
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"SET JUST_DIED");
         if(!spiritOfRedemtionTalentReady)
             pVictim->setDeathState(JUST_DIED);
