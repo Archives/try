@@ -2973,15 +2973,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     if(m_caster->GetTypeId() == TYPEID_PLAYER)
         m_caster->KnockBackFrom(target, -normalized_d, vertical);
     else
-    {
-        float x,z,y,o;
-        x = m_caster->GetPositionX();
-        y = m_caster->GetPositionY();
-        z = m_caster->GetPositionZ()+1;
-        o = target->GetOrientation();
-        ((Creature*)target)->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, ((Creature*)target)->GetSplineFlags(), 1);
-        target->GetMap()->CreatureRelocation((Creature*)target,x,y,z,o);		
-    }
+        EffectJump(eff_idx);
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
