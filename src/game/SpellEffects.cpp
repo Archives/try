@@ -6376,6 +6376,19 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             }
             break;
         }
+        case SPELLFAMILY_WARRIOR: 
+        { 
+            // Vigilance 
+            if(m_spellInfo->Id == 50725) 
+            { 
+                // refresh Taunt cooldown 
+                Unit *caster = GetCaster(); 
+                if(caster && caster->GetTypeId == TYPEID_PLAYER) 
+                    ((Player*)caster)->RemoveSpellCooldown(355, true); 
+                return; 
+            } 
+            break; 
+        }
         case SPELLFAMILY_WARLOCK:
         {
             switch(m_spellInfo->Id)
