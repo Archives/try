@@ -10706,7 +10706,7 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex 
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
             if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)) ||
-                ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
+                ((*iter)->GetId() == 46924 &&                                                // Bladestorm Immunity
                 (1 << (mechanic-1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
                 (1 << (mechanic-1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
                 return true;

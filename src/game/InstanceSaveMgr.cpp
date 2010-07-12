@@ -647,12 +647,12 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
 
         // calculate the next reset time
         uint32 diff = sWorld.getConfig(CONFIG_UINT32_INSTANCE_RESET_TIME_HOUR) * HOUR;
-        uint32 period = (mapDiff->resetTime / DAY * sWorld.getRate(RATE_INSTANCE_RESET_TIME)) * DAY;
+        uint32 period = (mapDiff->resetTime / DAY * sWorld.getConfig(CONFIG_FLOAT_RATE_INSTANCE_RESET_TIME)) * DAY;
         time_t next_reset = today + period + diff;        
         // update it in the DB
         CharacterDatabase.PExecute("UPDATE instance_reset SET resettime = '"UI64FMTD"' WHERE mapid = '%d' AND difficulty = '%d'", (uint64)next_reset, mapid, difficulty);
-        SetResetTimeFor(mapid,difficulty,(uint64)next_reset);
-        ScheduleReset(true, next_reset-3600, InstanceResetEvent(1, mapid, difficulty, -1));
+        m_Scheduler.SetResetTimeFor(mapid,difficulty,(uint64)next_reset);
+        m_Scheduler.ScheduleReset(true, next_reset-3600, InstanceResetEvent(1, mapid, difficulty, -1));
     }
 
     // note: this isn't fast but it's meant to be executed very rarely

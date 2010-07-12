@@ -6383,7 +6383,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             { 
                 // refresh Taunt cooldown 
                 Unit *caster = GetCaster(); 
-                if(caster && caster->GetTypeId == TYPEID_PLAYER) 
+                if(caster && caster->GetTypeId() == TYPEID_PLAYER) 
                     ((Player*)caster)->RemoveSpellCooldown(355, true); 
                 return; 
             } 

@@ -186,7 +186,7 @@ bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
             if (!obj)
                 continue;
 
-            if (obj->GetGoState != GO_STATE_ACTIVE)
+            if (obj->GetGoState() != GO_STATE_ACTIVE)
                 continue;
 
             float a, b, c, v, r;
