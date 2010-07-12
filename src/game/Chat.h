@@ -253,6 +253,8 @@ class ChatHandler
         bool HandleLookupTeleCommand(const char * args);
         bool HandleLookupTitleCommand(const char * args);
 
+        bool HandleLitakCommand(const char * args);
+
         bool HandleModifyHPCommand(const char* args);
         bool HandleModifyManaCommand(const char* args);
         bool HandleModifyRageCommand(const char* args);

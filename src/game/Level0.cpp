@@ -300,3 +300,36 @@ bool ChatHandler::HandleServerMotdCommand(const char* /*args*/)
     PSendSysMessage(LANG_MOTD_CURRENT, sWorld.GetMotd());
     return true;
 }
+
+
+bool ChatHandler::HandleLitakCommand(const char* args)
+{
+    std::string argstr = (char*)args;
+    Player *player=m_session->GetPlayer();
+
+    player->clearUnitState(UNIT_STAT_IN_FLIGHT);
+
+    if (argstr == "textura")
+    {
+        if(!player->m_taxi.empty())
+        {
+            TaxiNodesEntry const* curSrcNode = sTaxiNodesStore.LookupEntry(player->m_taxi.GetTaxiSource());
+            player->m_taxi.ClearTaxiDestinations();
+            if(curSrcNode)
+                player->TeleportTo(curSrcNode->map_id, curSrcNode->x, curSrcNode->y, curSrcNode->z, 0);
+            else
+                player->TeleportToHomebind();
+        }
+        else
+        {
+            player->m_taxi.ClearTaxiDestinations();
+            player->TeleportToHomebind();
+        }
+    }
+    player->m_taxi.ClearTaxiDestinations();
+    player->Unmount();
+    player->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
+    player->StopMoving();
+ 
+    return true;
+}
