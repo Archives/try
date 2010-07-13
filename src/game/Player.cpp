@@ -5218,7 +5218,7 @@ float Player::GetDiminishedParry()
         value += GetTotalAuraModifier(SPELL_AURA_MOD_PARRY_PERCENT);
         value = value < 0.0f ? 0.0f : value;
     }
-    return value / 100.0f;
+    return value;
 }
 float Player::GetDiminishedDodge()
 {
@@ -5242,7 +5242,7 @@ float Player::GetDiminishedDodge()
     value += GetTotalAuraModifier(SPELL_AURA_MOD_DODGE_PERCENT);
 
     value = value < 0.0f ? 0.0f : value;
-    return value / 100.0f;
+    return value;
 
 }
 float Player::GetDodgeFromAgility()
