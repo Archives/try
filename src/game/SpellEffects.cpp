@@ -374,6 +374,21 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                             damage -= distance * float(500);
                         break;
                     }
+                    // Pulsing Shockwave (Loken's spell)
+                    case 52942: 
+                    case 59837:
+                        float distance = m_caster->GetDistance(unitTarget);
+                        float multiplier;
+                        if (distance - (1./3.)<=0)
+                            multiplier = 3.55556;
+                        else
+                        {
+                            multiplier = 1 + log(distance - 1./3.)/log(1.16);
+                            if (multiplier < 3.55556)
+                                multiplier = 3.55556;
+                        }
+                        damage = damage * multiplier * 3 / 2;
+                        break;
                 }
                 break;
             }
