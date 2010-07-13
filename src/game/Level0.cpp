@@ -307,7 +307,16 @@ bool ChatHandler::HandleLitakCommand(const char* args)
     std::string argstr = (char*)args;
     Player *player=m_session->GetPlayer();
 
+    if(player->isInCombat())
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+    if(player->IsInFlight())
+        player->Unmount();
     player->clearUnitState(UNIT_STAT_IN_FLIGHT);
+    player->GetMotionMaster()->Clear(false, true);
 
     if (argstr == "textura")
     {
@@ -317,19 +326,15 @@ bool ChatHandler::HandleLitakCommand(const char* args)
             player->m_taxi.ClearTaxiDestinations();
             if(curSrcNode)
                 player->TeleportTo(curSrcNode->map_id, curSrcNode->x, curSrcNode->y, curSrcNode->z, 0);
-            else
-                player->TeleportToHomebind();
         }
         else
-        {
             player->m_taxi.ClearTaxiDestinations();
-            player->TeleportToHomebind();
-        }
     }
     player->m_taxi.ClearTaxiDestinations();
-    player->Unmount();
+    
     player->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
     player->StopMoving();
+    
  
     return true;
 }
