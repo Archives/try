@@ -772,8 +772,8 @@ struct DungeonEncounterEntry
     int32     unk1;                                         // 3        some reference to boss order? minibosses have - values
     uint32    order;                                        // 4        Order of boss in dungeon
     char*     Name[16];                                     // 5-20     CreatureName
-    //uint32    unk2;                                       // 21       No idea
-    //uint32    unk3;                                       // 22       No idea
+    //uint32    nameflags;                                  // 21
+    //uint32    unk3;                                       // 22       No idea, always 0
 
     bool IsHeroic() const { return heroic == 1; };
 };
@@ -1093,22 +1093,25 @@ struct ItemSetEntry
 struct LFGDungeonEntry
 {
     uint32  ID;                                             // 0
-    //char*   name[16];                                       // 1-17 Name lang
-    uint32  minlevel;                                       // 18
-    uint32  maxlevel;                                       // 19
-    uint32  reclevel;                                       // 20
-    uint32  recminlevel;                                    // 21
-    uint32  recmaxlevel;                                    // 22
-    uint32  map;                                            // 23
-    uint32  heroic;                                         // 24
-    uint32  unk;                                            // 25 0 = raid or zone, 3 = dungeon, 15 = world event
-    uint32  type;                                           // 26
-    //uint32  unk2;                                           // 27
-    //char*   unk3;                                           // 28
-    uint32  expansion;                                      // 29
-    //uint32  unk4;                                           // 30
-    uint32  grouptype;                                      // 31
-    //char*   desc[16];                                       // 32-47 Description
+    //char*   name[16];                                     // 1-17 Name lang
+    //uint32 nameflags;                                     // 18
+    uint32  minlevel;                                       // 19
+    uint32  maxlevel;                                       // 20
+    uint32  reclevel;                                       // 21
+    uint32  recminlevel;                                    // 22
+    uint32  recmaxlevel;                                    // 23
+    uint32  map;                                            // 24
+    uint32  heroic;                                         // 25
+    uint32  unk;                                            // 26 0 = raid or zone, 3 = dungeon, 15 = world event
+    uint32  type;                                           // 27
+    //uint32  unk2;                                         // 28
+    //char*   unk3;                                         // 29
+    uint32  expansion;                                      // 30
+    //uint32  unk4;                                         // 31
+    uint32  grouptype;                                      // 32
+    //char*   desc[16];                                     // 32-47 Description
+    //uint32 descflags;                                     // 48 
+    
     // Helpers
     uint32 Entry() const { return ID + (type << 24); }
     bool isHeroic() const { return heroic == 1; }

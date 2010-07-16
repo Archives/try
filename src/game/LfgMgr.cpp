@@ -148,11 +148,13 @@ void LfgGroup::KilledCreature(char *name)
     error_log("Killed creature %s", name);
     if(m_dungeonBosses.find(name) == m_dungeonBosses.end())
         return;
+    error_log("Killed 2");
     DungeonEncounterMap::iterator itr = m_dungeonBosses.find(name);
     m_killedBosses++;
     //Last boss
     if(sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID)->lastBossId == itr->second->ID)
     {
+        error_log("Killed boss");
         m_instanceStatus = INSTANCE_COMPLETED;
         //Reward here
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
@@ -173,7 +175,10 @@ void LfgGroup::KilledCreature(char *name)
         }
     }
     else
+    {
+        error_log("Killed 3");
         m_instanceStatus = INSTANCE_SAVED;
+    }
 
     SendUpdate();
 }
@@ -195,7 +200,8 @@ void LfgGroup::TeleportToDungeon()
         m_isRandom = true;
         LfgLocksMap *groupLocks = GetLocksList();
         std::vector<LFGDungeonEntry const*> options;
-        LFGDungeonEntry const *currentRow;
+        options.clear();
+        LFGDungeonEntry const *currentRow = NULL;
         //Possible dungeons
         for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
         {
@@ -607,37 +613,156 @@ void LfgGroup::SendProposalUpdate(uint8 state)
     }
 }
 
-void LfgGroup::SendRoleCheckUpdate()
+void LfgGroup::UpdateRoleCheck(uint32 diff)
 {
-    uint8 state = LFG_ROLECHECK_INITIALITING;
-    if(m_membersBeforeRoleCheck == 0)
-        m_membersBeforeRoleCheck = GetMembersCount();
-    //Someone left the group
-    else if(m_membersBeforeRoleCheck > GetMembersCount())
-        state = LFG_ROLECHECK_ABORTED;
-
-    if(m_rolesProposal.size() == m_membersBeforeRoleCheck)
+    if(diff != 0)
     {
-        state = LFG_ROLECHECK_FINISHED;
-        uint8 roles[3] = {0,0,0};
-        for(ProposalAnswersMap::iterator itr = m_rolesProposal.begin(); itr != m_rolesProposal.end(); ++itr)
+        if(m_readycheckTimer <= diff && m_membersBeforeRoleCheck != m_rolesProposal.size())
         {
-         /*   if(itr->second & TANK)
-                roles[0]++;
-            if(itr->second & HEALER)
-                roles[1]++;
-            if(itr->second & DAMAGE)
-                roles[2]++;
-
-            //No role?
-            if(possibleRoles == 0)
+            SendRoleCheckUpdate(LFG_ROLECHECK_MISSING_ROLE);
+            for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                state = LFG_ROLECHECK_NO_ROLE;
-                break;
+                Player *player = itr->getSource();
+                sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_FAILED);
+                if(player->GetGUID() == GetLeaderGUID())
+                {
+                    WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+                    data << uint32(LFG_JOIN_FAILED);                                  
+                    data << uint32(0);
+                    player->GetSession()->SendPacket(&data);
+                }
             }
-            if(possibleRoles == 1) */
-        }
+            return;
+        }else m_readycheckTimer -= diff;
     }
+
+    bool offline = false;
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+    {
+        Player *player = sObjectMgr.GetPlayer(citr->guid);
+        if(!player)
+        {
+            offline = true;
+            break;
+        }
+        if(offline && player)
+            sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_ABORTED);
+    }
+    if(GetMembersCount() != m_membersBeforeRoleCheck || offline)
+    {
+        SendRoleCheckUpdate(LFG_ROLECHECK_ABORTED);
+        if(Player *leader = sObjectMgr.GetPlayer(GetLeaderGUID()))
+        {
+            WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+            data << uint32(LFG_JOIN_FAILED);                                  
+            data << uint32(0);
+            leader->GetSession()->SendPacket(&data);
+        }
+        return;
+    }
+    if(m_rolesProposal.empty())
+        return;
+    //Offline members checked at join
+    //Check roles
+    if(m_membersBeforeRoleCheck != m_rolesProposal.size())
+        return;
+
+    uint64 TankOnly = 0;
+    uint64 HealOnly = 0;
+    PlayerList *dpsOnly = new PlayerList();
+    ProposalAnswersMap *others = new ProposalAnswersMap();
+    uint8 error = 0;
+    for(ProposalAnswersMap::iterator itr = m_rolesProposal.begin(); itr != m_rolesProposal.end(); ++itr)
+    {
+        uint8 role = (itr->second & LEADER) ? itr->second-1 : itr->second;
+        if(role == 0)
+        {
+            error = LFG_ROLECHECK_NO_ROLE;
+            break;
+        }
+        
+        if((role == TANK && TankOnly != 0) || (role == HEALER && HealOnly != 0) || (role == DAMAGE && dpsOnly->size() == 3))
+        {
+            error = LFG_ROLECHECK_WRONG_ROLES;
+            break;
+        }
+        else if(role == TANK)
+            TankOnly = itr->first;
+        else if(role == HEALER)
+            HealOnly = itr->first;
+        else if(role == DAMAGE)
+            dpsOnly->insert(itr->first);
+        else
+            others->insert(std::make_pair<uint64, uint8>(itr->first, itr->second));
+    }
+    if(error == 0 && !others->empty())
+    {
+        for(ProposalAnswersMap::iterator itr = others->begin(); itr != others->end(); ++itr)
+        {
+            if((itr->second & TANK) && TankOnly == 0)
+            {
+                TankOnly = itr->first;
+                others->erase(itr);
+            }
+            else if((itr->second & HEALER) && HealOnly == 0)
+            {
+                HealOnly = itr->first;
+                others->erase(itr);
+            }
+            else if((itr->second & DAMAGE) && dpsOnly->size() != 3)
+            {
+                dpsOnly->insert(itr->first);
+                others->erase(itr);
+            }
+        }
+        if(!others->empty())
+            error = LFG_ROLECHECK_WRONG_ROLES;
+    }
+    if(error != 0)
+    {
+        SendRoleCheckUpdate(error);
+        for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+        {
+            Player *player = itr->getSource();         
+            sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_FAILED);
+            if(player->GetGUID() == GetLeaderGUID())
+            {
+                WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+                data << uint32(LFG_JOIN_FAILED);                                  
+                data << uint32(0);
+                player->GetSession()->SendPacket(&data);
+            }
+        }
+        return;
+    }
+    //Move group to queue
+    SendRoleCheckUpdate(LFG_ROLECHECK_FINISHED);
+    for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+    {
+        Player *player = itr->getSource();
+        sLfgMgr.SendLfgUpdateParty(player,  LFG_UPDATETYPE_ADDED_TO_QUEUE);
+        
+        if(player->GetGUID() == GetLeaderGUID())
+        {
+            WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+            data << uint32(LFG_JOIN_OK);                                  
+            data << uint32(0);
+            player->GetSession()->SendPacket(&data);
+        }
+       
+        premadePlayers.insert(player->GetGUID());
+    } 
+    m_tank = TankOnly;
+    m_heal = HealOnly;
+    dps = dpsOnly;
+
+    sLfgMgr.AddCheckedGroup(this);
+}
+
+void LfgGroup::SendRoleCheckUpdate(uint8 state)
+{
+    if(state == LFG_ROLECHECK_INITIALITING)
+        m_readycheckTimer = LFG_TIMER_READY_CHECK;
 
     Player *leader = sObjectMgr.GetPlayer(GetLeaderGUID());
     if(!leader)
@@ -673,6 +798,7 @@ void LfgGroup::SendRoleCheckUpdate()
         data << uint32(0);
         data << uint8(member->getLevel());
     }
+    BroadcastPacket(&data, false);
 }
 
 LfgMgr::LfgMgr()
@@ -699,6 +825,10 @@ void LfgMgr::Update(uint32 diff)
     if(m_updateProposalTimer <= diff)
     {
         UpdateFormedGroups(); 
+
+        for(GroupsList::iterator grpitr = rolecheckGroups.begin(); grpitr != rolecheckGroups.end(); ++grpitr)
+            (*grpitr)->UpdateRoleCheck(diff);     
+
         m_updateProposalTimer = LFG_TIMER_UPDATE_PROPOSAL;
     }
     else m_updateProposalTimer -= diff;
@@ -720,7 +850,7 @@ void LfgMgr::AddToQueue(Player *player)
     //Already checked that group is fine
     if(Group *group = player->GetGroup())
     {
-        /*
+
         if(!group->isLfgGroup())
         {
         
@@ -728,16 +858,25 @@ void LfgMgr::AddToQueue(Player *player)
         else
         {
             LfgGroup *lfgGroup = (LfgGroup*)group;
+            if(!lfgGroup->IsInDungeon())
+            {
+                WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
+                data << uint32(LFG_JOIN_INTERNAL_ERROR);                                  
+                data << uint32(0);
+                player->GetSession()->SendPacket(&data);
+                return;
+            }
+            for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player *player = itr->getSource();         
+                SendLfgUpdateParty(player, LFG_UPDATETYPE_JOIN_PROPOSAL);
+            }
+
             lfgGroup->SendRoleCheckUpdate(LFG_ROLECHECK_INITIALITING);
-
+            lfgGroup->UpdateRoleCheck();
+            rolecheckGroups.insert(lfgGroup);
         }
-
-
-
-
-
-
-
+        /*
 
         for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
         {
@@ -770,7 +909,7 @@ void LfgMgr::AddToQueue(Player *player)
         WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
         data << uint32(LFG_JOIN_INTERNAL_ERROR);                                  
         data << uint32(0);
-        player->GetSession()->SendPacket(&data);
+       // player->GetSession()->SendPacket(&data);
     }
     else
     {
@@ -849,6 +988,13 @@ void LfgMgr::RemoveFromQueue(Player *player)
     }
     if(sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE))
         UpdateQueues();
+}
+
+void LfgMgr::AddCheckedGroup(LfgGroup *group)
+{
+    rolecheckGroups.erase(group);
+
+
 }
 
 void LfgMgr::UpdateQueues()
@@ -1036,22 +1182,34 @@ void LfgMgr::UpdateQueues()
                 {
                     //Update wait times
                     uint32 avgWaitTime = 0;
+                    uint8 timescount = 0;
                     if(Player *tank = sObjectMgr.GetPlayer((*grpitr)->GetTank()))
                     {
                         uint32 waitTimeTank = m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second;
                         uint32 currentTankTime = getMSTimeDiff(tank->m_lookingForGroup.joinTime, getMSTime());
-                        uint32 avgWaitTank = (waitTimeTank+currentTankTime)/2;
-                        avgWaitTime += avgWaitTank;
-                        m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second = avgWaitTank;           
+                        uint32 avgWaitTank = (waitTimeTank+currentTankTime)/2;            
+                        //add 5s cooldown
+                        if(currentTankTime > 5000)
+                        {
+                            avgWaitTime += avgWaitTank;
+                            m_waitTimes[LFG_WAIT_TIME_TANK].find(itr->second->dungeonInfo->ID)->second = avgWaitTank;
+                            ++timescount;
+                        }
                     }
                     if(Player *heal = sObjectMgr.GetPlayer((*grpitr)->GetHeal()))
                     {
                         uint32 waitTimeHeal = m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second;
                         uint32 currentHealTime = getMSTimeDiff(heal->m_lookingForGroup.joinTime, getMSTime());
-                        uint32 avgTimeHeal = (waitTimeHeal+currentHealTime)/2;
-                        avgWaitTime += avgTimeHeal;
-                        m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second = avgTimeHeal;           
+                        uint32 avgTimeHeal = (waitTimeHeal+currentHealTime)/2;      
+                        //add 5s cooldown
+                        if(currentHealTime > 5000)
+                        {
+                            avgWaitTime += avgTimeHeal;
+                            m_waitTimes[LFG_WAIT_TIME_HEAL].find(itr->second->dungeonInfo->ID)->second = avgTimeHeal;
+                            ++timescount;
+                        }
                     }
+                    
                     for(PlayerList::iterator plritr = (*grpitr)->GetDps()->begin(); plritr != (*grpitr)->GetDps()->end(); ++plritr)
                     {
                         if(Player *dps = sObjectMgr.GetPlayer(*plritr))
@@ -1059,11 +1217,15 @@ void LfgMgr::UpdateQueues()
                             uint32 waitTimeDps = m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second;
                             uint32 currTime = getMSTimeDiff(dps->m_lookingForGroup.joinTime, getMSTime());
                             uint32 avgWaitDps = (waitTimeDps+currTime)/2;
-                            avgWaitTime += avgWaitDps;
-                            m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second = avgWaitDps;
+                            if(currTime > 5000)
+                            {
+                                avgWaitTime += avgWaitDps;
+                                m_waitTimes[LFG_WAIT_TIME_DPS].find(itr->second->dungeonInfo->ID)->second = avgWaitDps;
+                                ++timescount;
+                            }
                         }
                     }
-                    m_waitTimes[LFG_WAIT_TIME].find(itr->second->dungeonInfo->ID)->second = (avgWaitTime/5);
+                    m_waitTimes[LFG_WAIT_TIME].find(itr->second->dungeonInfo->ID)->second = (avgWaitTime/timescount);
                     
                     //Send Info                   
                     (*grpitr)->SendGroupFormed();
@@ -1151,7 +1313,7 @@ void LfgMgr::UpdateFormedGroups()
                         SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_GROUP_FOUND);
                         SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
                         
-                        //I think this is useless when you are not in group, but its sent by retail serverse anyway...
+                        //I think this is useless when you are not in group, but its sent by retail servers anyway...
                         SendLfgUpdateParty(plritr->getSource(), LFG_UPDATETYPE_REMOVED_FROM_QUEUE);       
                     }
                     (*grpitr)->TeleportToDungeon();
@@ -1161,6 +1323,7 @@ void LfgMgr::UpdateFormedGroups()
         }
     }
 }
+
 void LfgMgr::SendLfgPlayerInfo(Player *plr)
 {
     LfgDungeonList *random = GetRandomDungeons(plr);

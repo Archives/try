@@ -1166,7 +1166,7 @@ bool Group::_removeMember(const uint64 &guid)
     {
         //Remove player from LFG
         sLfgMgr.RemovePlayer(player);
-        if(isLfgGroup())
+        if(isLfgGroup() && ((LfgGroup*)this)->IsInDungeon())
         {
             if (!player->isAlive())
             {

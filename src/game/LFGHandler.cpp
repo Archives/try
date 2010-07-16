@@ -230,11 +230,8 @@ void WorldSession::HandleLfgSetRoles(WorldPacket& recv_data)
     {
         if(group->isLfgGroup())
         {
-          /*  ((LfgGroup*)group)->GetRoleAnswers()->insert(std::make_pair<uint64, uint8>(_player->GetGUID(), roles));
-            uint8 status = 
-            if(((LfgGroup*)group)->GetRoleAnswers()->size() == group->GetMembersCount())
-                
-            ((LfgGroup*)group)->SendRoleCheckUpdate( */
+            ((LfgGroup*)group)->GetRoleAnswers()->insert(std::make_pair<uint64, uint8>(_player->GetGUID(), roles));                
+            ((LfgGroup*)group)->UpdateRoleCheck();
         }
     } 
 }

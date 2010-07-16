@@ -213,6 +213,30 @@ enum QueueFaction
 };
 #define MAX_LFG_FACTION                  2
 
+/*
+enum QueueTypes
+{
+    QUEUE_TANK                         = 0,
+    QUEUE_HEALER                       = 1,
+    QUEUE_DAMAGE                       = 2,
+
+    QUEUE_TH                           = 3,   // Tank + heal
+    QUEUE_TD                           = 4,   // Tank + damage
+    QUEUE_HD                           = 5,   // Heal + damage
+    QUEUE_DD                           = 6,   // Damage + damage
+
+    QUEUE_THD                          = 7,   // Tank + heal + damage
+    QUEUE_TDD                          = 8,   // Tank + damage + damage
+    QUEUE_HDD                          = 9,   // Heal + damage + damage
+    QUEUE_DDD                          = 10,  // Damage + damage + damage
+
+    QUEUE_THDD                         = 11,  // Tank + Heal + damage + damage
+    QUEUE_TDDD                         = 12,  // Tank + damage + damage + damage
+    QUEUE_HDDD                         = 13,  // Heal + damage + damage + damage
+
+    QUEUE_THDDD                        = 14,  // Tank + Heal + damage + damage + damage
+}; */
+
 typedef std::set<uint64> PlayerList;
 
 struct DugeonInfo             //used in db
@@ -246,7 +270,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SendLfgQueueStatus();
         void SendGroupFormed();
         void SendProposalUpdate(uint8 state);
-        void SendRoleCheckUpdate();
+        void SendRoleCheckUpdate(uint8 state);
         LfgLocksMap *GetLocksList() const;
         
         //Override these methods
@@ -259,6 +283,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         PlayerList *GetDps() { return dps; };
         ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
         ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
+        void UpdateRoleCheck(uint32 diff = 0);
 
         void SetTank(uint64 tank) { m_tank = tank; }
         void SetHeal(uint64 heal) { m_heal = heal; }
@@ -303,7 +328,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint8 m_membersBeforeRoleCheck;
 
         uint32 m_killedBosses;
-        uint32 m_readycheckTimer;
+        int32 m_readycheckTimer;
         uint8 m_baseLevel;
         uint8 m_instanceStatus;
         bool m_inDungeon;
@@ -353,6 +378,8 @@ class MANGOS_DLL_SPEC LfgMgr
         LfgGroup *GetLfgGroupById(uint32 groupid);
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
         void AddGroupToDelete(LfgGroup *group);
+        void AddCheckedGroup(LfgGroup *group);
+
         uint32 GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
 
@@ -366,7 +393,7 @@ class MANGOS_DLL_SPEC LfgMgr
 
         QueuedDungeonsMap m_queuedDungeons[MAX_LFG_FACTION];
         GroupsList formedGroups[MAX_LFG_FACTION];
-        GroupsList inDungeonGroups[MAX_LFG_FACTION];
+        GroupsList rolecheckGroups;
         GroupsList groupsForDelete;
 
         uint32 m_groupids;
