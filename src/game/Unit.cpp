@@ -10054,6 +10054,10 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
             case 1804:              // Greater Blessing of Sanctuary 
                 if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
                     TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+            case 329:                          // Renewed Hope 
+                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PRIEST)
+                    TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
                 break;
             // Ebon Plague 
             case 1933: 
@@ -10076,6 +10080,20 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
         { 
             if(spellProto->Dispel ==  DISPEL_DISEASE) 
                 TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+        } 
+    } 
+    // .. taken (proc auras) 
+    AuraList const& mProcAuras = GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL); 
+    for(AuraList::const_iterator i = mProcAuras.begin(); i != mProcAuras.end(); ++i) 
+    { 
+        switch((*i)->GetId()) 
+        { 
+            // Vigilance 
+            case 50720: 
+            { 
+                TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+            } 
         } 
     } 
 
@@ -11156,6 +11174,48 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
                     TakenPercent *= (mod + 100.0f) / 100.0f;
                 }
                 break;
+            case 19:                // Blessing of Sanctuary 
+            case 1804:              // Greater Blessing of Sanctuary 
+                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
+                    TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+            case 329:                          // Renewed Hope 
+                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PRIEST) 
+                    TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+            // Ebon Plague 
+            case 1933: 
+                if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+                    if((*i)->GetModifier()->m_miscvalue & schoolMask) 
+                        TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+        } 
+    } 
+ 
+    // .. taken (SPELL_AURA_284) 
+    AuraList const& mAuraListAura284 = GetAurasByType(SPELL_AURA_284); 
+    for(AuraList::const_iterator i = mAuraListAura284.begin(); i != mAuraListAura284.end(); ++i) 
+    { 
+        // Crypt Fever and Ebon Plague 
+        if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
+        {   
+            if (spellProto && spellProto->Dispel ==  DISPEL_DISEASE) 
+                TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+        } 
+    } 
+ 
+    // .. taken (proc auras) 
+    AuraList const& mProcAuras = GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL); 
+    for(AuraList::const_iterator i = mProcAuras.begin(); i != mProcAuras.end(); ++i) 
+    { 
+        switch((*i)->GetId()) 
+        { 
+            // Vigilance 
+            case 50720: 
+            { 
+                TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+                break; 
+            }
         }
     }
 
