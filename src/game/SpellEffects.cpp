@@ -544,27 +544,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         }
                     }
                 }
-                // Mind Flay
-                else if (m_originalCaster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000800000))
-                {
-                    float bonus = 0;
-                    // Glyph of Mind Flay
-                    Unit::AuraList const& mDummy = m_originalCaster->GetAurasByType(SPELL_AURA_DUMMY);
-                    for(Unit::AuraList::const_iterator itr = mDummy.begin(); itr != mDummy.end(); ++itr)
-                        if ((*itr)->GetSpellProto()->Id == 55687)
-                            if (unitTarget->HasAuras(SPELLFAMILY_PRIEST, UI64LIT(0x0008000)))     // has Shadow Word Pain
-                                bonus += float((*itr)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_0))/100.0f;
-                    
-                    // Twisted Faith
-                    Unit::AuraList const& mOverrideClassScript = m_originalCaster->GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
-                    for(Unit::AuraList::const_iterator i = mOverrideClassScript.begin(); i != mOverrideClassScript.end(); ++i)
-                        if ((*i)->GetModifier()->m_miscvalue == 7377)
-                            if (unitTarget->HasAuras(SPELLFAMILY_PRIEST, UI64LIT(0x0008000)))     // has Shadow Word Pain
-                                bonus += float((*i)->GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1))/100.0f;
-                    
-                    damage *= 1.0f + bonus;
-                    damage += float(m_originalCaster->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_SHADOW) * 0.257143f * bonus);
-                }
                 break;
             }
             case SPELLFAMILY_DRUID:

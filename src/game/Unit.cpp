@@ -9924,6 +9924,14 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
                     if (Aura *aur = GetAura(55692, EFFECT_INDEX_0))
                         DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f;
             }
+            // Glyph of Mind Flay 
+            else if(spellProto->Id == 58381) 
+            { 
+                //Shadow Word Pain 
+                if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x0008000), NULL)) 
+                    if (Aura *aur = GetAura(55687, EFFECT_INDEX_0)) 
+                        DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f; 
+            }
             break;
         }
         case SPELLFAMILY_DRUID:
