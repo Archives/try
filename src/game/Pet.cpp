@@ -43,7 +43,7 @@ m_bonusdamage(0), m_resetTalentsTime(0), m_usedTalentCount(0), m_loading(false),
 m_declinedname(NULL), m_petModeFlags(PET_MODE_DEFAULT)
 {
     m_name = "Pet";
-    m_regenTimer = 4000;
+    m_regenTimer = 2000;
 
     // pets always have a charminfo, even if they are not actually charmed
     CharmInfo* charmInfo = InitCharmInfo(this);
@@ -547,7 +547,7 @@ void Pet::Update(uint32 diff)
                     default:
                         break;
                 }
-                m_regenTimer = 4000;
+                m_regenTimer = 2000;
             }
             else
                 m_regenTimer -= diff;
@@ -586,7 +586,7 @@ void Pet::Regenerate(Powers power)
         case POWER_FOCUS:
         {
             // For hunter pets.
-            addvalue = 24 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_FOCUS);
+            addvalue = 10 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_FOCUS);
             break;
         }
         case POWER_ENERGY:
@@ -604,6 +604,9 @@ void Pet::Regenerate(Powers power)
     for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
         if ((*i)->GetModifier()->m_miscvalue == power)
             addvalue *= ((*i)->GetModifier()->m_amount + 100) / 100.0f;
+
+    // HACK - this notifies client about power change 
+    SendEnergizeSpellLog(this, 0, (uint32)addvalue, power);
 
     ModifyPower(power, (int32)addvalue);
 }
