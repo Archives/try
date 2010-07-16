@@ -1134,6 +1134,11 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
                     bonusAP += coeff * owner->GetTotalAttackPowerValue(BASE_ATTACK);
                     break;
                 }
+                case CLASS_DEATH_KNIGHT: 
+                { 
+                    val = 2 * GetStat(STAT_STRENGTH) - 20.0f; 
+                    break; 
+                }
             }
         }
     }
