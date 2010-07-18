@@ -44,28 +44,8 @@ inline void MaNGOS::ObjectUpdater::Visit(CreatureMapType &m)
         iter->getSource()->Update(i_timeDiff);
 }
 
-inline void MaNGOS::PlayerRelocationNotifier::Visit(PlayerMapType &m)
+inline void PlayerCreatureRelocationWorker(Player* pl, Creature* c)
 {
-    for(PlayerMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-    {
-        if (&i_player==iter->getSource())
-            continue;
-
-        // visibility for players updated by ObjectAccessor::UpdateVisibilityFor calls in appropriate places
-
-        // Cancel Trade
-        if (i_player.GetTrader()==iter->getSource())
-                                                            // iteraction distance
-            if (!i_player.IsWithinDistInMap(iter->getSource(), INTERACTION_DISTANCE))
-                i_player.GetSession()->SendCancelTrade();   // will clode both side trade windows
-    }
-}
-
-inline void PlayerCreatureRelocationWorker(Player* pl, WorldObject const* viewPoint, Creature* c)
-{
-    // update creature visibility at player/creature move
-    pl->UpdateVisibilityOf(viewPoint,c);
-
     // Creature AI reaction
     if (!c->hasUnitState(UNIT_STAT_LOST_CONTROL))
     {
@@ -94,11 +74,9 @@ inline void MaNGOS::PlayerRelocationNotifier::Visit(CreatureMapType &m)
     if (!i_player.isAlive() || i_player.isInFlight())
         return;
 
-    WorldObject const* viewPoint = i_player.GetCamera().GetBody();
-
     for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
         if (iter->getSource()->isAlive())
-            PlayerCreatureRelocationWorker(&i_player, viewPoint, iter->getSource());
+            PlayerCreatureRelocationWorker(&i_player, iter->getSource());
 }
 
 template<>
@@ -109,8 +87,13 @@ inline void MaNGOS::CreatureRelocationNotifier::Visit(PlayerMapType &m)
 
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
         if (Player* player = iter->getSource())
+<<<<<<< HEAD
             if (player->isAlive() && !player->isInFlight())
                 PlayerCreatureRelocationWorker(player, player->GetCamera().GetBody(), &i_creature);
+=======
+            if (player->isAlive() && !player->IsTaxiFlying())
+                PlayerCreatureRelocationWorker(player, &i_creature);
+>>>>>>> 00c1f22... [K89] Visibility & Reloc by Silverice
 }
 
 template<>

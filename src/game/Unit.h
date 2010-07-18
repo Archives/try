@@ -1897,6 +1897,14 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
          void SetVehicleGUID(uint64 guid) { m_vehicleGUID = guid; }
          void ChangeSeat(int8 seatId, bool next);
 
+        void SheduleAINotify(uint32 delay);
+
+        bool m_notify_sheduled;
+        struct 
+        {
+            float x, y, z;
+        } m_last_notified_position;
+
     protected:
         explicit Unit ();
 
