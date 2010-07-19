@@ -968,7 +968,7 @@ void BattleGround::EndBattleGround(uint32 winner)
         loser_string << ")";
         sLog.outArenaLog("%s %s %s", basic.str().c_str(), winner_string.str().c_str(), loser_string.str().c_str());
         table << "arena_duration";
-        tabledata << m_ArenaDuration;
+        tabledata << uint32(m_ArenaDuration);
         std::ostringstream dbstring;
         dbstring << "INSERT INTO arena_log_" << winner_arena_team->GetType() << " (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
         CharacterDatabase.PExecute( dbstring.str().c_str() );
