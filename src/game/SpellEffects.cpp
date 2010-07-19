@@ -380,12 +380,12 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         float distance = m_caster->GetDistance(unitTarget);
                         float multiplier;
                         if (distance - (1./3.)<=0)
-                            multiplier = 3.55556;
+                            multiplier = 3.55556f;
                         else
                         {
                             multiplier = 1 + log(distance - 1./3.)/log(1.16);
-                            if (multiplier < 3.55556)
-                                multiplier = 3.55556;
+                            if (multiplier < 3.55556f)
+                                multiplier = 3.55556f;
                         }
                         damage = damage * multiplier * 3 / 2;
                         break;
@@ -2931,43 +2931,50 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
 
 void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 {
-    Unit* target = unitTarget;
-    // Death Grip
-    if(m_spellInfo->Id == 49575)
-        target = m_originalCaster;
+    if(m_caster->GetTypeId() != TYPEID_PLAYER)
+    {
+        EffectJump(eff_idx);
+        return;
+    }
 
-    if (!target)
+    Unit* target = unitTarget;
+    Player* caster = (Player*)m_caster;
+
+    float x, y, z, direction, angle, vertical, normalized_d;
+    // Death Grip
+    if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_SELF2)
+    {
+        target = m_originalCaster;
+        direction = NULL;
+    }
+    // Feral Charge
+    else if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
+    {
+        target = ObjectAccessor::GetUnit(*caster, caster->GetSelection());
+        direction = M_PI_F;
+
+        WorldPacket data;
+        caster->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
+        caster->GetSession()->SendPacket( &data );
+        caster->SetPosition(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ(), target->GetOrientation(), false);
+    }
+    else
+    {
+        sLog.outDebug("Spell::EffectJumpToDest: Unhandled spell %u", m_spellInfo->Id);
+        EffectJump(eff_idx);
+        return;
+    }
+    
+    if(!target)
         return;
 
-    float distance, angle, vertical, normalized_d;
-    distance = m_caster->GetDistance(target);
-    angle = m_caster->GetAngle(target);
-    normalized_d = distance - 2;
-    if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
-    {
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
-        {
-            target = ObjectAccessor::GetUnit(*m_caster, ((Player*)m_caster)->GetSelection());
-        
-            float behind_x, behind_y, behind_z;
-            target->GetClosePoint(behind_x, behind_y, behind_z, target->GetObjectBoundingRadius(), CONTACT_DISTANCE, M_PI_F);
-            angle = m_caster->GetAngle(behind_x, behind_y);
-            //m_caster->SetOrientation(target->GetOrientation());
-            //huh wtf?
-            WorldPacket data;
-            ((Player*)m_caster)->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
-            ((Player*)m_caster)->GetSession()->SendPacket( &data );
-            ((Player*)m_caster)->SetPosition(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation(), false);
-            normalized_d = m_caster->GetDistance(behind_x, behind_y, behind_z);
-        }
-        
-    }
-    vertical = 10.0f + target->GetPositionZ() - m_caster->GetPositionZ();
-    
-    if(m_caster->GetTypeId() == TYPEID_PLAYER)
-        m_caster->KnockBackFrom(target, -normalized_d, vertical);
-    else
-        EffectJump(eff_idx);
+    target->GetClosePoint(x, y, z, target->GetObjectBoundingRadius(), CONTACT_DISTANCE, direction);
+      
+    angle = caster->GetAngle(x,y);
+    normalized_d = caster->GetDistance(x,y,z);
+    vertical = 10.0f + target->GetPositionZ() - caster->GetPositionZ();
+
+    caster->KnockWithAngle(angle, -normalized_d, vertical);
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
