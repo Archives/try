@@ -1114,8 +1114,8 @@ struct LFGDungeonEntry
     
     // Helpers
     uint32 Entry() const { return ID + (type << 24); }
-    bool isHeroic() const { return heroic == 1; }
-    bool isRandom() const { return type == 6; }
+    bool isHeroic() const { return (heroic == 1); }
+    bool isRandom() const { return (type == 6); }
 };
 
 #define MAX_LOCK_CASE 8

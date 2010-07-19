@@ -183,9 +183,24 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
     uint8 teleportOut;
     recv_data >> teleportOut;
 
+    //This should not happen
+    if (!_player->isAlive())
+    {
+        _player->ResurrectPlayer(1.0f);
+        _player->SpawnCorpseBones();
+    }
+    //Teleport in
     if(teleportOut == 0)
+    {
+        if(Group *group = _player->GetGroup())
+        {
+            if(!group->isLfgGroup() || !((LfgGroup*)group)->GetDungeonInfo())
+                return;
+            ((LfgGroup*)group)->TeleportPlayer(_player, sLfgMgr.GetDungeonInfo(((LfgGroup*)group)->GetDungeonInfo()->ID));
+        }
         return;
-
+    }
+    /*
     if(Group *group = _player->GetGroup())
     {
         if(group->isLfgGroup())
@@ -194,13 +209,8 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
             return;
         }
     }
-
-    //This should not happen
-    if (!_player->isAlive())
-    {
-        _player->ResurrectPlayer(1.0f);
-        _player->SpawnCorpseBones();
-    }
+    */
+    
     WorldLocation teleLoc = _player->m_lookingForGroup.joinLoc;
     if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
     {

@@ -258,7 +258,6 @@ typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
     public:
-        typedef std::map<char*, DungeonEncounterEntry const*> DungeonEncounterMap;
         LfgGroup();
         ~LfgGroup();
 
@@ -295,6 +294,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         bool RemoveOfflinePlayers();
         bool UpdateCheckTimer(uint32 time);
         void TeleportToDungeon();
+        void TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo);
         bool HasCorrectLevel(uint8 level);
         bool IsInDungeon() const { return m_inDungeon; }
         void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
@@ -311,11 +311,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
                 roles |= DAMAGE;
             return roles;        
         }
-        void KilledCreature(Creature *creature)
-        {
-            KilledCreature(const_cast<char*>(creature->GetName()));
-        }
-        void KilledCreature(char *name);
+        void KilledCreature(Creature *creature);
         
     private:
         uint64 m_tank;
@@ -333,7 +329,6 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint8 m_instanceStatus;
         bool m_inDungeon;
         bool m_isRandom;
-        DungeonEncounterMap m_dungeonBosses;
         uint32 randomDungeonEntry;
 };
 
