@@ -812,6 +812,7 @@ void BattleGround::EndBattleGround(uint32 winner)
 
             winner_change = winner_arena_team->WonAgainst(loser_rating);
             loser_change = loser_arena_team->LostAgainst(winner_rating);
+            UpdateArenaTeamRanks();
 
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
@@ -2089,16 +2090,16 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
 }
 
-/*bool BattleGround::ArenaPlayersCount()
+void BattleGround::UpdateArenaTeamRanks()
 {
-    if(!isArena() || !sWorld.getConfig(CONFIG_BOOL_END_ARENA_IF_NOT_ENOUGH_PLAYERS))
-        return true;
-
-    //uint32 m_uiAliTeamCount = GetPlayersCountByTeam(BG_TEAM_ALLIANCE);
-    //uint32 m_uiHordeTeamCount = GetPlayersCountByTeam(BG_TEAM_HORDE);
-    //if(m_uiAliTeamCount < GetArenaType() || m_uiHordeTeamCount < GetArenaType())
-    if(GetBgMap()->GetPlayers().getSize() < GetArenaType()*2 && m_uiPlayersJoined < GetArenaType()*2)
-        return false;
- 
-    return true;
-}*/
+    for (ObjectMgr::ArenaTeamMap::const_iterator itr = sObjectMgr.GetArenaTeamMapBegin(); itr != sObjectMgr.GetArenaTeamMapEnd(); ++itr)
+    {
+        uint32 rank = 1;
+        for (ObjectMgr::ArenaTeamMap::const_iterator i = sObjectMgr.GetArenaTeamMapBegin(); i != sObjectMgr.GetArenaTeamMapEnd(); ++i)
+        {
+            if (i->second->GetType() == itr->second->GetType() && i->second->GetStats().rating > itr->second->GetRating())
+                ++rank;
+        }
+        itr->second->SetRank(rank);
+    }
+}

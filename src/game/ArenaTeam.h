@@ -139,6 +139,7 @@ class ArenaTeam
         const ArenaTeamStats& GetStats() const { return m_stats; }
         void SetStats(uint32 stat_type, uint32 value);
         uint32 GetRating() const          { return m_stats.rating; }
+        void SetRank (uint32 rank)        { m_stats.rank = rank; }
 
         uint32 GetEmblemStyle() const     { return m_EmblemStyle; }
         uint32 GetEmblemColor() const     { return m_EmblemColor; }
