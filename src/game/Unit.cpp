@@ -549,7 +549,26 @@ void Unit::RemoveSpellbyDamageTaken(AuraType auraType, uint32 damage)
         uint32 max_dmg = getLevel() > 8 ? 25 * getLevel() - 150 : 50;
         float chance = float(damage) / max_dmg * 100.0f;
         if (roll_chance_f(chance))
-            RemoveSpellsCausingAura(auraType);
+        {
+            if (auraType == SPELL_AURA_MOD_ROOT)
+            {
+                // remove only magical roots
+                AuraList::const_iterator iter, next;
+                for (iter = m_modAuras[auraType].begin(); iter != m_modAuras[auraType].end(); iter = next)
+                {
+                    next = iter;
+                    ++next;
+                    
+                    if ((*iter) && (*iter)->GetSpellProto()->Dispel == DISPEL_MAGIC)
+                    {
+                        RemoveAurasDueToSpell((*iter)->GetId());
+                        next = m_modAuras[auraType].begin();
+                    }
+                }
+            }
+            else
+                RemoveSpellsCausingAura(auraType);
+        }
     }
 }
 
