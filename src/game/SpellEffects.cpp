@@ -2116,28 +2116,46 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     if (!item)
                         return;
 
+                    m_caster->CastSpell(unitTarget, 5940, true);
+
                     // all poison enchantments is temporary
                     uint32 enchant_id = item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT);
-                    if (enchant_id)
+                    if (!enchant_id)
+                        return;
+                    
+                    SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+                    if (!pEnchant)
+                        return;
+                    
+                    for (int s = 0; s < 3 ; ++s)
                     {
-                        SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
-                        if (pEnchant)
+                        if (pEnchant->type[s]!=ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
+                            continue;
+                        
+                        SpellEntry const* combatEntry = sSpellStore.LookupEntry(pEnchant->spellid[s]);
+                        if (!combatEntry || combatEntry->Dispel != DISPEL_POISON)
+                            continue;
+                        
+                        // if target have 5 stack of Deadly poison proc from other weapon
+                        if (combatEntry->SpellFamilyFlags == 0x10000 && combatEntry->SpellFamilyName == SPELLFAMILY_ROGUE)
                         {
-                            for (int s=0;s<3;s++)
+                            AuraList const& mAura = unitTarget->GetAurasByType(SPELL_AURA_PERIODIC_DAMAGE);
+                            for (AuraList::const_iterator itr = mAura.begin(); itr != mAura.end(); ++itr)
                             {
-                                if (pEnchant->type[s]!=ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
-                                    continue;
-
-                                SpellEntry const* combatEntry = sSpellStore.LookupEntry(pEnchant->spellid[s]);
-                                if (!combatEntry || combatEntry->Dispel != DISPEL_POISON)
-                                    continue;
-
-                                m_caster->CastSpell(unitTarget, combatEntry, true, item);
+                                if ((*itr)->GetSpellProto()->SpellFamilyFlags == 0x10000 &&        // deadly poison
+                                    (*itr)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE && 
+                                    (*itr)->GetCasterGUID() == GetGUID() &&                        // same caster
+                                    (*itr)->GetStackAmount() >= 5)                                 // max stack
+                                    if(CastItemCombatSpellFromOtherWeapon(unitTarget, BASE_ATTACK))
+                                    {
+                                        (*itr)->GetHolder()->RefreshHolder();
+                                        m_caster->CastSpell(unitTarget, 5940, true);
+                                        return;
+                                    }
                             }
-                         }
+                        }	
+                        m_caster->CastSpell(unitTarget, combatEntry, true, item);
                     }
-
-                    m_caster->CastSpell(unitTarget, 5940, true);
                     return;
                 }
                 case 14185:                                 // Preparation
