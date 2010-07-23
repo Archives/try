@@ -16046,14 +16046,14 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
 
     //For character transfer
-    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
-        AddLoginEquip();
-
     if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
         LearnAviableSpells();
 
     if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
         LearnSkillRecipesFromTrainer();
+
+    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+        AddLoginEquip();
 
     if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
         LearnAllAviableTaxiPaths();
@@ -21852,9 +21852,10 @@ void Player::LearnSkillRecipesFromTrainer()
     RemoveAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES,true);
         
     DEBUG_LOG("Player::LearnSkillRecipesFromTrainer(): Player %u has flag AT_LOGIN_LEARN_SKILL_RECIPES, learning recipes...", GetGUID());
-
     for(SkillStatusMap::iterator itr = mSkillStatus.begin(); itr != mSkillStatus.end(); ++itr)
     {
+        learnSkillRewardedSpells(itr->first, GetSkillValue(itr->first));
+
         QueryResult *result = WorldDatabase.PQuery("SELECT spell FROM npc_trainer WHERE reqskill=%u AND reqskillvalue <= %u GROUP BY spell", itr->first, GetSkillValue(itr->first));
         if(!result)
             continue;
