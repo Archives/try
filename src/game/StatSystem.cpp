@@ -1076,7 +1076,7 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
     float bonusAP = 0.0f;
     UnitMods unitMod = UNIT_MOD_ATTACK_POWER;
 
-    val = GetStat(STAT_STRENGTH) - 20.0f; 
+    val = (GetStat(STAT_STRENGTH) - 20.0f) * 2;
 
     Unit* owner = GetOwner();
     if (owner && owner->GetTypeId()==TYPEID_PLAYER)
@@ -1133,11 +1133,6 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
                         coeff += glyph->GetModifier()->m_amount / 100.0f;
                     bonusAP += coeff * owner->GetTotalAttackPowerValue(BASE_ATTACK);
                     break;
-                }
-                case CLASS_DEATH_KNIGHT: 
-                { 
-                    val = 2 * GetStat(STAT_STRENGTH) - 20.0f; 
-                    break; 
                 }
             }
         }
