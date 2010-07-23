@@ -804,7 +804,7 @@ namespace MaNGOS
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_LINE:
-                        if(i_spell.GetCaster()->HasInArc(M_PI, itr->getSource(), i_spell.m_targets.m_srcO) &&
+                        if(i_spell.GetCaster()->HasInArc(M_PI_F, itr->getSource(), i_spell.m_targets.m_srcO) &&
                             itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
                         {
                             float width = itr->getSource()->GetObjectBoundingRadius();
