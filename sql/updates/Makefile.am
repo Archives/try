@@ -100,26 +100,8 @@ pkgdata_DATA = \
 	10131_01_mangos_spell_bonus_data.sql \
 	10148_01_mangos_mangos_string.sql \
 	10171_01_mangos_mangos_string.sql \
-<<<<<<< HEAD
-	10270_01_mangos_reputation_spillover_template.sql \
-=======
-	10197_01_mangos_playercreateinfo.sql \
-	10203_01_mangos_item_template.sql \
-	10205_01_mangos_spell_area.sql \
-	10207_01_mangos_npc_vendor.sql \
-	10208_01_mangos_playercreateinfo.sql \
-	10217_01_mangos_playercreateinfo_spell.sql \
-	10217_02_mangos_playercreateinfo_action.sql \
-	10217_03_mangos_spell_learn_spell.sql \
-	10217_04_mangos_spell_chain.sql \
-	10217_05_mangos_spell_proc_event.sql \
-	10219_01_mangos_spell_proc_event.sql \
-	10223_01_mangos_spell_proc_event.sql \
-	10237_01_mangos_spell_bonus_data.sql \
-	10244_01_mangos_command.sql \
-	10251_01_mangos_command.sql \
 	10252_01_mangos_reputation_reward_rate.sql \
->>>>>>> e20c560... [10252] Implement reputation_reward_rate for quests and creatures
+	10270_01_mangos_reputation_spillover_template.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -200,24 +182,6 @@ EXTRA_DIST = \
 	10131_01_mangos_spell_bonus_data.sql \
 	10148_01_mangos_mangos_string.sql \
 	10171_01_mangos_mangos_string.sql \
-<<<<<<< HEAD
-	10270_01_mangos_reputation_spillover_template.sql \
-=======
-	10197_01_mangos_playercreateinfo.sql \
-	10203_01_mangos_item_template.sql \
-	10205_01_mangos_spell_area.sql \
-	10207_01_mangos_npc_vendor.sql \
-	10208_01_mangos_playercreateinfo.sql \
-	10217_01_mangos_playercreateinfo_spell.sql \
-	10217_02_mangos_playercreateinfo_action.sql \
-	10217_03_mangos_spell_learn_spell.sql \
-	10217_04_mangos_spell_chain.sql \
-	10217_05_mangos_spell_proc_event.sql \
-	10219_01_mangos_spell_proc_event.sql \
-	10223_01_mangos_spell_proc_event.sql \
-	10237_01_mangos_spell_bonus_data.sql \
-	10244_01_mangos_command.sql \
-	10251_01_mangos_command.sql \
 	10252_01_mangos_reputation_reward_rate.sql \
->>>>>>> e20c560... [10252] Implement reputation_reward_rate for quests and creatures
+	10270_01_mangos_reputation_spillover_template.sql \
 	README
