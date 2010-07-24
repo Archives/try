@@ -271,6 +271,7 @@ class BattleGroundEY : public BattleGround
         virtual void Reset();
         void UpdateTeamScore(uint32 Team);
         void EndBattleGround(uint32 winner);
+        bool HandlePlayerUnderMap(Player * plr);
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value);
         virtual void FillInitialWorldStates(WorldPacket& data, uint32& count);
         void SetDroppedFlagGUID(uint64 guid)       { m_DroppedFlagGUID = guid;}
