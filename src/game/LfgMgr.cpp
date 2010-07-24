@@ -222,8 +222,9 @@ void LfgGroup::TeleportToDungeon()
                     if((*itrDung)->ID != (*itr2)->dungeonInfo->ID)
                         continue;
                     DugeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo((*itr2)->dungeonInfo->ID);
-                    if((*itr2)->lockType != LFG_LOCKSTATUS_RAID_LOCKED && !dungeonInfo->locked)
+                    if(dungeonInfo->locked || (*itr2)->lockType != LFG_LOCKSTATUS_RAID_LOCKED)
                     {
+                        error_log("erase %u, locktype %u", dungeonInfo->ID, (*itr2)->lockType);
                         options.erase(itrDung);
                         break;
                     }                   
@@ -233,11 +234,15 @@ void LfgGroup::TeleportToDungeon()
         //This should not happen
         if(options.empty())
         {
-            for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+            for(member_witerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
             {
-                sLfgMgr.SendLfgUpdatePlayer(itr->getSource(), LFG_UPDATETYPE_GROUP_DISBAND);
-                itr->getSource()->GetSession()->SendNotification("Cannot find any random dungeons for this group, you have to find new group. We are sorry");
-                RemoveMember(itr->getSource()->GetGUID(), 0);
+                error_log("wrong");
+                Player *plr = sObjectMgr.GetPlayer(itr->guid);
+                if(!plr)
+                    continue;
+                sLfgMgr.SendLfgUpdatePlayer(plr, LFG_UPDATETYPE_GROUP_DISBAND);
+                plr->GetSession()->SendNotification("Cannot find any random dungeons for this group, you have to find new group. We are sorry");
+                RemoveMember(plr->GetGUID(), 0);
             }
             sLfgMgr.AddGroupToDelete(this);
             return;
@@ -404,6 +409,7 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo)
     plr->m_lookingForGroup.queuedDungeons.clear();
     plr->m_lookingForGroup.roles = GetPlayerRole(plr->GetGUID());
     plr->ScheduleDelayedOperation(DELAYED_LFG_ENTER_DUNGEON);
+    plr->ScheduleDelayedOperation(DELAYED_SAVE_PLAYER);
     plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
         dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
 }

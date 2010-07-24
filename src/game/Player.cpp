@@ -20541,7 +20541,7 @@ PartyResult Player::CanUninviteFromGroup() const
     if(!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID()))
         return ERR_NOT_LEADER;
 
-    if(InBattleGround())
+    if(InBattleGround() || grp->isLfgGroup())
         return ERR_INVITE_RESTRICTED;
 
     return ERR_PARTY_RESULT_OK;
