@@ -221,7 +221,7 @@ void LfgGroup::TeleportToDungeon()
                 {
                     if((*itrDung)->ID != (*itr2)->dungeonInfo->ID)
                         continue;
-                    DugeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo((*itr2)->dungeonInfo->ID);
+                    DungeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo((*itr2)->dungeonInfo->ID);
                     if(dungeonInfo->locked || (*itr2)->lockType != LFG_LOCKSTATUS_RAID_LOCKED)
                     {
                         error_log("erase %u, locktype %u", dungeonInfo->ID, (*itr2)->lockType);
@@ -253,7 +253,7 @@ void LfgGroup::TeleportToDungeon()
     }
 
     error_log("TELEPORT dung id %u", m_dungeonInfo->ID);
-    DugeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID);
+    DungeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID);
     if(m_groupType == GROUPTYPE_LFD)
     {
         //Set Leader
@@ -305,12 +305,12 @@ void LfgGroup::TeleportToDungeon()
         error_log("teleport");
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
     
-        TeleportPlayer(plr, dungeonInfo);
+        TeleportPlayer(plr, dungeonInfo, originalDungeonId);
     }
     m_inDungeon = true;
 }
 
-void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo)
+void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 originalDungeonId)
 {
     if(m_inDungeon)
     {
@@ -1607,10 +1607,10 @@ void LfgMgr::LoadDungeonsInfo()
         currentRow = sLFGDungeonStore.LookupEntry(i);
         if(!currentRow)
             continue;
-        DugeonInfo *info = new DugeonInfo();
+        DungeonInfo *info = new DungeonInfo();
         info->ID = currentRow->ID;
         info->locked = true;
-        m_dungeonInfoMap.insert(std::make_pair<uint32, DugeonInfo*>(info->ID, info));
+        m_dungeonInfoMap.insert(std::make_pair<uint32, DungeonInfo*>(info->ID, info));
     }
     uint32 count = 0;
     //                                                0   1     2           3          4        5        6        7        8
@@ -1631,7 +1631,7 @@ void LfgMgr::LoadDungeonsInfo()
 
         bar.step();
         
-        DugeonInfo *info = new DugeonInfo();
+        DungeonInfo *info = new DungeonInfo();
         info->ID                      = fields[0].GetUInt32();
         info->name                    = fields[1].GetCppString();
         info->lastBossId              = fields[2].GetUInt32();

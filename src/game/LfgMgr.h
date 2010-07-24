@@ -239,7 +239,7 @@ enum QueueTypes
 
 typedef std::set<uint64> PlayerList;
 
-struct DugeonInfo             //used in db
+struct DungeonInfo             //used in db
 {
     uint32 ID;                // From LfgDungeons.dbc
     std::string name;
@@ -251,7 +251,7 @@ struct DugeonInfo             //used in db
     float start_o;
     bool locked;
 };
-typedef std::map<uint32, DugeonInfo*> DungeonInfoMap;
+typedef std::map<uint32, DungeonInfo*> DungeonInfoMap;
 
 typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 //Used not only inside dungeons, but also as queued group
@@ -294,7 +294,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         bool RemoveOfflinePlayers();
         bool UpdateCheckTimer(uint32 time);
         void TeleportToDungeon();
-        void TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo);
+        void TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 originalDungeonId = 0);
         bool HasCorrectLevel(uint8 level);
         bool IsInDungeon() const { return m_inDungeon; }
         void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
@@ -366,7 +366,7 @@ class MANGOS_DLL_SPEC LfgMgr
 
         void LoadDungeonRewards();
         void LoadDungeonsInfo();
-        DugeonInfo* GetDungeonInfo(uint32 id) { return m_dungeonInfoMap.find(id)->second; };
+        DungeonInfo* GetDungeonInfo(uint32 id) { return m_dungeonInfoMap.find(id)->second; };
         LfgLocksList *GetDungeonsLock(Player *plr);
 
         uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
