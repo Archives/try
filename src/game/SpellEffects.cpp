@@ -5392,6 +5392,34 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                     if (m_targets.getUnitTarget() != unitTarget)
                         weaponDamagePercentMod /= 2.0f;
             }
+            // consume diseases on target if Obliterate 
+            if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0002000000000000)) 
+            { 
+                int32 chance = 0; 
+                // Annihilation 
+                SpellEntry const* talentProto = (m_caster->GetTypeId() == TYPEID_PLAYER) ? ((Player*)m_caster)->GetKnownTalentRankById(2048) : NULL; 
+                if (talentProto) 
+                    chance += talentProto->CalculateSimpleValue(EFFECT_INDEX_0); 
+ 
+                // now remove 
+                if (!roll_chance_i(chance)) 
+                { 
+                     Unit::SpellAuraHolderMap& auras = unitTarget->GetSpellAuraHolderMap(); 
+                     
+                     for (Unit::SpellAuraHolderMap::iterator itr = auras.begin(); itr != auras.end();) 
+                     { 
+                         if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
+                             itr->second->GetCasterGUID() == m_caster->GetGUID()) 
+                         { 
+                             unitTarget->RemoveSpellAuraHolder(itr->second); 
+                             itr = auras.begin(); 
+                         } 
+                         else 
+                             ++itr; 
+                     } 
+                } 
+ 
+            }
             // Glyph of Blood Strike
             if( m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400000) &&
                 m_caster->HasAura(59332) &&
