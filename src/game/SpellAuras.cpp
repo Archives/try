@@ -5307,6 +5307,9 @@ void Aura::HandleAuraProcTriggerSpell(bool apply, bool Real)
             case 28200:                                     // Ascendance (Talisman of Ascendance trinket)
                 SetAuraCharges(6);
                 break;
+            case 50421:                                     // Scent of Blood (not sure why exactly 1 charge, but it works :-))(maybe because we need to drop only one ^^)
+                GetHolder()->SetAuraCharges(1);
+                break;
             default: break;
         }
     }
