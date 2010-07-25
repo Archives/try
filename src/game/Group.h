@@ -77,8 +77,10 @@ enum GroupType                                              // group type flags?
     GROUPTYPE_BG     = 0x01,
     GROUPTYPE_RAID   = 0x02,
     GROUPTYPE_BGRAID = GROUPTYPE_BG | GROUPTYPE_RAID,       // mask
-    // 0x04?
-    GROUPTYPE_LFD    = 0x08,
+
+    GROUPTYPE_LFD_1  = 0x04,                                // this one allows vote kick and Dungeon Guide I think
+    GROUPTYPE_LFD_2  = 0x08,                                // this one shows roles next to members images and shows "Teleport Out Of Dungeon" at minimap
+    GROUPTYPE_LFD    = GROUPTYPE_LFD_1 | GROUPTYPE_LFD_2,
     // 0x10, leave/change group?, I saw this flag when leaving group and after leaving BG while in group
 };
 
@@ -452,5 +454,6 @@ class MANGOS_DLL_SPEC Group
         Rolls               RollId;
         BoundInstancesMap   m_boundInstances[MAX_DIFFICULTY];
         uint8*              m_subGroupsCounts;
+        uint32              m_groupListSendCounter;
 };
 #endif

@@ -63,7 +63,9 @@ bool LfgGroup::LoadGroupFromDB(Field *fields)
     m_tank = m_mainTank;
     m_heal = fields[1].GetUInt64();
     m_dungeonInfo = sLFGDungeonStore.LookupEntry(fields[19].GetUInt32());
-    m_instanceStatus = fields[20].GetUInt8();
+    randomDungeonEntry = fields[20].GetUInt32();
+    m_instanceStatus = fields[21].GetUInt8();
+    m_inDungeon = true; 
     return true;
 }
 bool LfgGroup::AddMember(const uint64 &guid, const char* name)
@@ -128,8 +130,11 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
         sLfgMgr.AddGroupToDelete(this);
         return true;
     }
-    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+    member_citerator citr, next;
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); citr = next)
     {
+        next = citr;
+        ++next; 
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
         if(!plr ||!plr->GetSession())
             RemoveMember(citr->guid, 0);
@@ -145,7 +150,7 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
 
 void LfgGroup::KilledCreature(Creature *creature)
 {
-    error_log("Killed creature %s", creature->GetEntry());
+    error_log("Killed creature %u", creature->GetEntry());
 
     if(creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
     {
@@ -171,7 +176,7 @@ void LfgGroup::KilledCreature(Creature *creature)
             plr->GetSession()->SendPacket(&data);
             LfgReward *reward = sLfgMgr.GetDungeonReward((randomDungeonEntry & 0x00FFFFFF), plr->m_lookingForGroup.DoneDungeon((randomDungeonEntry & 0x00FFFFFF)), plr->getLevel());
             if (!reward)
-                return;
+                continue;
             reward->questInfo->SetFlag(QUEST_FLAGS_AUTO_REWARDED);
             plr->CompleteQuest(reward->questInfo->GetQuestId());
         }
@@ -281,6 +286,7 @@ void LfgGroup::TeleportToDungeon()
         /*
         ALTER TABLE `groups` ADD `healGuid` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
             ADD `LfgId` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
+            ADD `LfgRandomEntry` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
             ADD `LfgInstanceStatus` TINYINT( 3 ) UNSIGNED NOT NULL;
 
         ALTER TABLE `group_member` ADD `lfg_join_x` FLOAT NOT NULL DEFAULT '0',
@@ -294,10 +300,10 @@ void LfgGroup::TeleportToDungeon()
         */
         CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Id);
         CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Id);
-        CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty,healGuid,LfgId,LfgInstanceStatus) "
-            "VALUES ('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u','%u','%u','%u')",
+        CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty,healGuid,LfgId,LfgRandomEntry,LfgInstanceStatus) "
+            "VALUES ('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u','%u','%u','%u','%u')",
             m_Id, GUID_LOPART(m_leaderGuid), GUID_LOPART(m_tank), GUID_LOPART(m_mainAssistant), uint32(m_lootMethod),
-            GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, m_instanceStatus);    
+            GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, randomDungeonEntry, m_instanceStatus);    
     }
     //sort group members...
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
@@ -464,11 +470,11 @@ void LfgGroup::SendUpdate()
         data << uint8(GROUPTYPE_LFD);                       // group type (flags in 3.3)
         data << uint8(citr->group);                         // groupid
         data << uint8(GetFlags(*citr));                     // group flags
-        data << uint8(0);                                   // 2.0.x, isBattleGroundGroup?
+        data << uint8(GROUPTYPE_LFD_2);                     // 2.0.x, isBattleGroundGroup? <--- Its flags....
         data << uint8(m_instanceStatus);                    // Instance status 0= not saved, 1= saved, 2 = completed
         data << uint32(m_dungeonInfo->Entry());             // dungeon entry
-        data << uint64(0x50000000FFFFFFFELL);               // related to voice chat?
-        data << uint32(0);                                  // 3.3, this value increments every time SMSG_GROUP_LIST is sent
+        data << uint64(0x1F54000004D3B000);                 // related to voice chat?
+        data << uint32(m_groupListSendCounter);             // 3.3, this value increments every time SMSG_GROUP_LIST is sent
         data << uint32(GetMembersCount()-1);
         for(member_citerator citr2 = m_memberSlots.begin(); citr2 != m_memberSlots.end(); ++citr2)
         {
@@ -498,6 +504,7 @@ void LfgGroup::SendUpdate()
         }
         player->GetSession()->SendPacket( &data );
     }
+    ++m_groupListSendCounter;
 }
 LfgLocksMap* LfgGroup::GetLocksList() const
 {
@@ -666,6 +673,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
             data << uint32(0);
             leader->GetSession()->SendPacket(&data);
         }
+        sLfgMgr.AddCheckedGroup(this);
         return;
     }
     if(m_rolesProposal.empty())
@@ -741,6 +749,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
                 player->GetSession()->SendPacket(&data);
             }
         }
+        sLfgMgr.AddCheckedGroup(this);
         return;
     }
     //Move group to queue
@@ -967,8 +976,6 @@ void LfgMgr::RemoveFromQueue(Player *player)
 void LfgMgr::AddCheckedGroup(LfgGroup *group)
 {
     rolecheckGroups.erase(group);
-
-
 }
 
 void LfgMgr::UpdateQueues()
@@ -1013,11 +1020,14 @@ void LfgMgr::UpdateQueues()
                     }
 
                 } */
-                for(GroupsList::iterator grpitr2 = itr->second->groups.begin(); grpitr2 != itr->second->groups.end(); ++grpitr2)
+                GroupsList::iterator grpitr2, grpitr2next;
+                for(grpitr2 = itr->second->groups.begin(); grpitr2 != itr->second->groups.end(); grpitr2 = grpitr2next)
                 {
+                    grpitr2next = grpitr2;
+                    ++grpitr2next;
                     if((*grpitr1) == (*grpitr2) || !(*grpitr1) || !(*grpitr2))
                         continue;
-                     error_log("Try tom merge");
+                    error_log("Try tom merge");
                     for (GroupReference *plritr = (*grpitr2)->GetFirstMember(); plritr != NULL; plritr = plritr->next())
                     {
                         Player *plr = plritr->getSource();
@@ -1039,14 +1049,15 @@ void LfgMgr::UpdateQueues()
                             (*grpitr1)->AddMember(plr->GetGUID(), plr->GetName());
                             (*grpitr1)->SetHeal(plr->GetGUID());
                         }
-
                     }
+                    error_log("DPS");
                     // ..and DPS
                     if((*grpitr1)->GetDps()->size() != LFG_DPS_COUNT && !(*grpitr2)->GetDps()->empty())
                     {
                         //move dps
                         for(PlayerList::iterator dps = (*grpitr2)->GetDps()->begin(); dps != (*grpitr2)->GetDps()->end(); ++dps)
                         {
+                            error_log("DPS 1");
                             if((*grpitr2)->GetPremadePlayers().find((*dps)) != (*grpitr2)->GetPremadePlayers().end())
                                 continue;
 
@@ -1062,6 +1073,7 @@ void LfgMgr::UpdateQueues()
                         //and delete them from second group
                         for(PlayerList::iterator dps = (*grpitr1)->GetDps()->begin(); dps != (*grpitr2)->GetDps()->end(); ++dps)
                         {
+                            error_log("DPS 2");
                             if((*grpitr2)->GetDps()->find(*dps) != (*grpitr2)->GetDps()->end())
                                 (*grpitr2)->GetDps()->erase(*dps);
                         }

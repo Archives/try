@@ -39,7 +39,7 @@
 Group::Group() : m_Id(0), m_leaderGuid(0), m_mainTank(0), m_mainAssistant(0),  m_groupType(GROUPTYPE_NORMAL),
     m_dungeonDifficulty(REGULAR_DIFFICULTY), m_raidDifficulty(REGULAR_DIFFICULTY),
     m_bgGroup(NULL), m_lootMethod(FREE_FOR_ALL), m_looterGuid(0), m_lootThreshold(ITEM_QUALITY_UNCOMMON),
-    m_subGroupsCounts(NULL)
+    m_subGroupsCounts(NULL), m_groupListSendCounter(0)
 {
     for (int i = 0; i < TARGET_ICON_COUNT; ++i)
         m_targetIcons[i] = 0;
@@ -989,14 +989,14 @@ void Group::SendUpdate()
         data << uint8(m_groupType);                         // group type (flags in 3.3)
         data << uint8(citr->group);                         // groupid
         data << uint8(GetFlags(*citr));                     // group flags
-        data << uint8(isBGGroup() ? 1 : 0);                 // 2.0.x, isBattleGroundGroup?
+        data << uint8(isBGGroup() ? GROUPTYPE_BG : GROUPTYPE_NORMAL);// Second type?
         if(m_groupType & GROUPTYPE_LFD)
         {
             data << uint8(0);
             data << uint32(0);
         }
         data << uint64(0x50000000FFFFFFFELL);               // related to voice chat?
-        data << uint32(0);                                  // 3.3, this value increments every time SMSG_GROUP_LIST is sent
+        data << uint32(m_groupListSendCounter);             // 3.3, this value increments every time SMSG_GROUP_LIST is sent
         data << uint32(GetMembersCount()-1);
         for(member_citerator citr2 = m_memberSlots.begin(); citr2 != m_memberSlots.end(); ++citr2)
         {
@@ -1026,6 +1026,7 @@ void Group::SendUpdate()
         }
         player->GetSession()->SendPacket( &data );
     }
+    ++m_groupListSendCounter;
 }
 
 void Group::UpdatePlayerOutOfRange(Player* pPlayer)
