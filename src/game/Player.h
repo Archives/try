@@ -2776,10 +2776,10 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     //Flat modifiers should be first?
     float diff = 0;
     if(totalpct)
-        diff = ((float)basevalue + (float)totalflat)*(float)totalpct/100.0f;
+        diff = ((float(basevalue) + float(totalflat))*float(totalpct)/100.0f) + float(totalflat);
     else
-        diff = (float)totalflat;
-    basevalue = T((float)basevalue + diff);
+        diff = float(totalflat);
+    basevalue = T(float(basevalue) + diff);
     return T(diff);
 }
 
