@@ -5942,12 +5942,19 @@ SpellCastResult Spell::CheckCasterAuras() const
     // in case of SPELL_ATTR_EX5_USABLE_WHILE_STUNNED must be also checked mechanic of spell
     if (unitflag & UNIT_FLAG_STUNNED && m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_STUNNED)
     {
+        if (m_spellInfo->Id == 42292 || m_spellInfo->Id ==  59752)
+            return SPELL_CAST_OK;
+
         Unit::AuraMap const& auras = m_caster->GetAuras();
         for(Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-            if (itr->second)
-                if (itr->second->GetModifier()->m_auraname == SPELL_AURA_MOD_STUN)
-                    if (!(GetSpellMechanicMask(itr->second->GetSpellProto(), itr->second->GetEffIndex()) & MECHANIC_STUN))
-                        return SPELL_FAILED_STUNNED;
+        {
+            if (!itr->second)
+                continue;
+             
+             if(itr->second->m_modifier.m_auraname == SPELL_AURA_MOD_STUN)
+                 if (!(GetSpellMechanicMask(itr->second->GetSpellProto(), itr->second->GetEffIndex()) & MECHANIC_STUN))
+                      return SPELL_FAILED_STUNNED;
+        }
     }
     return SPELL_CAST_OK;
 }

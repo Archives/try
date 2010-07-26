@@ -2993,7 +2993,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     normalized_d = caster->GetDistance(x,y,z);
     vertical = 10.0f + target->GetPositionZ() - caster->GetPositionZ();
 
-    caster->KnockWithAngle(angle, -normalized_d, vertical);
+    caster->KnockWithAngle(angle, normalized_d, vertical);
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
