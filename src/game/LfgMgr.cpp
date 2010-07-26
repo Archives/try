@@ -470,7 +470,7 @@ void LfgGroup::SendUpdate()
         data << uint8(GROUPTYPE_LFD);                       // group type (flags in 3.3)
         data << uint8(citr->group);                         // groupid
         data << uint8(GetFlags(*citr));                     // group flags
-        data << uint8(GROUPTYPE_LFD_2);                     // 2.0.x, isBattleGroundGroup? <--- Its flags....
+        data << uint8(GetPlayerRole(citr->guid));           // 2.0.x, isBattleGroundGroup? <--- Its flags or maybe more likely roles....?
         data << uint8(m_instanceStatus);                    // Instance status 0= not saved, 1= saved, 2 = completed
         data << uint32(m_dungeonInfo->Entry());             // dungeon entry
         data << uint64(0x1F54000004D3B000);                 // related to voice chat?
