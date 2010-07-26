@@ -16839,7 +16839,10 @@ void Player::LearnAviableSpells()
                     (!IsSpellFitByClassAndRace(spell) && spell_entry->SpellFamilyName != SPELLFAMILY_GENERIC))
                     continue;
 
-                learnSpell(spell, false);
+                if(spell_entry->Effect[EFFECT_INDEX_0] == SPELL_EFFECT_LEARN_SPELL || spell_entry->Effect[EFFECT_INDEX_1] == SPELL_EFFECT_LEARN_SPELL || spell_entry->Effect[EFFECT_INDEX_2] == SPELL_EFFECT_LEARN_SPELL)
+                    CastSpell(this, spell, true);
+                else
+                    learnSpell(spell, false);
             } while (result_trainer->NextRow());
             delete result_trainer;
         }
