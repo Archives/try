@@ -4699,6 +4699,10 @@ SpellCastResult Spell::CheckCast(bool strict)
             return SPELL_FAILED_MOVING;
     }
 
+    //Death grip - cant cast while falling, possibly some spell atribute exist :/
+    if(m_spellInfo->Id == 49576 && m_caster->m_movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)))
+        return SPELL_FAILED_MOVING;
+
     if(Unit *target = m_targets.getUnitTarget())
     {
         // target state requirements (not allowed state), apply to self also
