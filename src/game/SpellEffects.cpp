@@ -2612,46 +2612,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             }
             // Raise Dead
             else if (m_spellInfo->Id == 46584)
-            {   
-                if( unitTarget->isDead() && unitTarget->GetCreatureType()==CREATURE_TYPE_HUMANOID && unitTarget->getLevel() >= m_caster->getLevel()-3 )
-                {
-                    if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
-                    {
-                        m_caster->CastSpell(m_caster, 52150, true, NULL);
-                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
-                        ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
-                    }
-                    else
-                    {
-                        m_caster->CastSpell(m_caster, 46585, true, NULL);
-                        ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
-                        ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
-                    }
-                }
-                else
-                {
-                    if(((Player*)m_caster)->HasItemCount(37201,1))
-                    {
-                           if( m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143) )
-                        {
-                            m_caster->CastSpell(m_caster, 52150, true, NULL);
-                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,52150, this); 
-                            ((Player*)m_caster)->RemoveSpellCooldown(52150, true);
-                               
-                        }
-                        else
-                        {
-                            m_caster->CastSpell(m_caster, 46585, true, NULL);
-                            ((Player*)m_caster)->SendCooldownEvent(m_spellInfo,46585, this); 
-                            ((Player*)m_caster)->RemoveSpellCooldown(46585, true);
-                           
-                        }
-                        ((Player*)m_caster)->DestroyItemCount(37201,1,true);
-                    }
-                    else 
-                        m_caster->CastStop();
-                    return;
-                }
+            {
+                uint32 spellId = (m_caster->GetTypeId()==TYPEID_PLAYER && ((Player*)m_caster)->HasSpell(52143)) ? 52150 : 46585;
+
+                m_caster->CastSpell(m_caster, spellId, true, NULL);
+                ((Player*)m_caster)->SendCooldownEvent(m_spellInfo, spellId, this); 
+                ((Player*)m_caster)->RemoveSpellCooldown(spellId, true);
+                return;
             }
             break;
         }

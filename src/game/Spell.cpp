@@ -5371,6 +5371,29 @@ SpellCastResult Spell::CheckCast(bool strict)
 
                 break;
             }
+            case SPELL_EFFECT_SCRIPT_EFFECT:
+            {
+                // Raise Dead
+                if (m_spellInfo->Id == 46584)
+                {
+                    SpellCastResult result;
+                    if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->isDead() &&
+                        m_targets.getUnitTarget()->GetCreatureType()==CREATURE_TYPE_HUMANOID &&
+                        m_targets.getUnitTarget()->getLevel() >= m_caster->getLevel()-3)
+                        result = SPELL_FAILED_SUCCESS;
+                    else if (m_caster->GetTypeId() == TYPEID_PLAYER && ((Player*)m_caster)->HasItemCount(37201,1))
+                    {
+                        ((Player*)m_caster)->DestroyItemCount(37201,1,true);
+                        result = SPELL_FAILED_SUCCESS;
+                    }
+                    else
+                        result = SPELL_FAILED_ITEM_NOT_FOUND;
+                    
+                    if (result)
+                        return result;
+                }
+                break;
+            }
             case SPELL_EFFECT_SKINNING:
             {
                 if (m_caster->GetTypeId() != TYPEID_PLAYER || !m_targets.getUnitTarget() || m_targets.getUnitTarget()->GetTypeId() != TYPEID_UNIT)
