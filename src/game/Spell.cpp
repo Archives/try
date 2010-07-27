@@ -5377,7 +5377,9 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_spellInfo->Id == 46584)
                 {
                     SpellCastResult result;
-                    if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->isDead() &&
+                    if (m_caster->HasAura(60200, EFFECT_INDEX_0))
+                        result = SPELL_FAILED_SUCCESS;
+                    else if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->isDead() &&
                         m_targets.getUnitTarget()->GetCreatureType()==CREATURE_TYPE_HUMANOID &&
                         m_targets.getUnitTarget()->getLevel() >= m_caster->getLevel()-3)
                         result = SPELL_FAILED_SUCCESS;
