@@ -2769,6 +2769,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 45472, true);
                 return;
             }
+            // Summon Gargoyle - cast dismiss pet
+            case 61777:
+            {
+                target->CastSpell(target, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_0), true);
+                return;
+            }
         }
 
         // Living Bomb

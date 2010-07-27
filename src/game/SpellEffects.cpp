@@ -377,6 +377,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     // Pulsing Shockwave (Loken's spell)
                     case 52942: 
                     case 59837:
+                    {
                         float distance = m_caster->GetDistance(unitTarget);
                         float multiplier;
                         if (distance - (1./3.)<=0)
@@ -388,6 +389,11 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                                 multiplier = 3.55556f;
                         }
                         damage = damage * multiplier * 3 / 2;
+                        break;
+                    }
+                    // Gargoyle Strike
+                    case 51963:
+                        damage+= uint32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK) / 3);
                         break;
                 }
                 break;
@@ -1813,6 +1819,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             break;
                     }
                     m_caster->CastSpell(m_caster, spell_id, true);
+                    return;
+                }
+                case 50515:                                 // Dismiss Gargoyle
+                {
+                    if (!unitTarget)
+                       return;
+                    unitTarget->RemoveGuardians();
                     return;
                 }
             }

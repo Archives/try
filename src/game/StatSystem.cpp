@@ -914,6 +914,8 @@ bool Pet::UpdateStats(Stats stat)
                         if (Aura *glyph = owner->GetDummyAura(58686))
                             scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
                     }
+                    else if (getPetType() == GUARDIAN_PET)
+                        scale_coeff = 0.4f;
                 }
                 break;
             }
