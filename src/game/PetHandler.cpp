@@ -679,6 +679,9 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
     spell->m_cast_count = cast_count;                       // probably pending spell cast
     spell->m_targets = targets;
 
+    if(pet->IsNonMeleeSpellCasted(false))
+        pet->CastStop();
+
     SpellCastResult result = spell->CheckPetCast(NULL);
     if (result == SPELL_CAST_OK)
     {
