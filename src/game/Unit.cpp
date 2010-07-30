@@ -7861,7 +7861,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         return false;
 
                     //convert runes to death
-                    for (uint32 i = 0; i*2 < MAX_RUNES; ++i)
+                    for (uint32 i = 0; i < NUM_RUNE_TYPES -1/*don't count death rune*/; ++i)
                     {
                         uint32 remainingCost = runeCost->RuneCost[i];
                         while(remainingCost)

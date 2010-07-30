@@ -326,9 +326,14 @@ bool ChatHandler::HandleLitakCommand(const char* args)
             player->m_taxi.ClearTaxiDestinations();
             if(curSrcNode)
                 player->TeleportTo(curSrcNode->map_id, curSrcNode->x, curSrcNode->y, curSrcNode->z, 0);
+            else
+                player->MonsterMove(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), 0);
         }
         else
+        {
             player->m_taxi.ClearTaxiDestinations();
+            player->MonsterMove(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), 0);
+        }
     }
     player->m_taxi.ClearTaxiDestinations();
     
