@@ -8535,7 +8535,13 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                 ((Player*)this)->RemoveSpellCategoryCooldown(1209, true);
             break;
         }
-        // Maelstrom Weapon
+         // Honor Among Thieves 
+        case 52916: 
+        { 
+            basepoints[0] = triggerAmount; 
+            break; 
+        }
+        // Maelstorm Weapon
         case 53817:
         {
             // have rank dependent proc chance, ignore too often cases
