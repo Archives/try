@@ -7839,6 +7839,59 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 if (procSpell && procSpell->Dispel == DISPEL_DISEASE)
                     return false;
             }
+            switch (spellProto->SpellIconID)
+            {
+                case 22:					                    // Reaping
+                case 2622:                                      // Death Rune Mastery
+                case 3041:                                      // Blood of the North
+                {
+                    if(!procSpell)
+                        return false;
+
+                    if (getClass() != CLASS_DEATH_KNIGHT)
+                        return false;
+
+                    Player * plr = GetTypeId() == TYPEID_PLAYER? ((Player*)this) : NULL;
+                    if (!plr)
+                        return false;
+
+                    //get spell rune cost
+                    SpellRuneCostEntry const *runeCost = sSpellRuneCostStore.LookupEntry(procSpell->runeCostID);
+                    if (!runeCost)
+                        return false;
+
+                    //convert runes to death
+                    for (uint32 i = 0; i*2 < MAX_RUNES; ++i)
+                    {
+                        uint32 remainingCost = runeCost->RuneCost[i];
+                        while(remainingCost)
+                        {
+                            int32  convertedRuneCooldown = -1;
+                            uint32 convertedRune = i;
+                            for(uint32 j = 0; j < MAX_RUNES; ++j)
+                            {
+                                // convert only valid runes
+                                if (RuneType(i) != plr->GetCurrentRune(j) && 
+                                    RuneType(i) != plr->GetBaseRune(j))
+                                    continue;
+
+                                // select rune with longest cooldown
+                                if (convertedRuneCooldown < plr->GetRuneCooldown(j))
+                                {
+                                    convertedRuneCooldown = int32(plr->GetRuneCooldown(j));
+                                    convertedRune = j;
+                                }
+                            }
+                            if (convertedRuneCooldown >= 0)
+                               plr->ConvertRune(convertedRune, RUNE_DEATH);
+                            --remainingCost;
+                        }
+                    }
+                    return true;
+                }
+                default:
+                    break;
+            }
             break;
         }
         default:
@@ -13703,6 +13756,7 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
             case SPELL_AURA_MOD_STUN:
             case SPELL_AURA_ADD_PCT_MODIFIER:
             case SPELL_AURA_DUMMY:
+            case SPELL_AURA_PERIODIC_DUMMY:
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "ProcDamageAndSpell: casting spell id %u (triggered by %s dummy aura of spell %u)", spellInfo->Id,(isVictim?"a victim's":"an attacker's"), triggeredByAura->GetId());
                 if (!HandleDummyAuraProc(pTarget, damage, triggeredByAura, procSpell, procFlag, procExtra, cooldown))
