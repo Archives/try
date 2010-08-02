@@ -583,7 +583,6 @@ bool IsPositiveTarget(uint32 targetA, uint32 targetB)
         case TARGET_CURRENT_ENEMY_COORDINATES:
         case TARGET_SINGLE_ENEMY:
         case TARGET_IN_FRONT_OF_CASTER_2:
-        case TARGET_DUELVSPLAYER:
             return false;
         // positive or dependent
         case TARGET_CASTER_COORDINATES:
@@ -638,6 +637,8 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     switch(spellproto->Effect[effIndex])
     {
         case SPELL_EFFECT_DUMMY:
+            if (spellproto->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && spellproto->SpellFamilyFlags & UI64LIT(0x002000))
+                return false;
             // some explicitly required dummy effect sets
             switch(spellId)
             {
