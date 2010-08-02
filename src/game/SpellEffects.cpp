@@ -1825,7 +1825,10 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 {
                     if (!unitTarget)
                        return;
-                    unitTarget->RemoveGuardians();
+
+                    Pet* gargoyle = unitTarget->FindGuardianWithEntry(27829);
+                    if (gargoyle)
+                        unitTarget->RemoveGuardian(gargoyle);
                     return;
                 }
             }

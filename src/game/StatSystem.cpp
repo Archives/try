@@ -914,8 +914,6 @@ bool Pet::UpdateStats(Stats stat)
                         if (Aura *glyph = owner->GetDummyAura(58686))
                             scale_coeff += glyph->GetModifier()->m_amount / 100.0f;
                     }
-                    else if (getPetType() == GUARDIAN_PET)
-                        scale_coeff = 0.4f;
                 }
                 break;
             }
@@ -1138,6 +1136,9 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
                 }
             }
         }
+        else if (getPetType() == GUARDIAN_PET)
+            if(owner->getClass() == CLASS_DEATH_KNIGHT)
+                bonusAP += owner->GetTotalAttackPowerValue(BASE_ATTACK) * 0.4f;
     }
 
     SetModifierValue(UNIT_MOD_ATTACK_POWER, BASE_VALUE, val + bonusAP);
