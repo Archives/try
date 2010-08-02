@@ -1125,19 +1125,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType);
 
         // calculate Mod Dmg Taken
-        switch (m_spellInfo->DmgClass)
-        {
-            // Melee and Ranged Spells
-            case SPELL_DAMAGE_CLASS_RANGED:
-            case SPELL_DAMAGE_CLASS_MELEE:
-                damage = unitTarget->MeleeDamageBonusTaken(caster, m_damage, m_attackType, m_spellInfo, SPELL_DIRECT_DAMAGE);
-                break;
-            // Magical Attacks
-            case SPELL_DAMAGE_CLASS_NONE:
-            case SPELL_DAMAGE_CLASS_MAGIC:
-                damage = unitTarget->SpellDamageBonusTaken(caster, m_spellInfo, m_damage, SPELL_DIRECT_DAMAGE);
-                break;
-        }
+        caster->CalculateModDmgTaken(&damageInfo, m_damage, m_spellInfo, m_attackType);
 
         unitTarget->CalculateAbsorbResistBlock(caster, &damageInfo, m_spellInfo);
 
