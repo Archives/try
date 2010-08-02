@@ -583,6 +583,7 @@ bool IsPositiveTarget(uint32 targetA, uint32 targetB)
         case TARGET_CURRENT_ENEMY_COORDINATES:
         case TARGET_SINGLE_ENEMY:
         case TARGET_IN_FRONT_OF_CASTER_2:
+        case TARGET_DUELVSPLAYER:
             return false;
         // positive or dependent
         case TARGET_CASTER_COORDINATES:
