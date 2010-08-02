@@ -2938,14 +2938,13 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 
     Unit* target = unitTarget;
     Player* caster = (Player*)m_caster;
-    SplineFlags spline = SPLINETYPE_FACINGTARGET;
 
     float x, y, z, direction, angle, vertical, normalized_d;
     // Death Grip
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_SELF2)
     {
         target = m_originalCaster;
-        direction = NULL;
+        direction = 0;
     }
     // Feral Charge
     else if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
@@ -2957,6 +2956,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
         caster->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
         caster->GetSession()->SendPacket( &data );
         caster->SetPosition(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ(), target->GetOrientation(), false);*/
+        
     }
     else
     {
@@ -2968,15 +2968,30 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     if(!target)
         return;
 
-    target->GetClosePoint(x, y, z, target->GetObjectBoundingRadius(), CONTACT_DISTANCE, direction);
-      
+    angle = target->GetOrientation();
+    angle += direction;
+    angle = (angle >= 0) ? angle : 2 * M_PI_F + angle;
+    angle = (angle <= 2*M_PI_F) ? angle : angle - 2 * M_PI_F; 
+    target->GetPosition(x,y,z);
+    x += cos(angle) * (target->GetObjectBoundingRadius() + CONTACT_DISTANCE);
+    y += sin(angle) * (target->GetObjectBoundingRadius() + CONTACT_DISTANCE);
+    if(!target->GetMap()->IsNextZcoordOK(x, y, z, 10.0f))
+    {
+        SendCastResult(SPELL_FAILED_TRY_AGAIN);
+        return;
+    }
+    target->UpdateGroundPositionZ(x, y, z, 10.0f);
+    z+=0.5f;
+    if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
+        caster->SendMonsterMove(x, y, z, SPLINETYPE_FACINGANGLE, SPLINEFLAG_WALKMODE, 1, NULL, double(target->GetOrientation()));
+    else
+        caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 1);
+
     /*angle = caster->GetAngle(x,y);
     normalized_d = caster->GetDistance(x,y,z);
     vertical = 10.0f + target->GetPositionZ() - caster->GetPositionZ();
 
-    caster->KnockWithAngle(angle, normalized_d, vertical);*/
-
-    caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, spline, 1);
+    caster->KnockWithAngle(angle, normalized_d, vertical);*/    
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
