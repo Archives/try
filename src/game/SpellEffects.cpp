@@ -2938,6 +2938,8 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 
     Unit* target = unitTarget;
     Player* caster = (Player*)m_caster;
+    SplineFlags spline = SPLINETYPE_FACINGTARGET;
+
     float x, y, z, direction, angle, vertical, normalized_d;
     // Death Grip
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_SELF2)
@@ -2951,10 +2953,10 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
         target = ObjectAccessor::GetUnit(*caster, caster->GetSelection());
         direction = M_PI_F;
 
-        WorldPacket data;
+        /*WorldPacket data;
         caster->BuildTeleportAckMsg(&data, m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), target->GetOrientation());
         caster->GetSession()->SendPacket( &data );
-        caster->SetPosition(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ(), target->GetOrientation(), false);
+        caster->SetPosition(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ(), target->GetOrientation(), false);*/
     }
     else
     {
@@ -2968,11 +2970,13 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 
     target->GetClosePoint(x, y, z, target->GetObjectBoundingRadius(), CONTACT_DISTANCE, direction);
       
-    angle = caster->GetAngle(x,y);
+    /*angle = caster->GetAngle(x,y);
     normalized_d = caster->GetDistance(x,y,z);
     vertical = 10.0f + target->GetPositionZ() - caster->GetPositionZ();
 
-    caster->KnockWithAngle(angle, normalized_d, vertical);
+    caster->KnockWithAngle(angle, normalized_d, vertical);*/
+
+    caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, spline, 1);
 }
 
 void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
