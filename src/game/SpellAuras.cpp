@@ -7885,6 +7885,8 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                 modOwner->ApplySpellMod(m_spellProto->Id, SPELLMOD_ALL_EFFECTS, DoneActualBenefit);
 
             DoneActualBenefit *= caster->CalculateLevelPenalty(GetSpellProto());
+            if (Aura* aura = caster->GetAura(SPELL_AURA_PVP_HEALING, EFFECT_INDEX_0))
+                DoneActualBenefit *= float(100.0f + (-10.0f)/*aura->GetBasePoints()*/) / 100;
 
             m_modifier.m_amount += (int32)DoneActualBenefit;
         }
