@@ -2728,6 +2728,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 36731, true, NULL, this);
                 return;
             }
+            case 43681:                                     // Inactive
+            {
+                if (!target || target->GetTypeId() != TYPEID_PLAYER)
+                    return;
+
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    ((Player*)target)->ToggleAFK();
+
+                return;
+            }
             case 44191:                                     // Flame Strike
             {
                 if (target->GetMap()->IsDungeon())

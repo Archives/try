@@ -19858,7 +19858,7 @@ bool Player::CanReportAfkDueToLimit()
 void Player::ReportedAfkBy(Player* reporter)
 {
     BattleGround *bg = GetBattleGround();
-    if(!bg || bg != reporter->GetBattleGround() || GetTeam() != reporter->GetTeam())
+    if(!bg || bg != reporter->GetBattleGround() || GetTeam() != reporter->GetTeam() || bg->GetStatus() == STATUS_IN_PROGRESS)
         return;
 
     // check if player has 'Idle' or 'Inactive' debuff
@@ -19866,7 +19866,7 @@ void Player::ReportedAfkBy(Player* reporter)
     {
         m_bgData.bgAfkReporter.insert(reporter->GetGUIDLow());
         // 3 players have to complain to apply debuff
-        if(m_bgData.bgAfkReporter.size() >= 3)
+        if(m_bgData.bgAfkReporter.size() >= sWorld.getConfig(CONFIG_UINT32_BATTLEGROUND_REPORTS_NEEDED))
         {
             // cast 'Idle' spell
             CastSpell(this, 43680, true);

@@ -11484,7 +11484,14 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
         return;
 
     if (PvP)
+    {
         m_CombatTimer = 5000;
+        // Remove spells which should be removed when entering PvP combat
+        if (HasAura(43680))                         // Idle
+            RemoveAurasDueToSpellByCancel(43680);
+        if (HasAura(SPELL_AURA_PLAYER_INACTIVE))    // Inactive
+            RemoveAurasDueToSpellByCancel(SPELL_AURA_PLAYER_INACTIVE);
+    }
 
     bool creatureNotInCombat = GetTypeId()==TYPEID_UNIT && !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
 
