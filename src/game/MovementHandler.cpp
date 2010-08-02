@@ -330,8 +330,9 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 
         if(plMover->isMovingOrTurning())
             plMover->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-
-        if(movementInfo.GetPos()->z < -500.0f || (_player->GetMapId() == 566 && movementInfo.GetPos()->z < 600.0f))  // EoTS is higher
+        
+        if(movementInfo.GetPos()->z < -500.0f || 
+            (_player->GetMapId() == 566 && movementInfo.GetPos()->z < 900.0f))  // EoTS is higher
         {
             if(plMover->InBattleGround()
                 && plMover->GetBattleGround()
