@@ -2939,7 +2939,7 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     Unit* target = unitTarget;
     Player* caster = (Player*)m_caster;
 
-    float x, y, z, direction, angle, vertical, normalized_d;
+    float x, y, z, direction, angle;
     // Death Grip
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_SELF2)
     {
@@ -5416,7 +5416,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                          else 
                              ++itr; 
                      }  */
-                    Unit::AuraMap& auras = unitTarget->GetAuras();
+                    /*Unit::AuraMap& auras = unitTarget->GetAuras();
                     for(Unit::AuraMap::iterator itr = auras.begin(); itr != auras.end(); ++itr)
                     {
                         if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
@@ -5427,7 +5427,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                         }
                         else
                             ++itr;
-                    }
+                    }*/
                 } 
  
             }
