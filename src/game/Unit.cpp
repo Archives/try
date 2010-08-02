@@ -7839,7 +7839,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                 if (procSpell && procSpell->Dispel == DISPEL_DISEASE)
                     return false;
             }
-            switch (spellProto->SpellIconID)
+            switch (dummySpell->SpellIconID)
             {
                 case 22:					                    // Reaping
                 case 2622:                                      // Death Rune Mastery

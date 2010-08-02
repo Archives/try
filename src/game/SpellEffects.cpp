@@ -2162,7 +2162,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                                     (*itr)->GetStackAmount() >= 5)                                 // max stack
                                     if(((Player*)m_caster)->CastItemCombatSpellFromOtherWeapon(unitTarget, BASE_ATTACK))
                                     {
-                                        (*itr)->GetHolder()->RefreshHolder();
+                                        (*itr)->RefreshAura();
                                         m_caster->CastSpell(unitTarget, 5940, true);
                                         return;
                                     }
@@ -2938,7 +2938,6 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 
     Unit* target = unitTarget;
     Player* caster = (Player*)m_caster;
-
     float x, y, z, direction, angle, vertical, normalized_d;
     // Death Grip
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_SELF2)
@@ -5384,6 +5383,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                 // now remove 
                 if (!roll_chance_i(chance)) 
                 { 
+                    /*
                      Unit::SpellAuraHolderMap& auras = unitTarget->GetSpellAuraHolderMap(); 
                      
                      for (Unit::SpellAuraHolderMap::iterator itr = auras.begin(); itr != auras.end();) 
@@ -5396,7 +5396,19 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                          } 
                          else 
                              ++itr; 
-                     } 
+                     }  */
+                    Unit::AuraMap& auras = unitTarget->GetAuras();
+                    for(Unit::AuraMap::iterator itr = auras.begin(); itr != auras.end(); ++itr)
+                    {
+                        if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
+                             itr->second->GetCasterGUID() == m_caster->GetGUID())
+                        {
+                            unitTarget->RemoveSpellAuraHolder(itr->second); 
+                            itr = auras.begin();
+                        }
+                        else
+                            ++itr;
+                    }
                 } 
  
             }

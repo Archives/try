@@ -313,7 +313,7 @@ bool ChatHandler::HandleLitakCommand(const char* args)
         SetSentErrorMessage(true);
         return false;
     }
-    if(player->IsInFlight())
+    if(player->isInFlight())
         player->Unmount();
     player->clearUnitState(UNIT_STAT_IN_FLIGHT);
     player->GetMotionMaster()->Clear(false, true);

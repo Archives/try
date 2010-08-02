@@ -5976,7 +5976,7 @@ SpellCastResult Spell::CheckCasterAuras() const
             if (!itr->second)
                 continue;
              
-             if(itr->second->m_modifier.m_auraname == SPELL_AURA_MOD_STUN)
+             if(itr->second->GetModifier()->m_auraname == SPELL_AURA_MOD_STUN)
                  if (!(GetSpellMechanicMask(itr->second->GetSpellProto(), itr->second->GetEffIndex()) & MECHANIC_STUN))
                       return SPELL_FAILED_STUNNED;
         }

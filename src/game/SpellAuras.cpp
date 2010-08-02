@@ -3249,7 +3249,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         }
         case SPELLFAMILY_ROGUE:
             // Honor Among Thieves 
-            else if (m_spellProto->Id == 52916) 
+            if (m_spellProto->Id == 52916) 
             { 
                // prevent multiple casting of 51699 
                if (m_target->GetGUID() != GetCasterGUID()) 
@@ -5314,7 +5314,7 @@ void Aura::HandleAuraProcTriggerSpell(bool apply, bool Real)
                 SetAuraCharges(6);
                 break;
             case 50421:                                     // Scent of Blood (not sure why exactly 1 charge, but it works :-))(maybe because we need to drop only one ^^)
-                GetHolder()->SetAuraCharges(1);
+                SetAuraCharges(1);
                 break;
             default: break;
         }
