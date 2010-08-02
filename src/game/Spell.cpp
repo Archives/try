@@ -1152,25 +1152,6 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (m_spellInfo->Id == 53385) 
             m_healthLeech += damageInfo.damage;
 
-        // Scourge Strike (Shadow Damage part) 
-        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && m_spellInfo->SpellIconID == 3143) 
-        { 
-            int32 diseaseCount = 0; 
-            Unit::AuraMap const& auras = unitTarget->GetAuras(); 
-            for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr) 
-            { 
-                if(itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
-                   itr->second->GetCasterGUID() == caster->GetGUID() && 
-                   IsSpellLastAuraEffect(itr->second->GetSpellProto(), itr->second->GetEffIndex())) 
-                    ++diseaseCount; 
-            } 
-            if (diseaseCount) 
-            { 
-                int32 bp0 = int32(damageInfo.damage * diseaseCount * m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2) / 100); 
-                caster->CastCustomSpell(unitTarget, 70890, &bp0, NULL, NULL, true); 
-            } 
-        } 
-
         caster->DealSpellDamage(&damageInfo, true);
 
         // Scourge Strike, here because needs to use final damage in second part of the spell
@@ -3456,15 +3437,7 @@ void Spell::finish(bool ok)
         if (m_spellInfo->Id == 53385) 
         {
             SpellEffectIndex healEffIndex = EFFECT_INDEX_1;
-            int32 healAmount = 0;
-            for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
-            {
-                if (ihit->deleted == true)
-                    continue;
-                Unit *unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
-                if (unit && unit->isAlive())
-                    healAmount += m_caster->CalculateSpellDamage(unit, m_spellInfo, healEffIndex, &m_currentBasePoints[healEffIndex]);
-            }
+            int32 healAmount = m_caster->CalculateSpellDamage(m_caster, m_spellInfo, healEffIndex, &m_currentBasePoints[healEffIndex]);
             healAmount = int32(m_healthLeech * healAmount / 100); 
             m_caster->CastCustomSpell(m_caster, 54171, &healAmount, NULL, NULL, true); 
         } 
