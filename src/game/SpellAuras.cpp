@@ -7012,7 +7012,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
             // Ice Barrier (non stacking from one caster)
             if (m_spellProto->SpellIconID == 32)
             {
-                if (!apply && (m_removeMode == AURA_REMOVE_BY_DISPEL || m_removeMode == AURA_REMOVE_BY_SHIELD_BREAK))
+                if (!apply && m_removeMode == AURA_REMOVE_BY_SHIELD_BREAK)
                 {
                     Unit::AuraList const& dummyAuras = m_target->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator itr = dummyAuras.begin(); itr != dummyAuras.end(); ++itr)
