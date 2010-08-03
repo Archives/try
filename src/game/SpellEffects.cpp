@@ -2930,7 +2930,7 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
 
 void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 {
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
+    if(m_caster->GetTypeId() != TYPEID_PLAYER && m_spellInfo->EffectImplicitTargetA[eff_idx] != TARGET_SELF2)
     {
         EffectJump(eff_idx);
         return;
@@ -2985,7 +2985,11 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
         caster->SendMonsterMove(x, y, z, SPLINETYPE_FACINGANGLE, SPLINEFLAG_WALKMODE, 1, NULL, double(target->GetOrientation()));
     else
+    {
+        if(caster->GetTypeId() != TYPEID_PLAYER)
+            caster->GetMap()->CreatureRelocation((Creature*)caster, x, y, z, caster->GetOrientation());
         caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 1);
+    }
 
     /*angle = caster->GetAngle(x,y);
     normalized_d = caster->GetDistance(x,y,z);
