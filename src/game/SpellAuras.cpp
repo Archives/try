@@ -1637,6 +1637,14 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             m_spellmod->mask2= modMask2;
         }
     }
+    //Improved Barskin
+    if(GetId() == 63410 || GetId() == 63411)
+    {
+        if(apply && !GetTarget()->HasAura(66530))
+            GetTarget()->CastSpell(GetTarget(), 66530, true);
+        else if (!apply && GetTarget()->HasAura(66530))
+            GetTarget()->RemoveAurasDueToSpell(66530);
+    }
 
     ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply);
 
@@ -6913,6 +6921,9 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                     }
                 }
             }
+            //Improved Barskin
+            if(form != FORM_TRAVEL)
+                m_target->RemoveAurasDueToSpell(66530);
         }
     }
     else
@@ -6940,6 +6951,10 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                  }
              }
         }
+        //Improved Barskin
+        if(form != FORM_TRAVEL)
+            m_target->CastSpell(m_target, 66530, true);
+
         if(spellId1)
             target->RemoveAurasDueToSpell(spellId1);
         if(spellId2)
