@@ -608,7 +608,7 @@ void BattleGroundWS::EndBattleGround(uint32 winner)
     if (winner)
     {
         RewardHonorToTeam(GetBonusHonorFromKill(sWorld.getConfig(CONFIG_UINT32_BONUS_HONOR_WSG_WIN)), winner);
-        RewardXpToTeam(0, 0.8, winner);
+        RewardXpToTeam(0, 0.8f, winner);
     }
 
     //complete map_end rewards (even if no team wins)

@@ -491,6 +491,7 @@ class Spell
         void AddPrecastSpell(SpellEntry const* spellInfo) { m_preCastSpells.push_back(spellInfo); }
         void AddTriggeredSpell(uint32 spellId);
         void AddPrecastSpell(uint32 spellId);
+        void AddPrecastAndTriggeredSpells();
         void CastPreCastSpells(Unit* target);
         void CastTriggerSpells();
 

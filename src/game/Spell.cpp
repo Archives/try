@@ -1053,9 +1053,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     
     // recheck for visibility of target
     if ((m_spellInfo->speed > 0.0f || 
-        (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE &&
-        GetSpellCastTime(m_spellInfo, this) > 0)) 
-         && !unit->isVisibleForOrDetect(caster, caster, false))
+        (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE && GetSpellCastTime(m_spellInfo, this) > 0)) &&
+        !unit->isVisibleForOrDetect(caster, caster, false))
     {
         caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
         missInfo = SPELL_MISS_EVADE;
@@ -1126,19 +1125,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType);
 
         // calculate Mod Dmg Taken
-        switch (m_spellInfo->DmgClass)
-        {
-            // Melee and Ranged Spells
-            case SPELL_DAMAGE_CLASS_RANGED:
-            case SPELL_DAMAGE_CLASS_MELEE:
-                damage = unitTarget->MeleeDamageBonusTaken(caster, m_damage, m_attackType, m_spellInfo, SPELL_DIRECT_DAMAGE);
-                break;
-            // Magical Attacks
-            case SPELL_DAMAGE_CLASS_NONE:
-            case SPELL_DAMAGE_CLASS_MAGIC:
-                damage = unitTarget->SpellDamageBonusTaken(caster, m_spellInfo, m_damage, SPELL_DIRECT_DAMAGE);
-                break;
-        }
+        caster->CalculateModDmgTaken(&damageInfo, m_damage, m_spellInfo, m_attackType);
 
         unitTarget->CalculateAbsorbResistBlock(caster, &damageInfo, m_spellInfo);
 
@@ -1164,25 +1151,6 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         // Divine Storm (Healing part) 
         if (m_spellInfo->Id == 53385) 
             m_healthLeech += damageInfo.damage;
-
-        // Scourge Strike (Shadow Damage part) 
-        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && m_spellInfo->SpellIconID == 3143) 
-        { 
-            int32 diseaseCount = 0; 
-            Unit::AuraMap const& auras = unitTarget->GetAuras(); 
-            for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr) 
-            { 
-                if(itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
-                   itr->second->GetCasterGUID() == caster->GetGUID() && 
-                   IsSpellLastAuraEffect(itr->second->GetSpellProto(), itr->second->GetEffIndex())) 
-                    ++diseaseCount; 
-            } 
-            if (diseaseCount) 
-            { 
-                int32 bp0 = int32(damageInfo.damage * diseaseCount * m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2) / 100); 
-                caster->CastCustomSpell(unitTarget, 70890, &bp0, NULL, NULL, true); 
-            } 
-        } 
 
         caster->DealSpellDamage(&damageInfo, true);
 
@@ -1220,7 +1188,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     // remove Arcane Blast buffs at any non-Arcane Blast arcane damage spell.
     // NOTE: it removed at hit instead cast because currently spell done-damage calculated at hit instead cast
     // For arcane missiles its removed in Aura::HandleAuraDummy();
-    if ((m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE) && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
+    if (m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_ARCANE && !(m_spellInfo->SpellFamilyFlags & UI64LIT(0x20000000))
         && !m_IsTriggeredSpell && !IsChanneledSpell(m_spellInfo) && m_spellInfo->DmgClass != SPELL_DAMAGE_CLASS_NONE)
     {
         m_caster->RemoveAurasDueToSpell(36032); // Arcane Blast buff
@@ -1439,8 +1407,7 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
     unitTarget = unit;
 
     // Reset damage/healing counter
-    m_damage = 0;
-    m_healing = 0; // healing maybe not needed at this point
+    ResetEffectDamageAndHeal();
 
     // Fill base damage struct (unitTarget - is real spell target)
     SpellNonMeleeDamage damageInfo(caster, unitTarget, m_spellInfo->Id, m_spellSchoolMask);
@@ -1914,6 +1881,21 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     tempTargetUnitMap.sort(TargetDistanceOrder(prev));
                     next = tempTargetUnitMap.begin();
                     --t;
+                }
+            }
+            // let not attack nearby enemies when Seal of Command is not triggered by single target attack
+            if (m_spellInfo->Id == 20424)
+            {
+                //           Divine Storm                                  Hammer of the Righteous
+                if(m_caster->FindCurrentSpellBySpellId(53385) || m_caster->FindCurrentSpellBySpellId(53595))
+                {
+                    if(m_UniqueTargetInfo.size() > 1)
+                    {
+                        tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
+                        TargetInfo tInfo = (*itr);
+                        m_UniqueTargetInfo.clear();
+                        m_UniqueTargetInfo.push_back(tInfo);
+                    }
                 }
             }
             break;
@@ -3034,150 +3016,7 @@ void Spell::cast(bool skipCheck)
     }
 
     // different triggred (for caster) and precast (casted before apply effect to target) cases
-    switch(m_spellInfo->SpellFamilyName)
-    {
-        case SPELLFAMILY_GENERIC:
-        {
-            if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)  // Bandages
-                AddPrecastSpell(11196);                     // Recently Bandaged
-            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
-                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
-            else if(m_spellInfo->Id == 20594)               // Stoneskin
-                AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
-            else if(m_spellInfo->Id == 71904)               // Chaos Bane strength buff
-                AddTriggeredSpell(73422);
-            else if(m_spellInfo->Id == 42292)               // PvP trinket
-                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
-            break;
-        }
-        case SPELLFAMILY_MAGE:
-        {
-            // Ice Block
-            if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000008000000000))
-                AddPrecastSpell(41425);                     // Hypothermia
-            break;
-        }
-        case SPELLFAMILY_PRIEST:
-        {
-            // Power Word: Shield
-            if (m_spellInfo->Mechanic == MECHANIC_SHIELD &&
-                (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000001)))
-                AddPrecastSpell(6788);                      // Weakened Soul
-            // Prayer of Mending (jump animation), we need formal caster instead original for correct animation
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000002000000000))
-                AddTriggeredSpell(41637);
-
-            switch(m_spellInfo->Id)
-            {
-                case 15237: AddTriggeredSpell(23455); break;// Holy Nova, rank 1
-                case 15430: AddTriggeredSpell(23458); break;// Holy Nova, rank 2
-                case 15431: AddTriggeredSpell(23459); break;// Holy Nova, rank 3
-                case 27799: AddTriggeredSpell(27803); break;// Holy Nova, rank 4
-                case 27800: AddTriggeredSpell(27804); break;// Holy Nova, rank 5
-                case 27801: AddTriggeredSpell(27805); break;// Holy Nova, rank 6
-                case 25331: AddTriggeredSpell(25329); break;// Holy Nova, rank 7
-                case 48077: AddTriggeredSpell(48075); break;// Holy Nova, rank 8
-                case 48078: AddTriggeredSpell(48076); break;// Holy Nova, rank 9
-                default:break;
-            }
-            break;
-        }
-        case SPELLFAMILY_DRUID:
-        {
-            // Faerie Fire (Feral)
-            if (m_spellInfo->Id == 16857 && m_caster->m_form != FORM_CAT)
-                AddTriggeredSpell(60089);
-            // Berserk (Bear Mangle part)
-            else if (m_spellInfo->Id == 50334)
-                AddTriggeredSpell(58923); 
-            break;
-        }
-        case SPELLFAMILY_ROGUE:
-            // Fan of Knives (main hand)
-            if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
-                ((Player*)m_caster)->haveOffhandWeapon())
-            {
-                AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
-            }
-            break;
-        case SPELLFAMILY_HUNTER:
-        {
-            switch(m_spellInfo->Id)
-            {
-                case 19263:                        // Deterrence
-                    AddTriggeredSpell(67801);
-                    break;
-                case 56453:                        // Lock and Load Marker
-                    AddPrecastSpell(67544);
-                    break;
-            }
-            break;
-        }
-        case SPELLFAMILY_PALADIN:
-        {
-            // Hand of Reckoning
-            if (m_spellInfo->Id == 62124)
-            {
-                if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->getVictim() != m_caster)
-                    AddPrecastSpell(67485);                 // Hand of Rekoning (no typos in name ;) )
-            }
-            // Divine Shield, Divine Protection 
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400000))
-            {
-                AddPrecastSpell(25771);                     // Forbearance
-                AddPrecastSpell(61987);                     // Avenging Wrath Marker
-            }
-            // Hand of Protection 
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000080)) 
-            { 
-                AddPrecastSpell(25771);                     // Forbearance 
-                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
-                    AddPrecastSpell(61987);                 // Avenging Wrath Marker 
-            }
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x200000000000))
-                AddPrecastSpell(61987);                     // Avenging Wrath Marker
-            // Lay on Hands
-            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))
-            {
-                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
-                    AddPrecastSpell(25771);                 // Forbearance
-            }
-            // Aura Mastery 
-            else if (m_spellInfo->Id == 31821) 
-            { 
-                // get Concentration Aura 
-                if (m_caster->GetAura(SPELL_AURA_REDUCE_PUSHBACK, SPELLFAMILY_PALADIN, UI64LIT(0x00020000), (0x00000020), m_caster->GetGUID())) 
-                    AddTriggeredSpell(64364);               // Aura Mastery - immunity part 
-            }
-            break;
-        }
-        case SPELLFAMILY_SHAMAN:
-        {
-            // Bloodlust
-            if (m_spellInfo->Id == 2825)
-                AddPrecastSpell(57724);                     // Sated
-            // Heroism
-            else if (m_spellInfo->Id == 32182)
-                AddPrecastSpell(57723);                     // Exhaustion
-            // Spirit Walk
-            else if (m_spellInfo->Id == 58875)
-                AddPrecastSpell(58876);
-            // Totem of Wrath
-            else if (m_spellInfo->Effect[EFFECT_INDEX_0]==SPELL_EFFECT_APPLY_AREA_AURA_RAID && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000004000000))
-                // only for main totem spell cast
-                AddTriggeredSpell(30708);                   // Totem of Wrath
-            break;
-        }
-        case SPELLFAMILY_DEATHKNIGHT:
-        {
-            // Chains of Ice
-            if (m_spellInfo->Id == 45524)
-                AddTriggeredSpell(55095);                   // Frost Fever
-            break;
-        }
-        default:
-            break;
-    }
+    AddPrecastAndTriggeredSpells();
 
     // traded items have trade slot instead of guid in m_itemTargetGUID
     // set to real guid to be sent later to the client
@@ -3192,27 +3031,6 @@ void Spell::cast(bool skipCheck)
     }
 
     FillTargetMap();
-
-    // let not attack nearby enemies when Seal of Command is not triggered by single target attack
-    if (m_spellInfo->Id == 20424)
-   {
-       bool aoeAttack = false;
-       if( m_caster->FindCurrentSpellBySpellId(53385) )    // Divine Storm
-           aoeAttack = true;
-       if( m_caster->FindCurrentSpellBySpellId(53595) )    // Hammer of the Righteous
-           aoeAttack = true;
-        
-       if( aoeAttack )
-       {
-           if(m_UniqueTargetInfo.size() > 1)
-           {
-               tbb::concurrent_vector<TargetInfo>::iterator itr = m_UniqueTargetInfo.begin();
-               TargetInfo tInfo = (*itr);
-               m_UniqueTargetInfo.clear();
-               m_UniqueTargetInfo.push_back(tInfo);
-           }
-       }
-   }
 
     if(m_spellState == SPELL_STATE_FINISHED)                // stop cast if spell marked as finish somewhere in FillTargetMap
     {
@@ -3279,7 +3097,7 @@ void Spell::handle_immediate()
         return;
 
     // start channeling if applicable
-    if(IsChanneledSpell(m_spellInfo))
+    if(IsChanneledSpell(spellInfo))
     {
         int32 duration = GetSpellDuration(m_spellInfo);
         if (duration)
@@ -3619,15 +3437,7 @@ void Spell::finish(bool ok)
         if (m_spellInfo->Id == 53385) 
         {
             SpellEffectIndex healEffIndex = EFFECT_INDEX_1;
-            int32 healAmount = 0;
-            for(tbb::concurrent_vector<TargetInfo>::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
-            {
-                if (ihit->deleted == true)
-                    continue;
-                Unit *unit = m_caster->GetObjectGuid() == ihit->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, ihit->targetGUID);
-                if (unit && unit->isAlive())
-                    healAmount += m_caster->CalculateSpellDamage(unit, m_spellInfo, healEffIndex, &m_currentBasePoints[healEffIndex]);
-            }
+            int32 healAmount = m_caster->CalculateSpellDamage(m_caster, m_spellInfo, healEffIndex, &m_currentBasePoints[healEffIndex]);
             healAmount = int32(m_healthLeech * healAmount / 100); 
             m_caster->CastCustomSpell(m_caster, 54171, &healAmount, NULL, NULL, true); 
         } 
@@ -7288,4 +7098,152 @@ bool Spell::isCausingAura(AuraType aura)
         }
     }
     return found;
+}
+
+void Spell::AddPrecastAndTriggeredSpells()
+{
+    switch(m_spellInfo->SpellFamilyName)
+    {
+        case SPELLFAMILY_GENERIC:
+        {
+            if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)  // Bandages
+                AddPrecastSpell(11196);                     // Recently Bandaged
+            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
+                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
+            else if(m_spellInfo->Id == 20594)               // Stoneskin
+                AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
+            else if(m_spellInfo->Id == 71904)               // Chaos Bane strength buff
+                AddTriggeredSpell(73422);
+            else if(m_spellInfo->Id == 42292)               // PvP trinket
+                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
+            break;
+        }
+        case SPELLFAMILY_MAGE:
+        {
+            // Ice Block
+            if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000008000000000))
+                AddPrecastSpell(41425);                     // Hypothermia
+            break;
+        }
+        case SPELLFAMILY_PRIEST:
+        {
+            // Power Word: Shield
+            if (m_spellInfo->Mechanic == MECHANIC_SHIELD &&
+                (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000001)))
+                AddPrecastSpell(6788);                      // Weakened Soul
+            // Prayer of Mending (jump animation), we need formal caster instead original for correct animation
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000002000000000))
+                AddTriggeredSpell(41637);
+
+            switch(m_spellInfo->Id)
+            {
+                case 15237: AddTriggeredSpell(23455); break;// Holy Nova, rank 1
+                case 15430: AddTriggeredSpell(23458); break;// Holy Nova, rank 2
+                case 15431: AddTriggeredSpell(23459); break;// Holy Nova, rank 3
+                case 27799: AddTriggeredSpell(27803); break;// Holy Nova, rank 4
+                case 27800: AddTriggeredSpell(27804); break;// Holy Nova, rank 5
+                case 27801: AddTriggeredSpell(27805); break;// Holy Nova, rank 6
+                case 25331: AddTriggeredSpell(25329); break;// Holy Nova, rank 7
+                case 48077: AddTriggeredSpell(48075); break;// Holy Nova, rank 8
+                case 48078: AddTriggeredSpell(48076); break;// Holy Nova, rank 9
+                default:break;
+            }
+            break;
+        }
+        case SPELLFAMILY_DRUID:
+        {
+            // Faerie Fire (Feral)
+            if (m_spellInfo->Id == 16857 && m_caster->m_form != FORM_CAT)
+                AddTriggeredSpell(60089);
+            // Berserk (Bear Mangle part)
+            else if (m_spellInfo->Id == 50334)
+                AddTriggeredSpell(58923); 
+            break;
+        }
+        case SPELLFAMILY_ROGUE:
+            // Fan of Knives (main hand)
+            if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
+                ((Player*)m_caster)->haveOffhandWeapon())
+            {
+                AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
+            }
+            break;
+        case SPELLFAMILY_HUNTER:
+        {
+            switch(m_spellInfo->Id)
+            {
+                case 19263:                        // Deterrence
+                    AddTriggeredSpell(67801);
+                    break;
+                case 56453:                        // Lock and Load Marker
+                    AddPrecastSpell(67544);
+                    break;
+            }
+            break;
+        }
+        case SPELLFAMILY_PALADIN:
+        {
+            // Hand of Reckoning
+            if (m_spellInfo->Id == 62124)
+            {
+                if (m_targets.getUnitTarget() && m_targets.getUnitTarget()->getVictim() != m_caster)
+                    AddPrecastSpell(67485);                 // Hand of Rekoning (no typos in name ;) )
+            }
+            // Divine Shield, Divine Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000400000))
+            {
+                AddPrecastSpell(25771);                     // Forbearance
+                AddPrecastSpell(61987);                     // Avenging Wrath Marker
+            }
+            // Hand of Protection 
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000000080)) 
+            { 
+                AddPrecastSpell(25771);                     // Forbearance 
+                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
+                    AddPrecastSpell(61987);                 // Avenging Wrath Marker 
+            }
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x200000000000))
+                AddPrecastSpell(61987);                     // Avenging Wrath Marker
+            // Lay on Hands
+            else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000008000))
+            {
+                if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster)
+                    AddPrecastSpell(25771);                 // Forbearance
+            }
+            // Aura Mastery 
+            else if (m_spellInfo->Id == 31821) 
+            { 
+                // get Concentration Aura 
+                if (m_caster->GetAura(SPELL_AURA_REDUCE_PUSHBACK, SPELLFAMILY_PALADIN, UI64LIT(0x00020000), (0x00000020), m_caster->GetGUID())) 
+                    AddTriggeredSpell(64364);               // Aura Mastery - immunity part 
+            }
+            break;
+        }
+        case SPELLFAMILY_SHAMAN:
+        {
+            // Bloodlust
+            if (m_spellInfo->Id == 2825)
+                AddPrecastSpell(57724);                     // Sated
+            // Heroism
+            else if (m_spellInfo->Id == 32182)
+                AddPrecastSpell(57723);                     // Exhaustion
+            // Spirit Walk
+            else if (m_spellInfo->Id == 58875)
+                AddPrecastSpell(58876);
+            // Totem of Wrath
+            else if (m_spellInfo->Effect[EFFECT_INDEX_0]==SPELL_EFFECT_APPLY_AREA_AURA_RAID && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000004000000))
+                // only for main totem spell cast
+                AddTriggeredSpell(30708);                   // Totem of Wrath
+            break;
+        }
+        case SPELLFAMILY_DEATHKNIGHT:
+        {
+            // Chains of Ice
+            if (m_spellInfo->Id == 45524)
+                AddTriggeredSpell(55095);                   // Frost Fever
+            break;
+        }
+        default:
+            break;
+    }
 }

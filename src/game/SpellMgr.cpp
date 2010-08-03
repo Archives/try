@@ -637,6 +637,8 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     switch(spellproto->Effect[effIndex])
     {
         case SPELL_EFFECT_DUMMY:
+            if (spellproto->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT && spellproto->SpellFamilyFlags & UI64LIT(0x002000))
+                return false;
             // some explicitly required dummy effect sets
             switch(spellId)
             {

@@ -2728,6 +2728,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 36731, true, NULL, this);
                 return;
             }
+            case 43681:                                     // Inactive
+            {
+                if (!target || target->GetTypeId() != TYPEID_PLAYER)
+                    return;
+
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    ((Player*)target)->ToggleAFK();
+
+                return;
+            }
             case 44191:                                     // Flame Strike
             {
                 if (target->GetMap()->IsDungeon())
@@ -7875,6 +7885,8 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                 modOwner->ApplySpellMod(m_spellProto->Id, SPELLMOD_ALL_EFFECTS, DoneActualBenefit);
 
             DoneActualBenefit *= caster->CalculateLevelPenalty(GetSpellProto());
+            if (Aura* aura = caster->GetAura(SPELL_AURA_PVP_HEALING, EFFECT_INDEX_0))
+                DoneActualBenefit *= float(100.0f + (-10.0f)/*aura->GetBasePoints()*/) / 100;
 
             m_modifier.m_amount += (int32)DoneActualBenefit;
         }
@@ -8491,6 +8503,7 @@ void Aura::PeriodicTick()
             // maybe has to be sent different to client, but not by SMSG_PERIODICAURALOG
             SpellNonMeleeDamage damageInfo(pCaster, target, spellProto->Id, SpellSchoolMask(spellProto->SchoolMask));
             pCaster->CalculateSpellDamage(&damageInfo, gain, spellProto);
+            pCaster->CalculateModDmgTaken(&damageInfo, gain, spellProto);
 
             damageInfo.target->CalculateAbsorbResistBlock(pCaster, &damageInfo, spellProto);
 
