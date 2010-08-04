@@ -300,17 +300,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
         uint8 GetInstanceStatus() const { return m_instanceStatus; }
         bool IsRandom() const { return m_isRandom; }
-        uint8 GetPlayerRole(uint64 guid, bool withLeader = true) const
-        {
-            uint8 roles = (m_leaderGuid == guid && withLeader) ? LEADER : 0;
-            if(m_tank == guid)
-                roles |= TANK;
-            else if(m_heal == guid)
-                roles |= HEALER;
-            else if(dps->find(guid) != dps->end())
-                roles |= DAMAGE;
-            return roles;        
-        }
+        uint8 GetPlayerRole(uint64 guid, bool withLeader = true, bool joinedAs = false) const;
         void KilledCreature(Creature *creature);
         
     private:

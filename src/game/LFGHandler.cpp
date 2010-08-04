@@ -218,6 +218,11 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
         _player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
         _player->RemoveAurasDueToSpell(LFG_BOOST);
         _player->TeleportTo(teleLoc);
+        if(Group *group = _player->GetGroup())
+        {
+            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+                group->RemoveMember(_player->GetGUID(), 0);          
+        }
     }
 }
 
