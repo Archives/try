@@ -1,7 +1,9 @@
 #####################################
 # MaNGOS Configuration file         #
 #####################################
-ConfVersion=2010051901
+
+[MangosdConf]
+ConfVersion=2010062001
 
 ###################################################################################################################
 # CONNECTIONS AND DIRECTORIES
@@ -1161,6 +1163,10 @@ Visibility.Distance.Grey.Object = 10
 #    Rate.Auction.Cut
 #        Auction rates (auction time, deposit get at auction start, auction cut from price at auction end)
 #
+#    Auction.Deposit.Min
+#        Minimum auction deposit size in copper
+#        Default: 100 (1 silver)
+#
 #    Rate.Honor
 #        Honor gain rate
 #
@@ -1272,6 +1278,7 @@ Rate.Damage.Fall = 1
 Rate.Auction.Time = 1
 Rate.Auction.Deposit = 1
 Rate.Auction.Cut = 1
+Auction.Deposit.Min = 100
 Rate.Honor = 1
 Rate.Mining.Amount = 1
 Rate.Mining.Next   = 1

@@ -33,6 +33,8 @@
 #include "CellImpl.h"
 #include "AccountMgr.h"
 #include "SpellMgr.h"
+#include "PoolManager.h"
+#include "GameEventMgr.h"
 
 // Supported shift-links (client generated and server side)
 // |color|Hachievement:achievement_id:player_guid:0:0:0:0:0:0:0:0|h[name]|h|r
@@ -216,7 +218,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "zonexy",         SEC_MODERATOR,      false, &ChatHandler::HandleGoZoneXYCommand,            "", NULL },
         { "xy",             SEC_MODERATOR,      false, &ChatHandler::HandleGoXYCommand,                "", NULL },
         { "xyz",            SEC_MODERATOR,      false, &ChatHandler::HandleGoXYZCommand,               "", NULL },
-        { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGoXYZCommand,               "", NULL },
+        { "",               SEC_MODERATOR,      false, &ChatHandler::HandleGoCommand,                  "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
@@ -1930,38 +1932,6 @@ char* ChatHandler::extractKeyFromLink(char* text, char const* const* linkTypes, 
     return NULL;
 }
 
-char const *fmtstring( char const *format, ... )
-{
-    va_list        argptr;
-    #define    MAX_FMT_STRING    32000
-    static char        temp_buffer[MAX_FMT_STRING];
-    static char        string[MAX_FMT_STRING];
-    static int        index = 0;
-    char    *buf;
-    int len;
-
-    va_start(argptr, format);
-    vsnprintf(temp_buffer,MAX_FMT_STRING, format, argptr);
-    va_end(argptr);
-
-    len = strlen(temp_buffer);
-
-    if( len >= MAX_FMT_STRING )
-        return "ERROR";
-
-    if (len + index >= MAX_FMT_STRING-1)
-    {
-        index = 0;
-    }
-
-    buf = &string[index];
-    memcpy( buf, temp_buffer, len+1 );
-
-    index += len + 1;
-
-    return buf;
-}
-
 GameObject* ChatHandler::GetObjectGlobalyWithGuidOrNearWithDbGuid(uint32 lowguid,uint32 entry)
 {
     if(!m_session)
@@ -2133,6 +2103,184 @@ uint64 ChatHandler::extractGuidFromLink(char* text)
 
     // unknown type?
     return 0;
+}
+
+enum LocationLinkType
+{
+    LOCATION_LINK_PLAYER            = 0,                    // must be first for selection in not link case
+    LOCATION_LINK_TELE              = 1,
+    LOCATION_LINK_TAXINODE          = 2,
+    LOCATION_LINK_CREATURE          = 3,
+    LOCATION_LINK_GAMEOBJECT        = 4,
+    LOCATION_LINK_CREATURE_ENTRY    = 5,
+    LOCATION_LINK_GAMEOBJECT_ENTRY  = 6
+};
+
+static char const* const locationKeys[] =
+{
+    "Htele",
+    "Htaxinode",
+    "Hplayer",
+    "Hcreature",
+    "Hgameobject",
+    "Hcreature_entry",
+    "Hgameobject_entry",
+    NULL
+};
+
+bool ChatHandler::extractLocationFromLink(char* text, uint32& mapid, float& x, float& y, float& z)
+{
+    int type = 0;
+
+    // |color|Hplayer:name|h[name]|h|r
+    // |color|Htele:id|h[name]|h|r
+    // |color|Htaxinode:id|h[name]|h|r
+    // |color|Hcreature:creature_guid|h[name]|h|r
+    // |color|Hgameobject:go_guid|h[name]|h|r
+    // |color|Hcreature_entry:creature_id|h[name]|h|r
+    // |color|Hgameobject_entry:go_id|h[name]|h|r
+    char* idS = extractKeyFromLink(text,locationKeys,&type);
+    if(!idS)
+        return false;
+
+    switch(type)
+    {
+        // it also fail case
+        case LOCATION_LINK_PLAYER:
+        {
+            // not link and not name, possible coordinates/etc
+            if (isNumeric(idS[0]))
+                return false;
+
+            std::string name = idS;
+            if(!normalizePlayerName(name))
+                return false;
+
+            if(Player* player = sObjectMgr.GetPlayer(name.c_str()))
+            {
+                mapid = player->GetMapId();
+                x = player->GetPositionX();
+                y = player->GetPositionY();
+                z = player->GetPositionZ();
+                return true;
+            }
+
+            if(uint64 guid = sObjectMgr.GetPlayerGUIDByName(name))
+            {
+                // to point where player stay (if loaded)
+                float o;
+                bool in_flight;
+                return Player::LoadPositionFromDB(mapid, x, y, z, o, in_flight, guid);
+            }
+
+            return false;
+        }
+        case LOCATION_LINK_TELE:
+        {
+            uint32 id = (uint32)atol(idS);
+            GameTele const* tele = sObjectMgr.GetGameTele(id);
+            if (!tele)
+                return false;
+            mapid = tele->mapId;
+            x = tele->position_x;
+            y = tele->position_y;
+            z = tele->position_z;
+            return true;
+        }
+        case LOCATION_LINK_TAXINODE:
+        {
+            uint32 id = (uint32)atol(idS);
+            TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(id);
+            if (!node)
+                return false;
+            mapid = node->map_id;
+            x = node->x;
+            y = node->y;
+            z = node->z;
+            return true;
+        }
+        case LOCATION_LINK_CREATURE:
+        {
+            uint32 lowguid = (uint32)atol(idS);
+
+            if(CreatureData const* data = sObjectMgr.GetCreatureData(lowguid) )
+            {
+                mapid = data->mapid;
+                x = data->posX;
+                y = data->posY;
+                z = data->posZ;
+                return true;
+            }
+            else
+                return false;
+        }
+        case LOCATION_LINK_GAMEOBJECT:
+        {
+            uint32 lowguid = (uint32)atol(idS);
+
+            if(GameObjectData const* data = sObjectMgr.GetGOData(lowguid) )
+            {
+                mapid = data->mapid;
+                x = data->posX;
+                y = data->posY;
+                z = data->posZ;
+                return true;
+            }
+            else
+                return false;
+        }
+        case LOCATION_LINK_CREATURE_ENTRY:
+        {
+            uint32 id = (uint32)atol(idS);
+
+            if (sObjectMgr.GetCreatureTemplate(id))
+            {
+                FindCreatureData worker(id, m_session ? m_session->GetPlayer() : NULL);
+
+                sObjectMgr.DoCreatureData(worker);
+
+                if (CreatureDataPair const* dataPair = worker.GetResult())
+                {
+                    mapid = dataPair->second.mapid;
+                    x = dataPair->second.posX;
+                    y = dataPair->second.posY;
+                    z = dataPair->second.posZ;
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
+        case LOCATION_LINK_GAMEOBJECT_ENTRY:
+        {
+            uint32 id = (uint32)atol(idS);
+
+            if (sObjectMgr.GetGameObjectInfo(id))
+            {
+                FindGOData worker(id, m_session ? m_session->GetPlayer() : NULL);
+
+                sObjectMgr.DoGOData(worker);
+
+                if (GameObjectDataPair const* dataPair = worker.GetResult())
+                {
+                    mapid = dataPair->second.mapid;
+                    x = dataPair->second.posX;
+                    y = dataPair->second.posY;
+                    z = dataPair->second.posZ;
+                    return true;
+                }
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
+    }
+
+    // unknown type?
+    return false;
 }
 
 std::string ChatHandler::extractPlayerNameFromLink(char* text)
@@ -2379,3 +2527,79 @@ int CliHandler::GetSessionDbLocaleIndex() const
 {
     return sObjectMgr.GetDBCLocaleIndex();
 }
+
+// Check/ Output if a NPC or GO (by guid) is part of a pool or game event
+template <typename T>
+void ChatHandler::ShowNpcOrGoSpawnInformation(uint32 guid)
+{
+    if (uint16 pool_id = sPoolMgr.IsPartOfAPool<T>(guid))
+    {
+        uint16 top_pool_id = sPoolMgr.IsPartOfTopPool<Pool>(pool_id);
+        if (!top_pool_id || top_pool_id == pool_id)
+            PSendSysMessage(LANG_NPC_GO_INFO_POOL, pool_id);
+        else
+            PSendSysMessage(LANG_NPC_GO_INFO_TOP_POOL, pool_id, top_pool_id);
+
+        if (int16 event_id = sGameEventMgr.GetGameEventId<Pool>(top_pool_id))
+        {
+            GameEventMgr::GameEventDataMap const& events = sGameEventMgr.GetEventMap();
+            GameEventData const& eventData = events[std::abs(event_id)];
+
+            if (event_id > 0)
+                PSendSysMessage(LANG_NPC_GO_INFO_POOL_GAME_EVENT_S, top_pool_id, std::abs(event_id), eventData.description.c_str());
+            else
+                PSendSysMessage(LANG_NPC_GO_INFO_POOL_GAME_EVENT_D, top_pool_id, std::abs(event_id), eventData.description.c_str());
+        }
+    }
+    else if (int16 event_id = sGameEventMgr.GetGameEventId<T>(guid))
+    {
+        GameEventMgr::GameEventDataMap const& events = sGameEventMgr.GetEventMap();
+        GameEventData const& eventData = events[std::abs(event_id)];
+
+        if (event_id > 0)
+            PSendSysMessage(LANG_NPC_GO_INFO_GAME_EVENT_S, std::abs(event_id), eventData.description.c_str());
+        else
+            PSendSysMessage(LANG_NPC_GO_INFO_GAME_EVENT_D, std::abs(event_id), eventData.description.c_str());
+    }
+}
+
+// Prepare ShortString for a NPC or GO (by guid) with pool or game event IDs
+template <typename T>
+std::string ChatHandler::PrepareStringNpcOrGoSpawnInformation(uint32 guid)
+{
+    std::string str = "";
+    if (uint16 pool_id = sPoolMgr.IsPartOfAPool<T>(guid))
+    {
+        uint16 top_pool_id = sPoolMgr.IsPartOfTopPool<T>(guid);
+        if (int16 event_id = sGameEventMgr.GetGameEventId<Pool>(top_pool_id))
+        {
+            char buffer[100];
+            const char* format = GetMangosString(LANG_NPC_GO_INFO_POOL_EVENT_STRING);
+            sprintf(buffer, format, pool_id, event_id);
+            str = buffer;
+        }
+        else
+        {
+            char buffer[100];
+            const char* format = GetMangosString(LANG_NPC_GO_INFO_POOL_STRING);
+            sprintf(buffer, format, pool_id);
+            str = buffer;
+        }
+    }
+    else if (int16 event_id = sGameEventMgr.GetGameEventId<T>(guid))
+    {
+        char buffer[100];
+        const char* format = GetMangosString(LANG_NPC_GO_INFO_EVENT_STRING);
+        sprintf(buffer, format, event_id);
+        str = buffer;
+    }
+
+    return str;
+}
+
+// Instantiate template for helper function
+template void ChatHandler::ShowNpcOrGoSpawnInformation<Creature>(uint32 guid);
+template void ChatHandler::ShowNpcOrGoSpawnInformation<GameObject>(uint32 guid);
+
+template std::string ChatHandler::PrepareStringNpcOrGoSpawnInformation<Creature>(uint32 guid);
+template std::string ChatHandler::PrepareStringNpcOrGoSpawnInformation<GameObject>(uint32 guid);

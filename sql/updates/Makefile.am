@@ -89,6 +89,16 @@ pkgdata_DATA = \
 	10045_01_mangos_spell_proc_event.sql \
 	10051_01_characters_character_aura.sql \
 	10056_01_mangos_spell_proc_event.sql \
+	10086_01_mangos_command.sql \
+	10089_01_mangos_game_event_pool.sql \
+	10106_01_mangos_command.sql \
+	10106_02_mangos_mangos_string.sql \
+	10107_01_mangos_mangos_string.sql \
+	10109_01_mangos_creature_model_info.sql \
+	10119_01_mangos_creature_model_info.sql \
+	10125_01_mangos_mangos_string.sql \
+	10131_01_mangos_spell_bonus_data.sql \
+	10148_01_mangos_mangos_string.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -158,4 +168,14 @@ EXTRA_DIST = \
 	10045_01_mangos_spell_proc_event.sql \
 	10051_01_characters_character_aura.sql \
 	10056_01_mangos_spell_proc_event.sql \
+	10086_01_mangos_command.sql \
+	10089_01_mangos_game_event_pool.sql \
+	10106_01_mangos_command.sql \
+	10106_02_mangos_mangos_string.sql \
+	10107_01_mangos_mangos_string.sql \
+	10109_01_mangos_creature_model_info.sql \
+	10119_01_mangos_creature_model_info.sql \
+	10125_01_mangos_mangos_string.sql \
+	10131_01_mangos_spell_bonus_data.sql \
+	10148_01_mangos_mangos_string.sql \
 	README

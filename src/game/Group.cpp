@@ -788,7 +788,7 @@ void Group::CountTheRoll(Rolls::iterator& rollI)
                 if (itr->second != ROLL_NEED)
                     continue;
 
-                uint8 randomN = urand(1, 99);
+                uint8 randomN = urand(1, 100);
                 SendLootRoll(itr->first, randomN, ROLL_NEED, *roll);
                 if (maxresul < randomN)
                 {
@@ -836,7 +836,7 @@ void Group::CountTheRoll(Rolls::iterator& rollI)
                 if (itr->second != ROLL_GREED && itr->second != ROLL_DISENCHANT)
                     continue;
 
-                uint8 randomN = urand(1, 99);
+                uint8 randomN = urand(1, 100);
                 SendLootRoll(itr->first, randomN, itr->second, *roll);
                 if (maxresul < randomN)
                 {
@@ -1139,7 +1139,7 @@ bool Group::_addMember(const uint64 &guid, const char* name, bool isAssistant, u
         else
             player->SetGroup(this, group);
         // if the same group invites the player back, cancel the homebind timer
-        InstanceGroupBind *bind = GetBoundInstance(player);
+        InstanceGroupBind *bind = GetBoundInstance(player->GetMapId(), player);
         if(bind && bind->save->GetInstanceId() == player->GetInstanceId())
             player->m_InstanceValid = true;
     }
@@ -1692,9 +1692,8 @@ void Group::ResetInstances(uint8 method, bool isRaid, Player* SendMsgTo)
     }
 }
 
-InstanceGroupBind* Group::GetBoundInstance(Player* player)
+InstanceGroupBind* Group::GetBoundInstance(uint32 mapid, Player* player)
 {
-    uint32 mapid = player->GetMapId();
     MapEntry const* mapEntry = sMapStore.LookupEntry(mapid);
     if(!mapEntry)
         return NULL;
@@ -1773,14 +1772,17 @@ void Group::UnbindInstance(uint32 mapid, uint8 difficulty, bool unload)
 
 void Group::_homebindIfInstance(Player *player)
 {
-    if(player && !player->isGameMaster() && sMapStore.LookupEntry(player->GetMapId())->IsDungeon())
+    if (player && !player->isGameMaster())
     {
-        // leaving the group in an instance, the homebind timer is started
-        // unless the player is permanently saved to the instance
-        InstanceSave *save = sInstanceSaveMgr.GetInstanceSave(player->GetInstanceId());
-        InstancePlayerBind *playerBind = save ? player->GetBoundInstance(save->GetMapId(), save->GetDifficulty()) : NULL;
-        if(!playerBind || !playerBind->perm)
-            player->m_InstanceValid = false;
+        Map* map = player->GetMap();
+        if (map->IsDungeon())
+        {
+            // leaving the group in an instance, the homebind timer is started
+            // unless the player is permanently saved to the instance
+            InstancePlayerBind *playerBind = player->GetBoundInstance(map->GetId(), map->GetDifficulty());
+            if(!playerBind || !playerBind->perm)
+                player->m_InstanceValid = false;
+        }
     }
 }
 
