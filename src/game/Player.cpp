@@ -61,6 +61,7 @@
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
 #include "Mail.h"
+#include "LfgMgr.h"
 
 #include <cmath>
 
@@ -399,6 +400,16 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
         else
             m_player->GetSession()->SendTradeStatus(TRADE_STATUS_BACK_TO_TRADE);
     }
+}
+
+bool LookingForGroup::DoneDungeon(uint32 ID, Player *player)
+{
+    if(LfgReward *dailyReward = sLfgMgr.GetDungeonReward(ID, true, player->getLevel()))
+    {
+        if(plr->GetQuestStatus(dailyReward->questInfo->GetQuestId()) != QUEST_STATUS_COMPLETE)
+            return false;
+    }
+    return true;
 }
 
 //== Player ====================================================

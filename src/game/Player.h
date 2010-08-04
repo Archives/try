@@ -410,19 +410,12 @@ struct LookingForGroup
     
     std::string comment;
     uint8 roles;
-    LfgDungeonList completedRandoms;
     LfgDungeonList queuedDungeons;
     GroupMap groups;
     std::map<uint32, GroupReference*> m_LfgGroup; // dung ID
     uint32 joinTime; 
 
-    bool DoneDungeon(uint32 ID)
-    {
-       LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry(ID);
-       if(dungeonInfo)
-            return completedRandoms.find(dungeonInfo) != completedRandoms.end();
-       return false;
-    }
+    bool DoneDungeon(uint32 ID, Player *player);
     WorldLocation joinLoc;
     uint32 taxi_start;
     uint32 taxi_end;

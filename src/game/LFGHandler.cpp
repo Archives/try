@@ -200,17 +200,7 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
         }
         return;
     }
-    /*
-    if(Group *group = _player->GetGroup())
-    {
-        if(group->isLfgGroup())
-        {
-            group->RemoveMember(_player->GetGUID(), 0);
-            return;
-        }
-    }
-    */
-    
+    //..and out
     WorldLocation teleLoc = _player->m_lookingForGroup.joinLoc;
     if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
     {

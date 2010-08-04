@@ -197,7 +197,7 @@ void LfgGroup::KilledCreature(Creature *creature)
             data << uint32(m_dungeonInfo->Entry());
             sLfgMgr.BuildRewardBlock(data, (randomDungeonEntry & 0x00FFFFFF), plr);
             plr->GetSession()->SendPacket(&data);
-            LfgReward *reward = sLfgMgr.GetDungeonReward((randomDungeonEntry & 0x00FFFFFF), plr->m_lookingForGroup.DoneDungeon((randomDungeonEntry & 0x00FFFFFF)), plr->getLevel());
+            LfgReward *reward = sLfgMgr.GetDungeonReward((randomDungeonEntry & 0x00FFFFFF), plr->m_lookingForGroup.DoneDungeon((randomDungeonEntry & 0x00FFFFFF), plr), plr->getLevel());
             if (!reward)
                 continue;
             reward->questInfo->SetFlag(QUEST_FLAGS_AUTO_REWARDED);
@@ -1484,12 +1484,12 @@ void LfgMgr::SendLfgUpdateParty(Player *plr, uint8 updateType)
 
 void LfgMgr::BuildRewardBlock(WorldPacket &data, uint32 dungeon, Player *plr)
 {
-    LfgReward *reward = GetDungeonReward(dungeon, plr->m_lookingForGroup.DoneDungeon(dungeon), plr->getLevel());
+    LfgReward *reward = GetDungeonReward(dungeon, plr->m_lookingForGroup.DoneDungeon(dungeon, plr), plr->getLevel());
 
     if (!reward)
         return;
 
-    data << uint8(plr->m_lookingForGroup.DoneDungeon(dungeon));  // false = its first run this day, true = it isnt
+    data << uint8(plr->m_lookingForGroup.DoneDungeon(dungeon, plr));  // false = its first run this day, true = it isnt
     if (data.GetOpcode() == SMSG_LFG_PLAYER_REWARD)
         data << uint32(0);             // ???
     data << uint32(reward->questInfo->GetRewOrReqMoney());
