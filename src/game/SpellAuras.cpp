@@ -8104,11 +8104,6 @@ void Aura::PeriodicTick()
                         pdamage += (pdamage + 1) / 2;       // +1 prevent 0.5 damage possible lost at 1..4 ticks
                     // 5..8 ticks have normal tick damage
                 }
-                else if(GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                {
-                    if (m_target->GetHealth() * 100 / m_target->GetMaxHealth() <= 25)
-                        pdamage *= 4;
-                }
             }
 
             // This method can modify pdamage
