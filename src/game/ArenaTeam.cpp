@@ -566,6 +566,21 @@ void ArenaTeam::FinishGame(int32 mod)
 
 }
 
+int32 ArenaTeam::DrawFinishGame(uint32 againstRating, int32 draw_change)
+{
+    if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
+        draw_change = 0;
+    else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
+        draw_change /= 2;
+
+    if (int32(m_stats.rating) + draw_change < 0)
+        m_stats.rating = 0;
+    else
+        m_stats.rating += draw_change;
+
+    return draw_change;
+}
+
 int32 ArenaTeam::WonAgainst(uint32 againstRating)
 {
     // called when the team has won
@@ -602,6 +617,25 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
 
     // return the rating change, used to display it on the results screen
     return mod;
+}
+
+int32 ArenaTeam::MemberDraw(Player * plr, uint32 againstRating, int32 draw_change)
+{
+    // called for each participant of a match after losing
+    for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
+    {
+        if(itr->guid == plr->GetGUID())
+        {
+            // update personal rating
+            if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
+                draw_change = 0;
+            else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
+                draw_change /= 2;
+
+            itr->ModifyPersonalRating(plr, draw_change, GetSlot());
+            return draw_change;
+        }
+    }
 }
 
 int32 ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
