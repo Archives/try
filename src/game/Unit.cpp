@@ -12809,7 +12809,8 @@ void Unit::IncrDiminishing(DiminishingGroup group)
 
 void Unit::ApplyDiminishingToDuration(DiminishingGroup group, int32 &duration,Unit* caster,DiminishingLevels Level, int32 limitduration)
 {
-    if(duration == -1 || group == DIMINISHING_NONE || caster->IsFriendlyTo(this) )
+    if(duration == -1 || group == DIMINISHING_NONE/* || caster->IsFriendlyTo(this)*/ )
+    // caster->IsFriendlyTo(this) commented because of reflected spells
         return;
 
     // Duration of crowd control abilities on pvp target is limited by 10 sec. (2.2.0)
