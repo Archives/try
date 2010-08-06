@@ -2537,18 +2537,18 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             // Death Coil
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x002000))
             {
+                // we must use this value to prevent double application of bonuses
+                int32 bp = m_spellInfo->CalculateSimpleValue(eff_idx); 
                 if (m_caster->IsFriendlyTo(unitTarget))
                 {
                     if (!unitTarget || unitTarget->GetCreatureType() != CREATURE_TYPE_UNDEAD)
                         return;
 
-                    int32 bp = int32(damage * 1.5f);
+                    bp = int32(bp * 1.5f);
                     m_caster->CastCustomSpell(unitTarget, 47633, &bp, NULL, NULL, true);
                 }
                 else
                 {
-                    int32 bp = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
-                    bp = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, uint32(bp), SPELL_DIRECT_DAMAGE);
                     m_caster->CastCustomSpell(unitTarget, 47632, &bp, NULL, NULL, true);
                 }
                 return;
