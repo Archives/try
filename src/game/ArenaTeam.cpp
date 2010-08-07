@@ -679,9 +679,6 @@ int32 ArenaTeam::MemberDraw(Player * plr, uint32 againstRating)
                 mod /= 2;
 
             itr->ModifyPersonalRating(plr, mod, GetSlot());
-            // update the unit fields
-            plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_WEEK,  itr->games_week);
-            plr->SetArenaTeamInfoField(GetSlot(), ARENA_TEAM_GAMES_SEASON,  itr->games_season);
             return mod;
         }
     }return 0;
