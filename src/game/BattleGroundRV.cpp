@@ -57,7 +57,7 @@ void BattleGroundRV::Update(uint32 diff)
     {
         for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
             if (Player* plr = sObjectMgr.GetPlayer(itr->first))
-                if (plr->GetPositionZ() < 25.0f)
+                if (plr->GetPositionZ() < 20.0f)
                     HandlePlayerUnderMap(plr);
         m_uiTexturesCheck = 10*IN_MILLISECONDS;
     }else m_uiTexturesCheck -= diff;
@@ -71,6 +71,17 @@ void BattleGroundRV::StartingEventOpenDoors()
 {
     OpenDoorEvent(BG_EVENT_DOOR);
 
+    // put Pillars into list
+    for(uint8 event2 = BATTLEGROUND_RV_SUBEVENT_PILLARS_FAR; event2 <= BATTLEGROUND_RV_SUBEVENT_PILLARS_NEAR; ++event2)
+        for (BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(BATTLEGROUND_RV_EVENT_PILLARS, event2)].gameobjects.begin();
+            itr != m_EventObjects[MAKE_PAIR32(BATTLEGROUND_RV_EVENT_PILLARS, event2)].gameobjects.end(); ++itr)
+        {
+            GameObject *obj = GetBgMap()->GetGameObject(*itr);
+            if (!obj)
+                continue;
+            m_lPillars.push_back(obj);
+        }
+        
     // teleport players few yards above
     for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         if (Player* plr = sObjectMgr.GetPlayer(itr->first))
@@ -161,18 +172,6 @@ void BattleGroundRV::Reset()
     m_uiTeleport = 22000;
     m_uiPillarChanging = urand(25,35)*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
     m_uiTexturesCheck = 10*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
-    uint32 i = 0;
-    for(uint8 event2 = 0; event2 < 2; ++event2)
-    {
-        for (BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.begin(); itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
-        {
-            GameObject *obj = GetBgMap()->GetGameObject(*itr);
-            if (!obj)
-                continue;
-            Pillar[i] = obj;
-            ++i;
-        }
-    }
 }
 
 void BattleGroundRV::FillInitialWorldStates(WorldPacket &data, uint32& count)
@@ -189,44 +188,24 @@ bool BattleGroundRV::SetupBattleGround()
 
 bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
 {
+    // caster or target is on pillar
+    if (caster->GetPositionZ() > 32.0f || target->GetPositionZ() > 32.0f)
+        return false;
+
     float angle = caster->GetAngle(target);
     float x_per_i = cos(angle);
     float y_per_i = sin(angle);
     float distance = caster->GetDistance(target);
     float x = caster->GetPositionX();
     float y = caster->GetPositionY();
-    for (int32 i = 0; i < distance; ++i)
+    for (float i = 0; i < distance; ++i)
     {
         x += x_per_i;
         y += y_per_i;
-        for (uint8 pil = 0; pil < PILLAR_COUNT; ++pil)
-            if(Pillar[pil] && Pillar[pil]->GetGoState() == GO_STATE_ACTIVE && 
-                Pillar[pil]->GetDistance2d(x,y) < Pillar[pil]->GetObjectBoundingRadius())
-                return true;
+        for(std::list<GameObject*>::iterator itr = m_lPillars.begin(); itr != m_lPillars.end();++itr)
+            if(GameObject * pillar = (*itr))
+                if(pillar->GetGoState() == GO_STATE_ACTIVE && pillar->IsWithinBoundingRadius(x,y))
+                    return true;
     }
     return false;
 }
-    /*for(uint8 i = 0; i < 2; ++i)
-    {
-        BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.begin();
-        for(; itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
-        {
-            GameObject *obj = GetBgMap()->GetGameObject(*itr);
-            if (!obj)
-                continue;
-
-            if (obj->GetGoState() != GO_STATE_ACTIVE)
-                continue;
-
-            float a, b, c, v, r;
-            a = caster->GetDistance2d(obj);
-            b = caster->GetDistance2d(target);
-            c = target->GetDistance2d(obj);
-            v = (sqrt(-pow(a, 4) + 2*pow(a,2)*pow(b,2) + 2*pow(a,2)*pow(c,2) - pow(b,4) + 2*pow(b,2)*pow(c,2) - pow(c,4)))/(2*b);
-            r = obj->GetObjectBoundingRadius();
-            if (r > v)
-                return true;
-        }
-    }
-    return false;
-}*/

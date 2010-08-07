@@ -71,6 +71,6 @@ class BattleGroundRV : public BattleGround
         uint32 m_uiPillarChanging;
         uint32 m_uiTexturesCheck;
 
-        GameObject* Pillar[PILLAR_COUNT];
+        std::list<GameObject*> m_lPillars;
 };
 #endif

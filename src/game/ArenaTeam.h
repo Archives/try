@@ -197,19 +197,21 @@ class ArenaTeam
         void InspectStats(WorldSession *session, uint64 guid);
 
         uint32 GetPoints(uint32 MemberRating);
-        float GetChanceAgainst(uint32 own_rating, uint32 enemy_rating, bool isDraw = false);
+        float GetChanceAgainst(uint32 own_rating, uint32 enemy_rating);
         int32 WonAgainst(uint32 againstRating);
         int32 MemberWon(Player * plr, uint32 againstRating);
-        int32 LostAgainst(uint32 againstRating, bool isDraw = false);
-        int32 MemberLost(Player * plr, uint32 againstRating, bool isDraw = false);
-        int32 OfflineMemberLost(uint64 guid, uint32 againstRating, bool isDraw = false);
+        int32 LostAgainst(uint32 againstRating);
+        int32 MemberLost(Player * plr, uint32 againstRating);
+        int32 DrawAgainst(uint32 againstRating);
+        int32 MemberDraw(Player * plr, uint32 againstRating);
+        int32 OfflineMemberLost(uint64 guid, uint32 againstRating);
 
         void UpdateArenaPointsHelper(std::map<uint32, uint32> & PlayerPoints);
 
         void NotifyStatsChanged();
 
         void FinishWeek();
-        void FinishGame(int32 mod);
+        void FinishGame(int32 mod, bool CountMatch = true);
 
     protected:
 

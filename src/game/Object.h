@@ -405,6 +405,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float GetDistance2d(const WorldObject* obj) const;
         float GetDistance2d(float x, float y) const;
         float GetDistanceZ(const WorldObject* obj) const;
+
         bool IsInMap(const WorldObject* obj) const
         {
             return IsInWorld() && obj->IsInWorld() && (GetMap() == obj->GetMap()) && InSamePhase(obj);
@@ -412,6 +413,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool IsWithinDist3d(float x, float y, float z, float dist2compare) const;
         bool IsWithinDist2d(float x, float y, float dist2compare) const;
         bool _IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const;
+        bool IsWithinBoundingRadius(float x, float y) const;
 
         // use only if you will sure about placing both object at same map
         bool IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D = true) const
