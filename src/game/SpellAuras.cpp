@@ -651,6 +651,8 @@ void Aura::SetDeactivity(bool deactivate)
 }
 void Aura::DeactivateAura(bool apply)
 {
+    //Disable for now
+    return;
     if(apply == m_deactivated)
         return;
 
@@ -8513,7 +8515,7 @@ void Aura::PeriodicTick()
             // maybe has to be sent different to client, but not by SMSG_PERIODICAURALOG
             SpellNonMeleeDamage damageInfo(pCaster, target, spellProto->Id, SpellSchoolMask(spellProto->SchoolMask));
             pCaster->CalculateSpellDamage(&damageInfo, gain, spellProto);
-            pCaster->CalculateModDmgTaken(&damageInfo, gain, spellProto);
+            pCaster->CalculateModDmgTaken(&damageInfo, damageInfo.damage, spellProto);
 
             damageInfo.target->CalculateAbsorbResistBlock(pCaster, &damageInfo, spellProto);
 

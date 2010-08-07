@@ -1125,7 +1125,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType);
 
         // calculate Mod Dmg Taken
-        caster->CalculateModDmgTaken(&damageInfo, m_damage, m_spellInfo, m_attackType);
+        caster->CalculateModDmgTaken(&damageInfo, damageInfo.damage, m_spellInfo, m_attackType);
 
         unitTarget->CalculateAbsorbResistBlock(caster, &damageInfo, m_spellInfo);
 
