@@ -435,7 +435,7 @@ class BattleGround
         void RewardSpellCast(Player *plr, uint32 spell_id);
         void UpdateWorldState(uint32 Field, uint32 Value);
         void UpdateWorldStateForPlayer(uint32 Field, uint32 Value, Player *Source);
-        void EndBattleGround(uint32 winner, bool draw = false);
+        void EndBattleGround(uint32 winner);
         void BlockMovement(Player *plr);
 
         void SendMessageToAll(int32 entry, ChatMsg type, Player const* source = NULL);

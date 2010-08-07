@@ -541,9 +541,8 @@ void BattleGround::Update(uint32 diff)
     {
         if(m_StartTime > uint32(ARENA_TIME_LIMIT))
         {
-            // both teams will lose points, sending EndBattleGround() with draw = true ...
-
-            EndBattleGround(0, true);
+            // both teams will lose this match
+            EndBattleGround(0);
             m_ArenaEnded = true;
         }
     }
@@ -756,19 +755,12 @@ void BattleGround::UpdateWorldStateForPlayer(uint32 Field, uint32 Value, Player 
     Source->GetSession()->SendPacket(&data);
 }
 
-void BattleGround::EndBattleGround(uint32 winner, bool draw)
+void BattleGround::EndBattleGround(uint32 winner)
 {
     this->RemoveFromBGFreeSlotQueue();
 
     ArenaTeam * winner_arena_team = NULL;
     ArenaTeam * loser_arena_team = NULL;
-
-    ArenaTeam * draw_arena_team_1 = NULL;
-    ArenaTeam * draw_arena_team_2 = NULL;
-
-    uint32 draw_rating_1 = 0;
-    uint32 draw_rating_2 = 0;
-    int32 const draw_change = -16;
 
     uint32 loser_rating = 0;
     uint32 winner_rating = 0;
@@ -810,8 +802,8 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
     // arena rating calculation
     if (isArena() && isRated() && winner)
     {
-        winner_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(winner));
-        loser_arena_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(winner)));
+        winner_arena_team = sObjectMgr.GetArenaTeamById(winner ? GetArenaTeamIdForTeam(winner) : ALLIANCE);
+        loser_arena_team = sObjectMgr.GetArenaTeamById(winner ? GetArenaTeamIdForTeam(GetOtherTeam(winner)): HORDE);
         if (winner_arena_team && loser_arena_team)
         {
             loser_rating = loser_arena_team->GetStats().rating;
@@ -820,13 +812,16 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
             winner_string << "Winner: " << winner_arena_team->GetName().c_str() << " [" << winner_rating << "] "<< " (";
             loser_string << "Loser: " << loser_arena_team->GetName().c_str() << " [" << loser_rating << "] "<< " (";
 
-            winner_change = winner_arena_team->WonAgainst(loser_rating);
+            if (winner)
+                winner_change = winner_arena_team->WonAgainst(loser_rating);
+            else
+                winner_change = winner_arena_team->LostAgainst(loser_rating);
             loser_change = loser_arena_team->LostAgainst(winner_rating);
             UpdateArenaTeamRanks();
 
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
-            SetArenaTeamRatingChangeForTeam(winner, winner_change);
-            SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+            SetArenaTeamRatingChangeForTeam(winner ? winner : ALLIANCE, winner_change);
+            SetArenaTeamRatingChangeForTeam(winner ? GetOtherTeam(winner) : HORDE, loser_change);
             basic << "Bracket: " << winner_arena_team->GetType() << " Rating change: " << winner_change << "/" << loser_change ;
 
             table << "rat_change, winner, winner_orig_rat, loser, loser_orig_rat, " ;
@@ -840,21 +835,6 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
         {
             SetArenaTeamRatingChangeForTeam(ALLIANCE, 0);
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
-        }
-    }
-    else if (isArena() && isRated() && draw)
-    {
-        // setting draw teams - does not really matter which faction... for our purposes draw_arena_team_1 will be ALLIANCE
-        draw_arena_team_1 = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(ALLIANCE));
-        draw_arena_team_2 = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(ALLIANCE)));
-        if (draw_arena_team_1 && draw_arena_team_2)
-        {
-            draw_rating_1 = draw_arena_team_1->GetStats().rating;
-            draw_rating_2 = draw_arena_team_2->GetStats().rating;
-
-            // Sending result of DrawFinishGame() to calculate with custom configuration of rating system...
-            SetArenaTeamRatingChangeForTeam(draw_arena_team_1, draw_arena_team_1->DrawFinishGame(draw_rating_2,draw_change));
-            SetArenaTeamRatingChangeForTeam(draw_arena_team_2, draw_arena_team_2->DrawFinishGame(draw_rating_1,draw_change));
         }
     }
 
@@ -874,16 +854,6 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
                 else
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
                 char const* a = (team == winner) ? "win" : "lose";
-                sLog.outArenaLog(" LEAVER:: Player (GUID: %u) %s arena match, but not in arena during EndBattleGround", GUID_LOPART(itr->first), a);
-            }
-            //for draw - offline member considered as if it left and lost the match
-            else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
-            {
-                if (team == ALLIANCE)
-                    draw_arena_team_1->OfflineMemberLost(itr->first, draw_rating_2);
-                else
-                    draw_arena_team_2->OfflineMemberLost(itr->first, draw_rating_1);
-                char const* a = "lose";
                 sLog.outArenaLog(" LEAVER:: Player (GUID: %u) %s arena match, but not in arena during EndBattleGround", GUID_LOPART(itr->first), a);
             }
             continue;
@@ -972,14 +942,6 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
                 loser_count++;
             }
         }
-        else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
-        {
-            int32 change;
-            if (team == ALLIANCE)
-                change = draw_arena_team_1->MemberDraw(plr,draw_rating_2,draw_change);
-            else
-                change = draw_arena_team_2->MemberDraw(plr,draw_rating_1,draw_change);
-        }
 
         if (team == winner)
             plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_BG, 1);
@@ -1018,16 +980,6 @@ void BattleGround::EndBattleGround(uint32 winner, bool draw)
         dbstring << "INSERT INTO arena_log_" << winner_arena_team->GetType() << " (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
         CharacterDatabase.PExecute( dbstring.str().c_str() );
         sLog.outString( dbstring.str().c_str() );
-    }
-    else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
-    {
-        // save the stat changes
-        draw_arena_team_1->SaveToDB();
-        draw_arena_team_2->SaveToDB();
-        // send updated arena team stats to players
-        // this way all arena team members will get notified, not only the ones who participated in this match
-        draw_arena_team_1->NotifyStatsChanged();
-        draw_arena_team_2->NotifyStatsChanged();
     }
 
     if (winmsg_id)

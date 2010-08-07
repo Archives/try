@@ -543,7 +543,7 @@ uint32 ArenaTeam::GetPoints(uint32 MemberRating)
     return (uint32) points;
 }
 
-float ArenaTeam::GetChanceAgainst(uint32 own_rating, uint32 enemy_rating)
+float ArenaTeam::GetChanceAgainst(uint32 own_rating, uint32 enemy_rating, bool isDraw)
 {
     // returns the chance to win against a team with the given rating, used in the rating adjustment calculation
     // ELO system
@@ -551,7 +551,13 @@ float ArenaTeam::GetChanceAgainst(uint32 own_rating, uint32 enemy_rating)
     if (sWorld.getConfig(CONFIG_UINT32_ARENA_SEASON_ID) >= 6)
         if (enemy_rating < 1500)
             enemy_rating = 1500;
-    return 1.0f/(1.0f+exp(log(10.0f)*(float)((float)enemy_rating - (float)own_rating)/400.0f));
+
+    float chance; 
+    if (isDraw)
+        chance = 0.5f;
+    else
+        chance = 1.0f/(1.0f+exp(log(10.0f)*(float)((float)enemy_rating - (float)own_rating)/400.0f));
+    return chance;
 }
 
 void ArenaTeam::FinishGame(int32 mod)
@@ -564,21 +570,6 @@ void ArenaTeam::FinishGame(int32 mod)
     m_stats.games_week += 1;
     m_stats.games_season += 1;
 
-}
-
-int32 ArenaTeam::DrawFinishGame(uint32 againstRating, int32 draw_change)
-{
-    if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
-        draw_change = 0;
-    else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
-        draw_change /= 2;
-
-    if (int32(m_stats.rating) + draw_change < 0)
-        m_stats.rating = 0;
-    else
-        m_stats.rating += draw_change;
-
-    return draw_change;
 }
 
 int32 ArenaTeam::WonAgainst(uint32 againstRating)
@@ -598,15 +589,15 @@ int32 ArenaTeam::WonAgainst(uint32 againstRating)
     return mod;
 }
 
-int32 ArenaTeam::LostAgainst(uint32 againstRating)
+int32 ArenaTeam::LostAgainst(uint32 againstRating, bool isDraw)
 {
     // called when the team has lost
     //'chance' calculation - to loose to the opponent
-    float chance = GetChanceAgainst(m_stats.rating, againstRating);
+    float chance = GetChanceAgainst(m_stats.rating, againstRating, isDraw);
     float K = (m_stats.rating < 1500) ? 48.0f : 32.0f;
     // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
     int32 mod = (int32)ceil(K * (0.0f - chance));
-	
+    
     if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
         mod = 0;
     else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
@@ -619,7 +610,7 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
     return mod;
 }
 
-int32 ArenaTeam::MemberDraw(Player * plr, uint32 againstRating, int32 draw_change)
+int32 ArenaTeam::MemberLost(Player * plr, uint32 againstRating, bool isDraw)
 {
     // called for each participant of a match after losing
     for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
@@ -627,26 +618,7 @@ int32 ArenaTeam::MemberDraw(Player * plr, uint32 againstRating, int32 draw_chang
         if(itr->guid == plr->GetGUID())
         {
             // update personal rating
-            if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
-                draw_change = 0;
-            else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
-                draw_change /= 2;
-
-            itr->ModifyPersonalRating(plr, draw_change, GetSlot());
-            return draw_change;
-        }
-    }
-}
-
-int32 ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
-{
-    // called for each participant of a match after losing
-    for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
-    {
-        if(itr->guid == plr->GetGUID())
-        {
-            // update personal rating
-            float chance = GetChanceAgainst(itr->personal_rating, againstRating);
+            float chance = GetChanceAgainst(itr->personal_rating, againstRating, isDraw);
             float K = (itr->personal_rating < 1500) ? 48.0f : 32.0f;
             // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
             int32 mod = (int32)ceil(K * (0.0f - chance));
@@ -668,7 +640,7 @@ int32 ArenaTeam::MemberLost(Player * plr, uint32 againstRating)
     }return 0;
 }
 
-int32 ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating)
+int32 ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating, bool isDraw)
 {
     // called for offline player after ending rated arena match!
     for(MemberList::iterator itr = m_members.begin(); itr !=  m_members.end(); ++itr)
@@ -676,7 +648,7 @@ int32 ArenaTeam::OfflineMemberLost(uint64 guid, uint32 againstRating)
         if(itr->guid == guid)
         {
             // update personal rating
-            float chance = GetChanceAgainst(itr->personal_rating, againstRating);
+            float chance = GetChanceAgainst(itr->personal_rating, againstRating, isDraw);
             float K = (itr->personal_rating < 1000) ? 48.0f : 32.0f;
             // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
             int32 mod = (int32)ceil(K * (0.0f - chance));
