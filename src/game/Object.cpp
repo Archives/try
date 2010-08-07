@@ -1268,6 +1268,14 @@ float WorldObject::GetDistanceZ(const WorldObject* obj) const
     return ( dist > 0 ? dist : 0);
 }
 
+bool WorldObject::IsWithinBoundingRadius(float x, float y) const
+{
+    float dx = GetPositionX() - x;
+    float dy = GetPositionY() - y;
+    float sizefactor = GetObjectBoundingRadius();
+    return sqrt((dx*dx) + (dy*dy)) < sizefactor;
+}
+
 bool WorldObject::IsWithinDist3d(float x, float y, float z, float dist2compare) const
 {
     float dx = GetPositionX() - x;

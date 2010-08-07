@@ -57,7 +57,7 @@ void BattleGroundRV::Update(uint32 diff)
     {
         for(BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
             if (Player* plr = sObjectMgr.GetPlayer(itr->first))
-                if (plr->GetPositionZ() < 25.0f)
+                if (plr->GetPositionZ() < 20.0f)
                     HandlePlayerUnderMap(plr);
         m_uiTexturesCheck = 10*IN_MILLISECONDS;
     }else m_uiTexturesCheck -= diff;
