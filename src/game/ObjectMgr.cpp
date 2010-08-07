@@ -3421,8 +3421,8 @@ void ObjectMgr::LoadGroups()
 {
     // -- loading groups --
     uint32 count = 0;
-    //                                                    0         1              2           3           4              5      6      7      8      9      10     11     12     13         14          15              16          17
-    QueryResult *result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, groupType, difficulty, raiddifficulty, leaderGuid, groupId FROM groups");
+    //                                                    0        1         2              3           4           5              6      7      8      9      10     11     12     13     14         15          16              17          18       19     20              21
+    QueryResult *result = CharacterDatabase.Query("SELECT mainTank,healGuid, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, groupType, difficulty, raiddifficulty, leaderGuid, groupId, LfgId, LfgRandomEntry, LfgInstanceStatus FROM groups");
 
     if (!result)
     {
@@ -3442,14 +3442,29 @@ void ObjectMgr::LoadGroups()
         bar.step();
         Field *fields = result->Fetch();
         ++count;
-        Group *group = new Group;
-        if (!group->LoadGroupFromDB(fields))
+        //LfgGroup
+        if(fields[14].GetUInt8() & GROUPTYPE_LFD)
         {
-            group->Disband();
-            delete group;
-            continue;
+            LfgGroup *group = new LfgGroup;
+            if (!group->LoadGroupFromDB(fields))
+            {
+                group->Disband();
+                delete group;
+                continue;
+            }
+            AddGroup(group);
         }
-        AddGroup(group);
+        else
+        {
+            Group *group = new Group;
+            if (!group->LoadGroupFromDB(fields))
+            {
+                group->Disband();
+                delete group;
+                continue;
+            }
+            AddGroup(group);
+        }
     }while( result->NextRow() );
 
     delete result;

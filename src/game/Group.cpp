@@ -129,39 +129,39 @@ bool Group::Create(const uint64 &guid, const char * name)
 
 bool Group::LoadGroupFromDB(Field* fields)
 {
-    //                                          0         1              2           3           4              5      6      7      8      9      10     11     12     13         14          15              16          17
-    // result = CharacterDatabase.Query("SELECT mainTank, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, groupType, difficulty, raiddifficulty, leaderGuid, groupId FROM groups");
+    //                                          0        1         2              3           4           5              6      7      8      9      10     11     12     13     14         15          16              17          18       19     20
+    // result = CharacterDatabase.Query("SELECT mainTank,healGuid, mainAssistant, lootMethod, looterGuid, lootThreshold, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, groupType, difficulty, raiddifficulty, leaderGuid, groupId, LfgId, LfgInstanceStatus FROM groups");
 
-    m_Id = fields[17].GetUInt32();
-    m_leaderGuid = MAKE_NEW_GUID(fields[16].GetUInt32(),0,HIGHGUID_PLAYER);
+    m_Id = fields[18].GetUInt32();
+    m_leaderGuid = MAKE_NEW_GUID(fields[17].GetUInt32(),0,HIGHGUID_PLAYER);
 
     // group leader not exist
     if(!sObjectMgr.GetPlayerNameByGUID(m_leaderGuid, m_leaderName))
         return false;
 
-    m_groupType  = GroupType(fields[13].GetUInt8());
+    m_groupType  = GroupType(fields[14].GetUInt8());
 
     if (m_groupType & GROUPTYPE_RAID)
         _initRaidSubGroupsCounter();
 
-    uint32 diff = fields[14].GetUInt8();
+    uint32 diff = fields[15].GetUInt8();
     if (diff >= MAX_DUNGEON_DIFFICULTY)
         diff = DUNGEON_DIFFICULTY_NORMAL;
     m_dungeonDifficulty = Difficulty(diff);
 
-    uint32 r_diff = fields[15].GetUInt8();
+    uint32 r_diff = fields[16].GetUInt8();
     if (r_diff >= MAX_RAID_DIFFICULTY)
         r_diff = RAID_DIFFICULTY_10MAN_NORMAL;
     m_raidDifficulty = Difficulty(r_diff);
 
     m_mainTank = fields[0].GetUInt64();
-    m_mainAssistant = fields[1].GetUInt64();
-    m_lootMethod = (LootMethod)fields[2].GetUInt8();
-    m_looterGuid = MAKE_NEW_GUID(fields[3].GetUInt32(), 0, HIGHGUID_PLAYER);
-    m_lootThreshold = (ItemQualities)fields[4].GetUInt16();
+    m_mainAssistant = fields[2].GetUInt64();
+    m_lootMethod = (LootMethod)fields[3].GetUInt8();
+    m_looterGuid = MAKE_NEW_GUID(fields[4].GetUInt32(), 0, HIGHGUID_PLAYER);
+    m_lootThreshold = (ItemQualities)fields[5].GetUInt16();
 
     for(int i = 0; i < TARGET_ICON_COUNT; ++i)
-        m_targetIcons[i] = fields[5+i].GetUInt64();
+        m_targetIcons[i] = fields[6+i].GetUInt64();
 
     return true;
 }
@@ -180,6 +180,12 @@ bool Group::LoadMemberFromDB(uint32 guidLow, uint8 subgroup, bool assistant)
     m_memberSlots.push_back(member);
 
     SubGroupCounterIncrease(subgroup);
+    //set role in lfg group
+    if(m_groupType & GROUPTYPE_LFD)
+    {
+        if(member.guid != ((LfgGroup*)this)->GetTank() && member.guid != ((LfgGroup*)this)->GetHeal())
+            ((LfgGroup*)this)->GetDps()->insert(member.guid);
+    }
 
     return true;
 }
@@ -302,6 +308,9 @@ bool Group::AddMember(const uint64 &guid, const char* name)
         // quest related GO state dependent from raid membership
         if(isRaidGroup())
             player->UpdateForQuestWorldObjects();
+
+        //Remove player from LFG
+        sLfgMgr.RemovePlayer(player);
     }
 
     return true;
@@ -310,7 +319,7 @@ bool Group::AddMember(const uint64 &guid, const char* name)
 uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
 {
     // remove member and change leader (if need) only if strong more 2 members _before_ member remove
-    if(GetMembersCount() > uint32(isBGGroup() ? 1 : 2))           // in BG group case allow 1 members group
+    if(GetMembersCount() > uint32((isBGGroup() || isLfgGroup()) ? 1 : 2))           // in BG and Lfg group case allow 1 members group
     {
         bool leaderChanged = _removeMember(guid);
 
@@ -372,6 +381,11 @@ void Group::ChangeLeader(const uint64 &guid)
     WorldPacket data(SMSG_GROUP_SET_LEADER, slot->name.size()+1);
     data << slot->name;
     BroadcastPacket(&data, true);
+
+    Player *leader = sObjectMgr.GetPlayer(guid);
+    if(isLfgGroup() && leader)
+        sLfgMgr.SendLfgUpdateParty(leader, LFG_UPDATETYPE_LEADER);
+
     SendUpdate();
 }
 
@@ -408,6 +422,9 @@ void Group::Disband(bool hideDestroy)
         WorldPacket data;
         if(!hideDestroy)
         {
+            if(isLfgGroup())
+                sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_GROUP_DISBAND);
+
             data.Initialize(SMSG_GROUP_DESTROYED, 0);
             player->GetSession()->SendPacket(&data);
         }
@@ -1160,6 +1177,28 @@ bool Group::_removeMember(const uint64 &guid)
     Player *player = sObjectMgr.GetPlayer(guid);
     if (player)
     {
+        //Remove player from LFG
+        sLfgMgr.RemovePlayer(player);
+        if(isLfgGroup() && ((LfgGroup*)this)->IsInDungeon())
+        {
+            if (!player->isAlive())
+            {
+                player->ResurrectPlayer(1.0f);
+                player->SpawnCorpseBones();
+            }
+            WorldLocation teleLoc = player->m_lookingForGroup.joinLoc;
+            if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
+            {
+                player->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
+                player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
+                player->RemoveAurasDueToSpell(LFG_BOOST);
+                if(((LfgGroup*)this)->GetInstanceStatus() != INSTANCE_COMPLETED)
+                    player->CastSpell(player, LFG_DESERTER, true);
+
+                player->TeleportTo(teleLoc);
+            }
+        }
+
         //if we are removing player from battleground raid
         if( isBGGroup() )
             player->RemoveFromBattleGroundRaid();

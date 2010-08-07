@@ -45,6 +45,7 @@ void Vehicle::Respawn()
 {
     Creature::Respawn();
     InstallAllAccessories();
+    SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
 }
 void Vehicle::RemoveFromWorld()
 {
@@ -159,6 +160,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
         setPowerType(POWER_ENERGY);
         SetMaxPower(POWER_ENERGY, 100);
         SetPower(POWER_ENERGY, 100);
+        SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
     }
     else if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
     {
@@ -177,17 +179,22 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
                 continue;
 
             if(spellInfo->powerType == POWER_MANA)
+            {
+                SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
                 break;
+            }
 
             if(spellInfo->powerType == POWER_ENERGY)
             {
                 setPowerType(POWER_ENERGY);
                 SetMaxPower(POWER_ENERGY, 100);
                 SetPower(POWER_ENERGY, 100);
+                SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
                 break;
             }
         }
     }
+    
     SetHealth(GetMaxHealth());
     InstallAllAccessories();
     return true;

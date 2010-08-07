@@ -493,6 +493,13 @@ struct AchievementCriteriaEntry
             uint32  killCount;                              // 4
         } honorable_kill;
 
+        // ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS = 119
+        struct
+        {
+            uint32 unused;                                  // 3
+            uint32 count;                                   // 4
+        } use_lfg;
+
         struct
         {
             uint32  field3;                                 // 3 main requirement
@@ -776,6 +783,20 @@ struct CurrencyTypesEntry
     uint32    ItemId;                                       // 1        used as real index
     //uint32    Category;                                   // 2        may be category
     uint32    BitIndex;                                     // 3        bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
+};
+
+struct DungeonEncounterEntry
+{
+    uint32    ID;                                           // 0        
+    uint32    Map;                                          // 1        used as real index
+    uint32    heroic;                                       // 2        may be category
+    int32     unk1;                                         // 3        some reference to boss order? minibosses have - values
+    uint32    order;                                        // 4        Order of boss in dungeon
+    char*     Name[16];                                     // 5-20     CreatureName
+    //uint32    nameflags;                                  // 21
+    //uint32    unk3;                                       // 22       No idea, always 0
+
+    bool IsHeroic() const { return heroic == 1; };
 };
 
 struct DurabilityCostsEntry
@@ -1088,6 +1109,34 @@ struct ItemSetEntry
     uint32    items_to_triggerspell[8];                     // 43-50    m_setThreshold
     uint32    required_skill_id;                            // 51       m_requiredSkill
     uint32    required_skill_value;                         // 52       m_requiredSkillRank
+};
+
+struct LFGDungeonEntry
+{
+    uint32  ID;                                             // 0
+    //char*   name[16];                                     // 1-17 Name lang
+    //uint32 nameflags;                                     // 18
+    uint32  minlevel;                                       // 19
+    uint32  maxlevel;                                       // 20
+    uint32  reclevel;                                       // 21
+    uint32  recminlevel;                                    // 22
+    uint32  recmaxlevel;                                    // 23
+    uint32  map;                                            // 24
+    uint32  heroic;                                         // 25
+    uint32  unk;                                            // 26 0 = raid or zone, 3 = dungeon, 15 = world event
+    uint32  type;                                           // 27
+    //uint32  unk2;                                         // 28
+    //char*   unk3;                                         // 29
+    uint32  expansion;                                      // 30
+    //uint32  unk4;                                         // 31
+    uint32  grouptype;                                      // 32
+    //char*   desc[16];                                     // 32-47 Description
+    //uint32 descflags;                                     // 48 
+    
+    // Helpers
+    uint32 Entry() const { return ID + (type << 24); }
+    bool isHeroic() const { return (heroic == 1); }
+    bool isRandom() const { return (type == 6); }
 };
 
 #define MAX_LOCK_CASE 8

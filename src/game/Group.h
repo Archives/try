@@ -77,8 +77,10 @@ enum GroupType                                              // group type flags?
     GROUPTYPE_BG     = 0x01,
     GROUPTYPE_RAID   = 0x02,
     GROUPTYPE_BGRAID = GROUPTYPE_BG | GROUPTYPE_RAID,       // mask
-    // 0x04?
-    GROUPTYPE_LFD    = 0x08,
+
+    GROUPTYPE_LFD_1  = 0x04,                                // this one allows vote kick and Dungeon Guide I think
+    GROUPTYPE_LFD_2  = 0x08,                                // this one shows roles next to members images and shows "Teleport Out Of Dungeon" at minimap
+    GROUPTYPE_LFD    = GROUPTYPE_LFD_1 | GROUPTYPE_LFD_2,
     // 0x10, leave/change group?, I saw this flag when leaving group and after leaving BG while in group
 };
 
@@ -209,6 +211,7 @@ class MANGOS_DLL_SPEC Group
         bool isRaidGroup() const { return m_groupType & GROUPTYPE_RAID; }
         bool isBGGroup()   const { return m_bgGroup != NULL; }
         bool IsCreated()   const { return GetMembersCount() > 0; }
+        bool isLfgGroup()  const { return m_groupType & GROUPTYPE_LFD; }
         const uint64& GetLeaderGUID() const { return m_leaderGuid; }
         const char * GetLeaderName() const { return m_leaderName.c_str(); }
         LootMethod    GetLootMethod() const { return m_lootMethod; }
@@ -326,7 +329,7 @@ class MANGOS_DLL_SPEC Group
         void ResetInstances(uint8 method, bool isRaid, Player* SendMsgTo);
 
         void SendTargetIconList(WorldSession *session);
-        void SendUpdate();
+        virtual void SendUpdate();
         void UpdatePlayerOutOfRange(Player* pPlayer);
                                                             // ignore: GUID of player that will be ignored
         void BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int group=-1, uint64 ignore=0);

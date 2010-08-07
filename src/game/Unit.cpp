@@ -951,6 +951,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
                 if(m->IsDungeon() && creditedPlayer)
                 {
+                    //Lfg group info at kill creature
+                    if(Group *group = creditedPlayer->GetGroup())
+                    {
+                        error_log("Killed v unit");
+                        if(group->isLfgGroup())
+                            ((LfgGroup*)group)->KilledCreature(cVictim);
+                    }
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if(cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
@@ -1333,7 +1340,7 @@ uint32 Unit::SpellNonMeleeDamageLog(Unit *pVictim, uint32 spellID, uint32 damage
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellID);
     SpellNonMeleeDamage damageInfo(this, pVictim, spellInfo->Id, SpellSchoolMask(spellInfo->SchoolMask));
     CalculateSpellDamage(&damageInfo, damage, spellInfo);
-    CalculateModDmgTaken(&damageInfo, damage, spellInfo);
+    CalculateModDmgTaken(&damageInfo, damageInfo.damage, spellInfo);
     damageInfo.target->CalculateAbsorbResistBlock(this, &damageInfo, spellInfo);
     DealDamageMods(damageInfo.target,damageInfo.damage,&damageInfo.absorb);
     SendSpellNonMeleeDamageLog(&damageInfo);
@@ -10592,10 +10599,12 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
     float  DoneTotalMod = 1.0f;
     int32  DoneTotal = 0;
 
-    // Healing done percent
-    AuraList const& mHealingDonePct = GetAurasByType(SPELL_AURA_MOD_HEALING_DONE_PERCENT);
-    for(AuraList::const_iterator i = mHealingDonePct.begin();i != mHealingDonePct.end(); ++i)
-        DoneTotalMod *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f;
+    if (!(spellProto->AttributesEx6 & SPELL_ATTR_EX6_NO_HEAL_PERCENT_MODS)) 
+    { 
+        AuraList const& mHealingDonePct = GetAurasByType(SPELL_AURA_MOD_HEALING_DONE_PERCENT); 
+        for(AuraList::const_iterator i = mHealingDonePct.begin();i != mHealingDonePct.end(); ++i) 
+            DoneTotalMod *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f; 
+    }
 
     // done scripted mod (take it from owner)
     Unit *owner = GetOwner();
@@ -13783,7 +13792,7 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                 DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "ProcDamageAndSpell: doing %u damage from spell id %u (triggered by %s aura of spell %u)", auraModifier->m_amount, spellInfo->Id, (isVictim?"a victim's":"an attacker's"), triggeredByAura->GetId());
                 SpellNonMeleeDamage damageInfo(this, pTarget, spellInfo->Id, SpellSchoolMask(spellInfo->SchoolMask));
                 CalculateSpellDamage(&damageInfo, auraModifier->m_amount, spellInfo);
-                CalculateModDmgTaken(&damageInfo, triggeredByAura->GetModifier()->m_amount, spellInfo);
+                CalculateModDmgTaken(&damageInfo, damageInfo.damage, spellInfo);
                 damageInfo.target->CalculateAbsorbResistBlock(this, &damageInfo, spellInfo);
                 DealDamageMods(damageInfo.target,damageInfo.damage,&damageInfo.absorb);
                 SendSpellNonMeleeDamageLog(&damageInfo);
