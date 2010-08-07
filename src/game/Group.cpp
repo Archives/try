@@ -1060,13 +1060,13 @@ void Group::UpdatePlayerOutOfRange(Player* pPlayer)
 
 void Group::BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int group, uint64 ignore)
 {
-    for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
-        Player *pl = itr->getSource();
-        if(!pl || (ignore != 0 && pl->GetGUID() == ignore) || (ignorePlayersInBGRaid && pl->GetGroup() != this) )
+        Player *pl = sObjectMgr.GetPlayer(citr->guid);
+        if(!pl || !pl->GetSession() || (ignore != 0 && pl->GetGUID() == ignore) || (ignorePlayersInBGRaid && pl->GetGroup() != this) )
             continue;
 
-        if (pl->GetSession() && (group == -1 || itr->getSubGroup() == group))
+        if (group == -1 || itr->getSubGroup() == group)
             pl->GetSession()->SendPacket(packet);
     }
 }

@@ -1789,12 +1789,12 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     ExitVehicle();
 
     // Leave lfg on teleport when instance is completed
-    if(Group *group = ((Player*)unitTarget)->GetGroup())
+    if(Group *group = GetGroup())
     {
         if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
         {
-            _player->RemoveAurasDueToSpell(LFG_BOOST);
-            group->RemoveMember(unitTarget->GetGUID(), 0);
+            RemoveAurasDueToSpell(LFG_BOOST);
+            group->RemoveMember(GetGUID(), 0);
         }
     }
 
