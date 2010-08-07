@@ -10599,10 +10599,12 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
     float  DoneTotalMod = 1.0f;
     int32  DoneTotal = 0;
 
-    // Healing done percent
-    AuraList const& mHealingDonePct = GetAurasByType(SPELL_AURA_MOD_HEALING_DONE_PERCENT);
-    for(AuraList::const_iterator i = mHealingDonePct.begin();i != mHealingDonePct.end(); ++i)
-        DoneTotalMod *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f;
+    if (!(spellProto->AttributesEx6 & SPELL_ATTR_EX6_NO_HEAL_PERCENT_MODS)) 
+    { 
+        AuraList const& mHealingDonePct = GetAurasByType(SPELL_AURA_MOD_HEALING_DONE_PERCENT); 
+        for(AuraList::const_iterator i = mHealingDonePct.begin();i != mHealingDonePct.end(); ++i) 
+            DoneTotalMod *= (100.0f + (*i)->GetModifier()->m_amount) / 100.0f; 
+    }
 
     // done scripted mod (take it from owner)
     Unit *owner = GetOwner();
