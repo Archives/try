@@ -304,6 +304,8 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         void KilledCreature(Creature *creature);
         
     private:
+        //ACE_Thread_Mutex m_queueLock;
+
         uint64 m_tank;
         uint64 m_heal;
         PlayerList *dps;
@@ -345,8 +347,8 @@ class MANGOS_DLL_SPEC LfgMgr
 
         void Update(uint32 diff);
 
-        void AddToQueue(Player *player);
-        void RemoveFromQueue(Player *player);
+        void AddToQueue(Player *player, bool updateQueue = true);
+        void RemoveFromQueue(Player *player, bool updateQueue = true);
         void RemovePlayer(Player *player);
 
         void SendLfgPlayerInfo(Player *plr);

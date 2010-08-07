@@ -479,6 +479,13 @@ struct AchievementCriteriaEntry
             uint32  killCount;                              // 4
         } honorable_kill;
 
+        // ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS = 119
+        struct
+        {
+            uint32 unused;                                  // 3
+            uint32 count;                                   // 4
+        } use_lfg;
+
         struct
         {
             uint32  field3;                                 // 3 main requirement

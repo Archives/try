@@ -402,11 +402,11 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
     }
 }
 
-bool LookingForGroup::DoneDungeon(uint32 ID, Player *player)
+bool LookingForGroup::DoneDungeon(uint32 ID, Player *plr)
 {
-    if(LfgReward *dailyReward = sLfgMgr.GetDungeonReward(ID, true, player->getLevel()))
+    if(LfgReward *dailyReward = sLfgMgr.GetDungeonReward(ID, true, plr->getLevel()))
     {
-        if(plr->GetQuestStatus(dailyReward->questInfo->GetQuestId()) != QUEST_STATUS_COMPLETE)
+        if(!plr->SatisfyQuestDay(dailyReward->questInfo, false))
             return false;
     }
     return true;
@@ -1765,6 +1765,16 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         m_movementInfo.ClearTransportData();
     }
 
+    // Leave lfg on teleport when instance is completed
+    if(Group *group = ((Player*)unitTarget)->GetGroup())
+    {
+        if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+        {
+            _player->RemoveAurasDueToSpell(LFG_BOOST);
+            group->RemoveMember(unitTarget->GetGUID(), 0);
+        }
+    }
+
     // The player was ported to another map and looses the duel immediately.
     // We have to perform this check before the teleport, otherwise the
     // ObjectAccessor won't find the flag.
@@ -2017,7 +2027,9 @@ void Player::ProcessDelayedOperations()
             ((LfgGroup*)group)->SendUpdate();
             SendDungeonDifficulty(true);
             SetGroupUpdateFlag(GROUP_UPDATE_FULL);
-            group->UpdatePlayerOutOfRange(this);   
+            group->UpdatePlayerOutOfRange(this);
+            if(((LfgGroup*)group)->IsRandom())
+                CastSpell(this, LFG_RANDOM_COOLDOWN, true);
         }
         CastSpell(this, LFG_BOOST, true);
     }
@@ -16346,6 +16358,11 @@ void Player::_LoadGroup(QueryResult *result)
         uint32 mount_spell= (*result)[8].GetUInt32();
         delete result;
 
+        m_lookingForGroup.joinLoc = joinLoc;
+        m_lookingForGroup.taxi_start = taxi_start;
+        m_lookingForGroup.taxi_end = taxi_end;
+        m_lookingForGroup.mount_spell = mount_spell;
+
         if (Group* group = sObjectMgr.GetGroupById(groupId))
         {
             uint8 subgroup = group->GetMemberGroup(GetGUID());
@@ -16356,11 +16373,10 @@ void Player::_LoadGroup(QueryResult *result)
                 SetDungeonDifficulty(group->GetDungeonDifficulty());
                 SetRaidDifficulty(group->GetRaidDifficulty());
             }
+            //Prevent group bug
+            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED && group->GetMembersCount() == 1)
+                group->RemoveMember(GetGUID(), 0);
         }
-        m_lookingForGroup.joinLoc = joinLoc;
-        m_lookingForGroup.taxi_start = taxi_start;
-        m_lookingForGroup.taxi_end = taxi_end;
-        m_lookingForGroup.mount_spell = mount_spell;
     }
 }
 

@@ -399,7 +399,6 @@ struct LookingForGroup
 {
     LookingForGroup()
     {
-        completedRandoms.clear();
         queuedDungeons.clear();
         groups.clear();
         taxi_start = 0;

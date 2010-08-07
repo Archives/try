@@ -357,6 +357,12 @@ void Map::LoadGrid(const Cell& cell, bool no_unload)
 
 bool Map::Add(Player *player)
 {
+    //Lfg boost remove, this is the last fail-safe!
+    if(!IsDungeon() && player->HasAura(72221))
+    {
+        sLog.outError("Some unhandled case, player has Lfg boost at non-dungeon map");
+        player->RemoveAurasDueToSpell(72221);
+    }
     player->GetMapRef().link(this, player);
     player->SetMap(this);
 
