@@ -2537,18 +2537,18 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             // Death Coil
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x002000))
             {
+                // we must use this value to prevent double application of bonuses
+                int32 bp = m_spellInfo->CalculateSimpleValue(eff_idx); 
                 if (m_caster->IsFriendlyTo(unitTarget))
                 {
                     if (!unitTarget || unitTarget->GetCreatureType() != CREATURE_TYPE_UNDEAD)
                         return;
 
-                    int32 bp = int32(damage * 1.5f);
+                    bp = int32(bp * 1.5f);
                     m_caster->CastCustomSpell(unitTarget, 47633, &bp, NULL, NULL, true);
                 }
                 else
                 {
-                    int32 bp = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
-                    bp = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, uint32(bp), SPELL_DIRECT_DAMAGE);
                     m_caster->CastCustomSpell(unitTarget, 47632, &bp, NULL, NULL, true);
                 }
                 return;
@@ -2933,7 +2933,7 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
 
 void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
 {
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
+    if(m_caster->GetTypeId() != TYPEID_PLAYER && m_spellInfo->EffectImplicitTargetA[eff_idx] != TARGET_SELF2)
     {
         EffectJump(eff_idx);
         return;
@@ -2988,7 +2988,11 @@ void Spell::EffectJumpToDest(SpellEffectIndex eff_idx)
     if(m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
         caster->SendMonsterMove(x, y, z, SPLINETYPE_FACINGANGLE, SPLINEFLAG_WALKMODE, 1, NULL, double(target->GetOrientation()));
     else
+    {
+        if(caster->GetTypeId() != TYPEID_PLAYER)
+            caster->GetMap()->CreatureRelocation((Creature*)caster, x, y, z, caster->GetOrientation());
         caster->SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 1);
+    }
 
     /*angle = caster->GetAngle(x,y);
     normalized_d = caster->GetDistance(x,y,z);

@@ -202,6 +202,7 @@ class ArenaTeam
         int32 MemberWon(Player * plr, uint32 againstRating);
         int32 LostAgainst(uint32 againstRating);
         int32 MemberLost(Player * plr, uint32 againstRating);
+        int32 MemberDraw(Player * plr, uint32 againstRating, int32 draw_change);
         int32 OfflineMemberLost(uint64 guid, uint32 againstRating);
 
         void UpdateArenaPointsHelper(std::map<uint32, uint32> & PlayerPoints);
@@ -210,6 +211,7 @@ class ArenaTeam
 
         void FinishWeek();
         void FinishGame(int32 mod);
+        int32 DrawFinishGame(uint32 againstRating, int32 draw_change);
 
     protected:
 

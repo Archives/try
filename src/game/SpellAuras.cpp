@@ -1637,6 +1637,14 @@ void Aura::HandleAddModifier(bool apply, bool Real)
             m_spellmod->mask2= modMask2;
         }
     }
+    //Improved Barskin
+    if(GetId() == 63410 || GetId() == 63411)
+    {
+        if(apply && !GetTarget()->HasAura(66530))
+            GetTarget()->CastSpell(GetTarget(), 66530, true);
+        else if (!apply && GetTarget()->HasAura(66530))
+            GetTarget()->RemoveAurasDueToSpell(66530);
+    }
 
     ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply);
 
@@ -6913,6 +6921,9 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                     }
                 }
             }
+            //Improved Barskin
+            if(form != FORM_TRAVEL)
+                m_target->RemoveAurasDueToSpell(66530);
         }
     }
     else
@@ -6940,6 +6951,10 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                  }
              }
         }
+        //Improved Barskin
+        if(form != FORM_TRAVEL)
+            m_target->CastSpell(m_target, 66530, true);
+
         if(spellId1)
             target->RemoveAurasDueToSpell(spellId1);
         if(spellId2)
@@ -6997,7 +7012,7 @@ void Aura::HandleSpellSpecificBoosts(bool apply, bool last_stack)
             // Ice Barrier (non stacking from one caster)
             if (m_spellProto->SpellIconID == 32)
             {
-                if (!apply && (m_removeMode == AURA_REMOVE_BY_DISPEL || m_removeMode == AURA_REMOVE_BY_SHIELD_BREAK))
+                if (!apply && m_removeMode == AURA_REMOVE_BY_SHIELD_BREAK)
                 {
                     Unit::AuraList const& dummyAuras = m_target->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator itr = dummyAuras.begin(); itr != dummyAuras.end(); ++itr)
@@ -8088,11 +8103,6 @@ void Aura::PeriodicTick()
                     else if(GetAuraTicks() >= 9)
                         pdamage += (pdamage + 1) / 2;       // +1 prevent 0.5 damage possible lost at 1..4 ticks
                     // 5..8 ticks have normal tick damage
-                }
-                else if(GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                {
-                    if (m_target->GetHealth() * 100 / m_target->GetMaxHealth() <= 25)
-                        pdamage *= 4;
                 }
             }
 

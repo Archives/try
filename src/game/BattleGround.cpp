@@ -484,7 +484,15 @@ void BattleGround::Update(uint32 diff)
 
                 for(BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
                     if (Player *plr = sObjectMgr.GetPlayer(itr->first))
+                    {
+                        WorldPacket status;
+                        BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(m_TypeID, GetArenaType());
+                        uint32 queueSlot = plr->GetBattleGroundQueueIndex(bgQueueTypeId);
+                        sBattleGroundMgr.BuildBattleGroundStatusPacket(&status, this, queueSlot, GetStatus(), 0, GetStartTime(), GetArenaType());
+                        plr->GetSession()->SendPacket(&status);
+
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
+                    }
 
                 CheckArenaWinConditions();
             }
@@ -533,15 +541,9 @@ void BattleGround::Update(uint32 diff)
     {
         if(m_StartTime > uint32(ARENA_TIME_LIMIT))
         {
-            uint32 winner;
-            // winner is team with higher damage
-            if(GetDamageDoneForTeam(ALLIANCE) > GetDamageDoneForTeam(HORDE))
-                winner = ALLIANCE;
-            else if (GetDamageDoneForTeam(HORDE) > GetDamageDoneForTeam(ALLIANCE))
-                winner = HORDE;
-            else
-                winner = 0;
-            EndBattleGround(winner);
+            // both teams will lose points, sending EndBattleGround() with draw = true ...
+
+            EndBattleGround(0, true);
             m_ArenaEnded = true;
         }
     }
@@ -754,12 +756,20 @@ void BattleGround::UpdateWorldStateForPlayer(uint32 Field, uint32 Value, Player 
     Source->GetSession()->SendPacket(&data);
 }
 
-void BattleGround::EndBattleGround(uint32 winner)
+void BattleGround::EndBattleGround(uint32 winner, bool draw)
 {
     this->RemoveFromBGFreeSlotQueue();
 
     ArenaTeam * winner_arena_team = NULL;
     ArenaTeam * loser_arena_team = NULL;
+
+    ArenaTeam * draw_arena_team_1 = NULL;
+    ArenaTeam * draw_arena_team_2 = NULL;
+
+    uint32 draw_rating_1 = 0;
+    uint32 draw_rating_2 = 0;
+    int32 const draw_change = -16;
+
     uint32 loser_rating = 0;
     uint32 winner_rating = 0;
     int32 winner_change = 0;
@@ -832,6 +842,22 @@ void BattleGround::EndBattleGround(uint32 winner)
             SetArenaTeamRatingChangeForTeam(HORDE, 0);
         }
     }
+    else if (isArena() && isRated() && draw)
+    {
+        // setting draw teams - does not really matter which faction... for our purposes draw_arena_team_1 will be ALLIANCE
+        draw_arena_team_1 = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(ALLIANCE));
+        draw_arena_team_2 = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(ALLIANCE)));
+        if (draw_arena_team_1 && draw_arena_team_2)
+        {
+            draw_rating_1 = draw_arena_team_1->GetStats().rating;
+            draw_rating_2 = draw_arena_team_2->GetStats().rating;
+
+            // Sending result of DrawFinishGame() to calculate with custom configuration of rating system...
+            SetArenaTeamRatingChangeForTeam(draw_arena_team_1, draw_arena_team_1->DrawFinishGame(draw_rating_2,draw_change));
+            SetArenaTeamRatingChangeForTeam(draw_arena_team_2, draw_arena_team_2->DrawFinishGame(draw_rating_1,draw_change));
+        }
+    }
+
     uint32 winner_count = 1;
     uint32 loser_count = 1;
     for(BattleGroundPlayerMap::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
@@ -848,6 +874,16 @@ void BattleGround::EndBattleGround(uint32 winner)
                 else
                     loser_arena_team->OfflineMemberLost(itr->first, winner_rating);
                 char const* a = (team == winner) ? "win" : "lose";
+                sLog.outArenaLog(" LEAVER:: Player (GUID: %u) %s arena match, but not in arena during EndBattleGround", GUID_LOPART(itr->first), a);
+            }
+            //for draw - offline member considered as if it left and lost the match
+            else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
+            {
+                if (team == ALLIANCE)
+                    draw_arena_team_1->OfflineMemberLost(itr->first, draw_rating_2);
+                else
+                    draw_arena_team_2->OfflineMemberLost(itr->first, draw_rating_1);
+                char const* a = "lose";
                 sLog.outArenaLog(" LEAVER:: Player (GUID: %u) %s arena match, but not in arena during EndBattleGround", GUID_LOPART(itr->first), a);
             }
             continue;
@@ -936,6 +972,14 @@ void BattleGround::EndBattleGround(uint32 winner)
                 loser_count++;
             }
         }
+        else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
+        {
+            int32 change;
+            if (team == ALLIANCE)
+                change = draw_arena_team_1->MemberDraw(plr,draw_rating_2,draw_change);
+            else
+                change = draw_arena_team_2->MemberDraw(plr,draw_rating_1,draw_change);
+        }
 
         if (team == winner)
             plr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_BG, 1);
@@ -974,6 +1018,16 @@ void BattleGround::EndBattleGround(uint32 winner)
         dbstring << "INSERT INTO arena_log_" << winner_arena_team->GetType() << " (" << table.str().c_str() << ") VALUES (" << tabledata.str().c_str() << " );";
         CharacterDatabase.PExecute( dbstring.str().c_str() );
         sLog.outString( dbstring.str().c_str() );
+    }
+    else if (isArena() && isRated() && draw_arena_team_1 && draw_arena_team_2)
+    {
+        // save the stat changes
+        draw_arena_team_1->SaveToDB();
+        draw_arena_team_2->SaveToDB();
+        // send updated arena team stats to players
+        // this way all arena team members will get notified, not only the ones who participated in this match
+        draw_arena_team_1->NotifyStatsChanged();
+        draw_arena_team_2->NotifyStatsChanged();
     }
 
     if (winmsg_id)
@@ -1424,6 +1478,11 @@ void BattleGround::AddPlayer(Player *plr)
             plr->SetHealth(plr->GetMaxHealth());
             plr->SetPower(POWER_MANA, plr->GetMaxPower(POWER_MANA));
         }
+
+        WorldPacket data(SMSG_ARENA_OPPONENT_UPDATE, 8);
+        data << plr->GetObjectGuid();
+        SendPacketToTeam(team, &data, plr, true);
+
         m_uiPlayersJoined++;
     }
     else
