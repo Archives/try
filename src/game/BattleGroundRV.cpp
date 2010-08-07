@@ -161,6 +161,18 @@ void BattleGroundRV::Reset()
     m_uiTeleport = 22000;
     m_uiPillarChanging = urand(25,35)*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
     m_uiTexturesCheck = 10*IN_MILLISECONDS + BATTLEGROUND_RV_ELEVATING_TIME;
+    uint32 i = 0;
+    for(uint8 i = 0; i < 2; ++i)
+    {
+        BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.begin();
+        for(; itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
+        {
+            GameObject *obj = GetBgMap()->GetGameObject(*itr);
+            if (!obj)
+                continue;
+            Pillar[i] = obj;
+        }
+    }
 }
 
 void BattleGroundRV::FillInitialWorldStates(WorldPacket &data, uint32& count)
@@ -177,7 +189,24 @@ bool BattleGroundRV::SetupBattleGround()
 
 bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
 {
-    for(uint8 i = 0; i < 2; ++i)
+    float angle = caster->GetAngle(target);
+    float x_per_i = cos(angle);
+    float y_per_i = sin(angle);
+    float distance = caster->GetDistance(target);
+    float x = caster->GetPositionX();
+    float y = caster->GetPositionY();
+    for (int32 i = 0; i < distance; ++i)
+    {
+        x += x_per_i;
+        y += y_per_i;
+        for (uint8 pil = 0; pil <= PILLAR_COUNT; ++pil)
+            if(Pillar[pil] && Pillar[pil]->GetGoState() == GO_STATE_ACTIVE && 
+                Pillar[pil]->GetDistance2d(x,y) < Pillar[pil]->GetObjectBoundingRadius())
+                return true;
+    }
+    return false;
+}
+    /*for(uint8 i = 0; i < 2; ++i)
     {
         BGObjects::const_iterator itr = m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.begin();
         for(; itr != m_EventObjects[MAKE_PAIR32(250, i)].gameobjects.end(); ++itr)
@@ -200,4 +229,4 @@ bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
         }
     }
     return false;
-}
+}*/

@@ -30,6 +30,8 @@ enum
     BATTLEGROUND_RV_SUBEVENT_PILLARS_NEAR       = 1,
 
     BATTLEGROUND_RV_ELEVATING_TIME              = 18000,
+
+    PILLAR_COUNT                                = 4
 };
 
 class BattleGroundRVScore : public BattleGroundScore
@@ -68,5 +70,7 @@ class BattleGroundRV : public BattleGround
         uint32 m_uiTeleport;
         uint32 m_uiPillarChanging;
         uint32 m_uiTexturesCheck;
+
+        GameObject* Pillar[PILLAR_COUNT];
 };
 #endif
