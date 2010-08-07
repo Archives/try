@@ -126,6 +126,15 @@ void WorldSession::HandleBattlemasterJoinOpcode( WorldPacket & recv_data )
     // check queue conditions
     if (!joinAsGroup)
     {
+        // Cant join while in LFG
+        if(!_player->m_lookingForGroup.queuedDungeons.empty())
+        {
+            WorldPacket data;
+            sBattleGroundMgr.BuildGroupJoinedBattlegroundPacket(&data, ERR_LFG_CANT_USE_BATTLEGROUND);
+            _player->GetSession()->SendPacket(&data);
+            return;
+        }
+
         // check Deserter debuff
         if (!_player->CanJoinToBattleground())
         {

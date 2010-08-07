@@ -33,6 +33,7 @@
 #include "Guild.h"
 #include "World.h"
 #include "BattleGroundMgr.h"
+#include "LfgMgr.h"
 #include "MapManager.h"
 #include "SocialMgr.h"
 #include "Auth/AuthCrypt.h"
@@ -372,6 +373,8 @@ void WorldSession::LogoutPlayer(bool Save)
                 sBattleGroundMgr.m_BattleGroundQueues[ bgQueueTypeId ].RemovePlayer(_player->GetGUID(), true);
             }
         }
+        ///- Remove player from LFG queues etc..
+        sLfgMgr.RemovePlayer(_player);
 
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage

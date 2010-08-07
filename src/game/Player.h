@@ -37,6 +37,7 @@
 #include "ReputationMgr.h"
 #include "BattleGround.h"
 #include "DBCEnums.h"
+#include "LfgMgr.h"
 
 #include<string>
 #include<vector>
@@ -394,72 +395,30 @@ struct EnchantDuration
 typedef std::list<EnchantDuration> EnchantDurationList;
 typedef std::list<Item*> ItemDurationList;
 
-enum LfgType
-{
-    LFG_TYPE_NONE                 = 0,
-    LFG_TYPE_DUNGEON              = 1,
-    LFG_TYPE_RAID                 = 2,
-    LFG_TYPE_QUEST                = 3,
-    LFG_TYPE_ZONE                 = 4,
-    LFG_TYPE_HEROIC_DUNGEON       = 5,
-    LFG_TYPE_RANDOM_DUNGEON       = 6
-};
-
-enum LfgRoles
-{
-    LEADER  = 0x01,
-    TANK    = 0x02,
-    HEALER  = 0x04,
-    DAMAGE  = 0x08
-};
-
-struct LookingForGroupSlot
-{
-    LookingForGroupSlot() : entry(0), type(0) {}
-    bool Empty() const { return !entry && !type; }
-    void Clear() { entry = 0; type = 0; }
-    void Set(uint32 _entry, uint32 _type ) { entry = _entry; type = _type; }
-    bool Is(uint32 _entry, uint32 _type) const { return entry == _entry && type == _type; }
-    bool canAutoJoin() const { return entry && (type == LFG_TYPE_DUNGEON || type == LFG_TYPE_HEROIC_DUNGEON); }
-
-    uint32 entry;
-    uint32 type;
-};
-
-#define MAX_LOOKING_FOR_GROUP_SLOT 3
-
 struct LookingForGroup
 {
-    LookingForGroup() {}
-    bool HaveInSlot(LookingForGroupSlot const& slot) const { return HaveInSlot(slot.entry, slot.type); }
-    bool HaveInSlot(uint32 _entry, uint32 _type) const
+    LookingForGroup()
     {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(slots[i].Is(_entry, _type))
-                return true;
-        return false;
+        queuedDungeons.clear();
+        groups.clear();
+        taxi_start = 0;
+        taxi_end = 0;
+        mount_spell = 0;
+        joinTime = 0;
     }
-
-    bool canAutoJoin() const
-    {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(slots[i].canAutoJoin())
-                return true;
-        return false;
-    }
-
-    bool Empty() const
-    {
-        for(int i = 0; i < MAX_LOOKING_FOR_GROUP_SLOT; ++i)
-            if(!slots[i].Empty())
-                return false;
-        return more.Empty();
-    }
-
-    LookingForGroupSlot slots[MAX_LOOKING_FOR_GROUP_SLOT];
-    LookingForGroupSlot more;
+    
     std::string comment;
     uint8 roles;
+    LfgDungeonList queuedDungeons;
+    GroupMap groups;
+    std::map<uint32, GroupReference*> m_LfgGroup; // dung ID
+    uint32 joinTime; 
+
+    bool DoneDungeon(uint32 ID, Player *player);
+    WorldLocation joinLoc;
+    uint32 taxi_start;
+    uint32 taxi_end;
+    uint32 mount_spell;
 };
 
 enum RaidGroupError
@@ -928,6 +887,9 @@ enum PlayerDelayedOperations
     DELAYED_SPELL_CAST_DESERTER = 0x04,
     DELAYED_BG_MOUNT_RESTORE    = 0x08,                     ///< Flag to restore mount state after teleport from BG
     DELAYED_BG_TAXI_RESTORE     = 0x10,                     ///< Flag to restore taxi state after teleport from BG
+    DELAYED_LFG_ENTER_DUNGEON   = 0x20,
+    DELAYED_LFG_MOUNT_RESTORE   = 0x40,
+    DELAYED_LFG_TAXI_RESTORE    = 0x80,
     DELAYED_END
 };
 
@@ -1983,6 +1945,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         void SetSemaphoreTeleportNear(bool semphsetting) { mSemaphoreTeleport_Near = semphsetting; }
         void SetSemaphoreTeleportFar(bool semphsetting) { mSemaphoreTeleport_Far = semphsetting; }
         void ProcessDelayedOperations();
+        void ScheduleDelayedOperation(uint32 operation)
+        {
+            if(operation < DELAYED_END)
+                m_DelayedOperations |= operation;
+        }
 
         void CheckExploreSystem(void);
 
@@ -2667,12 +2634,6 @@ class MANGOS_DLL_SPEC Player : public Unit
             m_bHasDelayedTeleport = m_bCanDelayTeleport;
             m_bHasBeenAliveAtDelayedTeleport = isAlive();
             return m_bHasDelayedTeleport;
-        }
-
-        void ScheduleDelayedOperation(uint32 operation)
-        {
-            if (operation < DELAYED_END)
-                m_DelayedOperations |= operation;
         }
 
         Unit *m_mover;

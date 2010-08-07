@@ -62,6 +62,7 @@
 #include "AchievementMgr.h"
 #include "Mail.h"
 #include "GameEventMgr.h"
+#include "LfgMgr.h"
 
 #include <cmath>
 
@@ -400,6 +401,16 @@ void TradeData::SetAccepted(bool state, bool crosssend /*= false*/)
         else
             m_player->GetSession()->SendTradeStatus(TRADE_STATUS_BACK_TO_TRADE);
     }
+}
+
+bool LookingForGroup::DoneDungeon(uint32 ID, Player *plr)
+{
+    if(LfgReward *dailyReward = sLfgMgr.GetDungeonReward(ID, true, plr->getLevel()))
+    {
+        if(!plr->SatisfyQuestDay(dailyReward->questInfo, false))
+            return false;
+    }
+    return true;
 }
 
 //== Player ====================================================
@@ -1777,6 +1788,16 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     }
     ExitVehicle();
 
+    // Leave lfg on teleport when instance is completed
+    if(Group *group = ((Player*)unitTarget)->GetGroup())
+    {
+        if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+        {
+            _player->RemoveAurasDueToSpell(LFG_BOOST);
+            group->RemoveMember(unitTarget->GetGUID(), 0);
+        }
+    }
+
     // The player was ported to another map and looses the duel immediately.
     // We have to perform this check before the teleport, otherwise the
     // ObjectAccessor won't find the flag.
@@ -2018,6 +2039,41 @@ void Player::ProcessDelayedOperations()
             m_taxi.AddTaxiDestination(m_bgData.taxiPath[1]);
             m_bgData.ClearTaxiPath();
 
+            ContinueTaxiFlight();
+        }
+    }
+    
+    if (m_DelayedOperations & DELAYED_LFG_ENTER_DUNGEON)
+    {
+        if(Group *group = GetGroup())
+        {
+            ((LfgGroup*)group)->SendUpdate();
+            SendDungeonDifficulty(true);
+            SetGroupUpdateFlag(GROUP_UPDATE_FULL);
+            group->UpdatePlayerOutOfRange(this);
+            if(((LfgGroup*)group)->IsRandom())
+                CastSpell(this, LFG_RANDOM_COOLDOWN, true);
+        }
+        CastSpell(this, LFG_BOOST, true);
+    }
+
+    if (m_DelayedOperations & DELAYED_LFG_MOUNT_RESTORE)
+    {
+        if(m_lookingForGroup.mount_spell)
+        {
+            CastSpell(this, m_lookingForGroup.mount_spell, true);
+            m_lookingForGroup.mount_spell = 0;
+        }
+    }
+
+    if (m_DelayedOperations & DELAYED_LFG_TAXI_RESTORE)
+    {
+        if (m_lookingForGroup.taxi_start && m_lookingForGroup.taxi_end)
+        {
+            m_taxi.AddTaxiDestination(m_lookingForGroup.taxi_start);
+            m_taxi.AddTaxiDestination(m_lookingForGroup.taxi_end);
+            m_lookingForGroup.taxi_start = 0;
+            m_lookingForGroup.taxi_end = 0;
             ContinueTaxiFlight();
         }
     }
@@ -16939,11 +16995,21 @@ void Player::_LoadTalents(QueryResult *result)
 }
 void Player::_LoadGroup(QueryResult *result)
 {
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT groupId FROM group_member WHERE memberGuid='%u'", GetGUIDLow());
+    //                                                       0       1          2          3          4          5            6          7        8
+    //QueryResult *result = CharacterDatabase.PQuery("SELECT groupId,lfg_join_x,lfg_join_y,lfg_join_z,lfg_join_o,lfg_join_map,taxi_start,taxi_end,mount_spell FROM group_member WHERE memberGuid='%u'", GetGUIDLow());
     if (result)
     {
-        uint32 groupId = (*result)[0].GetUInt32();
+        uint32 groupId    = (*result)[0].GetUInt32();
+        WorldLocation joinLoc  = WorldLocation((*result)[5].GetUInt32(), (*result)[1].GetFloat(), (*result)[2].GetFloat(), (*result)[3].GetFloat(), (*result)[4].GetFloat());
+        uint32 taxi_start = (*result)[6].GetUInt32();
+        uint32 taxi_end   = (*result)[7].GetUInt32();
+        uint32 mount_spell= (*result)[8].GetUInt32();
         delete result;
+
+        m_lookingForGroup.joinLoc = joinLoc;
+        m_lookingForGroup.taxi_start = taxi_start;
+        m_lookingForGroup.taxi_end = taxi_end;
+        m_lookingForGroup.mount_spell = mount_spell;
 
         if (Group* group = sObjectMgr.GetGroupById(groupId))
         {
@@ -16955,6 +17021,9 @@ void Player::_LoadGroup(QueryResult *result)
                 SetDungeonDifficulty(group->GetDungeonDifficulty());
                 SetRaidDifficulty(group->GetRaidDifficulty());
             }
+            //Prevent group bug
+            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED && group->GetMembersCount() == 1)
+                group->RemoveMember(GetGUID(), 0);
         }
     }
 }
@@ -21259,7 +21328,7 @@ PartyResult Player::CanUninviteFromGroup() const
     if(!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID()))
         return ERR_NOT_LEADER;
 
-    if(InBattleGround())
+    if(InBattleGround() || grp->isLfgGroup())
         return ERR_INVITE_RESTRICTED;
 
     return ERR_PARTY_RESULT_OK;

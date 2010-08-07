@@ -951,6 +951,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
                 if(m->IsDungeon() && creditedPlayer)
                 {
+                    //Lfg group info at kill creature
+                    if(Group *group = creditedPlayer->GetGroup())
+                    {
+                        error_log("Killed v unit");
+                        if(group->isLfgGroup())
+                            ((LfgGroup*)group)->KilledCreature(cVictim);
+                    }
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if(cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
