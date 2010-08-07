@@ -813,10 +813,16 @@ void BattleGround::EndBattleGround(uint32 winner)
             loser_string << "Loser: " << loser_arena_team->GetName().c_str() << " [" << loser_rating << "] "<< " (";
 
             if (winner)
+            {
                 winner_change = winner_arena_team->WonAgainst(loser_rating);
+                loser_change = loser_arena_team->LostAgainst(winner_rating);
+            }
             else
-                winner_change = winner_arena_team->LostAgainst(loser_rating);
-            loser_change = loser_arena_team->LostAgainst(winner_rating);
+            {
+                winner_change = winner_arena_team->DrawAgainst(loser_rating);
+                loser_change = loser_arena_team->DrawAgainst(winner_rating);
+            }
+
             UpdateArenaTeamRanks();
 
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
@@ -899,7 +905,14 @@ void BattleGround::EndBattleGround(uint32 winner)
             else
                 getip << "ERROR: ip not found";
 
-            if (team == winner)
+            if (!winner)
+            {
+                if (winner_arena_team->HaveMember(plr->GetGUID()))
+                    change = winner_arena_team->MemberDraw(plr,loser_rating);
+                else
+                    change = loser_arena_team->MemberDraw(plr,winner_rating);
+            }
+            else if (team == winner)
             {
                 // update achievement BEFORE personal rating update
                 ArenaTeamMember* member = winner_arena_team->GetMember(plr->GetGUID());
