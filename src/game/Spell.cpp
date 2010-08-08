@@ -5701,6 +5701,19 @@ SpellCastResult Spell::CheckCasterAuras() const
         // Pain Suppression can be casted through stun only with glyph
         (m_spellInfo->Id == 33206 && !m_caster->HasAura(63248))))*/
         prevented_reason = SPELL_FAILED_STUNNED;
+    /*if (unitflag & UNIT_FLAG_STUNNED)
+    {
+        Unit::AuraList const& stunList = m_caster->GetAurasByType(SPELL_AURA_MOD_STUN);
+        for(Unit::AuraList::const_iterator itr = stunList.begin(); itr != stunList.end();++itr)
+        {
+            uint32 exceptionflag = (*itr)->GetSpellProto()->Mechanic == MECHANIC_STUN ? SPELL_ATTR_EX5_USABLE_WHILE_STUNNED : SPELL_ATTR_EX5_USABLE_WHILE_FEARED;
+            if(!(m_spellInfo->AttributesEx5 & exceptionflag))		
+            {
+                prevented_reason = SPELL_FAILED_STUNNED;
+                break;
+            }
+        }
+    }*/
     else if (unitflag & UNIT_FLAG_CONFUSED && !(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_CONFUSED))
         prevented_reason = SPELL_FAILED_CONFUSED;
     else if (unitflag & UNIT_FLAG_FLEEING && !(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_FEARED))
