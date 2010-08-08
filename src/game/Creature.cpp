@@ -482,15 +482,19 @@ void Creature::Update(uint32 diff)
             // CORPSE/DEAD state will processed at next tick (in other case death timer will be updated unexpectedly)
             if(!isAlive())
                 break;
-            if(m_regenTimer > 0)
+            if (m_regenTimer)
             {
                 if(diff >= m_regenTimer)
                     m_regenTimer = 0;
                 else
                     m_regenTimer -= diff;
             }
-            if (m_regenTimer != 0)
-                break;
+
+            if (!m_regenTimer)
+            {
+                Regenerate(POWER_MANA, REGEN_TIME_FULL);
+                m_regenTimer = REGEN_TIME_FULL;
+            }
 
             if (!isInCombat() || IsPolymorphed())
                 RegenerateHealth();
@@ -527,33 +531,6 @@ void Creature::StopGroupLoot()
 
     m_groupLootTimer = 0;
     m_groupLootId = 0;
-}
-
-void Creature::RegenerateMana()
-{
-    uint32 curValue = GetPower(POWER_MANA);
-    uint32 maxValue = GetMaxPower(POWER_MANA);
-
-    if (curValue >= maxValue)
-        return;
-
-    uint32 addvalue = 0;
-
-    // Combat and any controlled creature
-    if (isInCombat() || GetCharmerOrOwnerGUID())
-    {
-        if(!IsUnderLastManaUseEffect())
-        {
-            float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
-            float Spirit = GetStat(STAT_SPIRIT);
-
-            addvalue = uint32((Spirit / 5.0f + 17.0f) * ManaIncreaseRate);
-        }
-    }
-    else
-        addvalue = maxValue / 3;
-
-    ModifyPower(POWER_MANA, addvalue);
 }
 
 void Creature::RegenerateHealth()

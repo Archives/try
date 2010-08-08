@@ -1810,6 +1810,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool IsUnderLastManaUseEffect() const { return m_lastManaUseTimer; }
 
         uint32 GetRegenTimer() const { return m_regenTimer; }
+        void Regenerate(Powers power, uint32 diff);
 
         void SetContestedPvP(Player *attackedPlayer = NULL);
 

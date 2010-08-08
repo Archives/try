@@ -81,35 +81,23 @@ void Vehicle::Update(uint32 diff)
         despawn = false;
     }
 
-    if(m_regenTimer <= diff)
+    if (m_regenTimer)
     {
-        RegeneratePower(getPowerType());
-        m_regenTimer = 1000;
+        if(diff >= m_regenTimer)
+            m_regenTimer = 0;
+        else
+            m_regenTimer -= diff;
     }
-    else
-        m_regenTimer -= diff;
-}
 
-void Vehicle::RegeneratePower(Powers power)
-{
-    uint32 curValue = GetPower(power);
-    uint32 maxValue = GetMaxPower(power);
-
-    if (curValue >= maxValue)
-        return;
-
-    float addvalue = 0.0f;
-
-    // hack: needs more research of power type from the dbc. 
-    // It must contains some info about vehicles like Salvaged Chopper.
-    if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
-        return;
-
-    addvalue = 20.0f;
-
-    SendEnergizeSpellLog(this, 0, (uint32)addvalue, power);
-
-    ModifyPower(power, (int32)addvalue);
+    if (!m_regenTimer)
+    {
+        // hack: needs more research of power type from the dbc. 
+        // It must contains some info about vehicles like Salvaged Chopper.
+        if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
+            return;
+        Regenerate(getPowerType(), REGEN_TIME_FULL);
+        m_regenTimer = REGEN_TIME_FULL;
+    }
 }
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 vehicleId, uint32 team, const CreatureData *data)

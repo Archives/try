@@ -537,22 +537,28 @@ void Pet::Update(uint32 diff)
             }
 
             //regenerate focus for hunter pets or energy for deathknight's ghoul
-            if(m_regenTimer <= diff)
+            if (m_regenTimer)
+            {
+                if(diff >= m_regenTimer)
+                    m_regenTimer = 0;
+                else
+                    m_regenTimer -= diff;
+            }
+
+            if (!m_regenTimer)
             {
                 switch (getPowerType())
                 {
                     case POWER_FOCUS:
                     case POWER_ENERGY:
-                        Regenerate(getPowerType());
+                        Regenerate(getPowerType(), REGEN_TIME_FULL);
                         break;
                     default:
                         break;
                 }
-                m_regenTimer = 2000;
+                m_regenTimer = REGEN_TIME_FULL;
             }
-            else
-                m_regenTimer -= diff;
-
+            
             if(getPetType() != HUNTER_PET)
                 break;
 
@@ -570,46 +576,6 @@ void Pet::Update(uint32 diff)
             break;
     }
     Creature::Update(diff);
-}
-
-void Pet::Regenerate(Powers power)
-{
-    uint32 curValue = GetPower(power);
-    uint32 maxValue = GetMaxPower(power);
-
-    if (curValue >= maxValue)
-        return;
-
-    float addvalue = 0.0f;
-
-    switch (power)
-    {
-        case POWER_FOCUS:
-        {
-            // For hunter pets.
-            addvalue = 10 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_FOCUS);
-            break;
-        }
-        case POWER_ENERGY:
-        {
-            // For deathknight's ghoul.
-            addvalue = 20;
-            break;
-        }
-        default:
-            return;
-    }
-
-    // Apply modifiers (if any).
-    AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
-    for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
-        if ((*i)->GetModifier()->m_miscvalue == power)
-            addvalue *= ((*i)->GetModifier()->m_amount + 100) / 100.0f;
-
-    // HACK - this notifies client about power change 
-    SendEnergizeSpellLog(this, 0, (uint32)addvalue, power);
-
-    ModifyPower(power, (int32)addvalue);
 }
 
 void Pet::LooseHappiness()
