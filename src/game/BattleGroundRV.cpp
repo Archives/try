@@ -198,14 +198,13 @@ bool BattleGroundRV::ObjectInLOS(Unit* caster, Unit* target)
     float distance = caster->GetDistance(target);
     float x = caster->GetPositionX();
     float y = caster->GetPositionY();
-    for (float i = 0; i < distance; ++i)
+    for (int32 i = 0; i < distance; ++i)
     {
         x += x_per_i;
         y += y_per_i;
         for(std::list<GameObject*>::iterator itr = m_lPillars.begin(); itr != m_lPillars.end();++itr)
-            if(GameObject * pillar = (*itr))
-                if(pillar->GetGoState() == GO_STATE_ACTIVE && pillar->IsWithinBoundingRadius(x,y))
-                    return true;
+            if ((*itr)->GetGoState() == GO_STATE_ACTIVE && (*itr)->IsWithinBoundingRadius(x,y))
+                return true;
     }
     return false;
 }
