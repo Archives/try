@@ -1330,6 +1330,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 duration);
         void ApplyEnchantment(Item *item,EnchantmentSlot slot,bool apply, bool apply_dur = true, bool ignore_condition = false);
         void ApplyEnchantment(Item *item,bool apply);
+        void ApplySkillDependentEnchantments(uint16 skill, bool apply);
         void SendEnchantmentDurations();
         void BuildEnchantmentsInfoData(WorldPacket *data);
         void AddItemDurations(Item *item);
@@ -1507,10 +1508,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         void RewardRage( uint32 damage, uint32 weaponSpeedHitFactor, bool attacker );
         void SendPetSkillWipeConfirm();
         void CalcRage( uint32 damage,bool attacker );
-        void RegenerateAll(uint32 diff = REGEN_TIME_FULL);
-        void Regenerate(Powers power, uint32 diff);
         void RegenerateHealth(uint32 diff);
         void setRegenTimer(uint32 time) {m_regenTimer = time;}
+        void RegenerateAll(uint32 diff = REGEN_TIME_FULL);
         void setWeaponChangeTimer(uint32 time) {m_weaponChangeTimer = time;}
 
         uint32 GetMoney() const { return GetUInt32Value (PLAYER_FIELD_COINAGE); }

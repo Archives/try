@@ -3723,6 +3723,7 @@ void Spell::EffectEnergize(SpellEffectIndex eff_idx)
         case 31930:                                         // Judgements of the Wise
         case 63375:                                         // Improved Stormstrike
         case 68082:                                         // Glyph of Seal of Command
+        case 67545:                                         // Empowered fire
             damage = damage * unitTarget->GetCreateMana() / 100;
             break;
         case 48542:                                         // Revitalize (mana restore case)
@@ -6347,6 +6348,40 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     return;
                 }                                           // random spell learn instead placeholder
+                case 60123:                                 // Lightwell Renew
+                {
+                    Unit* creator = Unit::GetUnit(*m_caster, m_caster->GetCreatorGUID());
+
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER || 
+                        !creator || creator->GetTypeId() != TYPEID_PLAYER || 
+                        ((Player*)unitTarget)->GetTeam() != ((Player*)creator)->GetTeam())
+                        return;
+
+                    uint32 renewSpell = 0;
+                    switch(m_caster->GetEntry())
+                    {
+                        case 31897: renewSpell = 7001; break;
+                        case 31896: renewSpell = 27873; break;
+                        case 31895: renewSpell = 27874; break;
+                        case 31894: renewSpell = 28276; break;
+                        case 31893: renewSpell = 48084; break;
+                        case 31883: renewSpell = 48085; break;
+                        default: break;
+                    }
+                    // Do not drop charges and cast spell if there is a Lightwell Renew spell on caster (based on comments...)
+                    if (unitTarget->HasAura(renewSpell))
+                        return;
+
+                    m_caster->CastSpell(unitTarget, renewSpell, true);
+
+                    if (Aura* aur = m_caster->GetAura(59907, EFFECT_INDEX_0))
+                    {
+                        if (aur->GetAuraCharges() > 1)
+                            aur->DropAuraCharge();
+                        else m_caster->RemoveAura(aur);
+                    }
+                    return;
+                }
                 case 60893:                                 // Northrend Alchemy Research
                 case 61177:                                 // Northrend Inscription Research
                 case 61288:                                 // Minor Inscription Research

@@ -581,9 +581,11 @@ void LfgGroup::SendGroupFormed()
 
 void LfgGroup::SendProposalUpdate(uint8 state)
 {
-    for (GroupReference *plritr = GetFirstMember(); plritr != NULL; plritr = plritr->next())
+    Player *plr;
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
-        if(!plritr->getSource() )
+        plr = sObjectMgr.GetPlayer(citr->guid);
+        if(!plr || !plr->GetSession())
             continue;
         //Correct - 3.3.3a
         WorldPacket data(SMSG_LFG_PROPOSAL_UPDATE);
@@ -593,31 +595,34 @@ void LfgGroup::SendProposalUpdate(uint8 state)
         data << uint32(GetKilledBosses());
         data << uint8(0); //silent
         uint8 membersCount = 0;
-        for (GroupReference *plritr2 = GetFirstMember(); plritr2 != NULL; plritr2 = plritr2->next())
-            if(plritr2->getSource() && plritr2->getSource()->GetSession())
-                ++membersCount;
-        data << uint8(membersCount);
-        for (GroupReference *plritr2 = GetFirstMember(); plritr2 != NULL; plritr2 = plritr2->next())
+        for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
-            if(Player *plr = plritr2->getSource())
+            Player *plr2 = sObjectMgr.GetPlayer(citr->guid);
+            if(plr2 && plr2->GetSession())
+                ++membersCount;
+        }
+        data << uint8(membersCount);
+        for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+        {
+            if(Player *plr2 = sObjectMgr.GetPlayer(citr->guid))
             {
-                uint8 roles = GetPlayerRole(plr->GetGUID());
+                uint8 roles = GetPlayerRole(plr2->GetGUID());
                 //Something got wrong
                 if(roles < 2)
                 {
                     sLog.outError("LfgMgr: Wrong role for player in SMSG_LFG_PROPOSAL_UPDATE");
-                    m_answers.insert(std::pair<uint64, uint8>(plr->GetGUID(), 0));
+                    m_answers.insert(std::pair<uint64, uint8>(plr2->GetGUID(), 0));
                 }
 
                 data << uint32(roles);
-                data << uint8((plr == plritr->getSource()));  // if its you, this is true
+                data << uint8(plr == plr2);  // if its you, this is true
                 data << uint8(m_inDungeon); // InDungeon
-                data << uint8(premadePlayers.find(plr->GetGUID()) != premadePlayers.end()); // Same group
+                data << uint8(premadePlayers.find(plr2->GetGUID()) != premadePlayers.end()); // Same group
                 //If player agrees with dungeon, these two are 1
-                if(m_answers.find(plr->GetGUID()) != m_answers.end())
+                if(m_answers.find(plr2->GetGUID()) != m_answers.end())
                 {
                     data << uint8(1);
-                    data << uint8(m_answers.find(plr->GetGUID())->second);
+                    data << uint8(m_answers.find(plr2->GetGUID())->second);
                 }
                 else
                 {
@@ -626,7 +631,7 @@ void LfgGroup::SendProposalUpdate(uint8 state)
                 }
             }
         }
-        plritr->getSource()->GetSession()->SendPacket(&data);
+        plr->GetSession()->SendPacket(&data);
     }
 }
 
@@ -1172,9 +1177,6 @@ void LfgMgr::UpdateQueues()
             //Send update to everybody in queue and move complete groups to waiting state
             for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr != itr->second->groups.end(); ++grpitr)
             {
-                //Send Update
-                (*grpitr)->SendLfgQueueStatus();
-
                 //prepare complete groups
                 if((*grpitr)->GetMembersCount() == 5)
                 {
@@ -1223,6 +1225,13 @@ void LfgMgr::UpdateQueues()
                             }
                         }
                     }
+
+                    if(timescount == 0)
+                        continue;
+
+                    //Send Update
+                    (*grpitr)->SendLfgQueueStatus();
+
                     m_waitTimes[LFG_WAIT_TIME].find(itr->second->dungeonInfo->ID)->second = (avgWaitTime/timescount);
                     
                     //Send Info                   
@@ -1256,7 +1265,7 @@ void LfgMgr::UpdateFormedGroups()
             {
                 (*grpitr)->SendProposalUpdate(LFG_PROPOSAL_FAILED);
                 //Move group to queue
-                /*if(m_queuedDungeons[i].find((*grpitr)->GetDungeonInfo()->ID) != m_queuedDungeons[i].end())
+                if(m_queuedDungeons[i].find((*grpitr)->GetDungeonInfo()->ID) != m_queuedDungeons[i].end())
                 {
                     QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].find((*grpitr)->GetDungeonInfo()->ID);
                     itr->second->groups.insert((*grpitr));
@@ -1268,7 +1277,6 @@ void LfgMgr::UpdateFormedGroups()
                     newInfo->groups.insert(*grpitr);
                     m_queuedDungeons[i].insert(std::pair<uint32, QueuedDungeonInfo*>(newInfo->dungeonInfo->ID, newInfo));
                 }
-                (*grpitr)->RemoveOfflinePlayers(); */
                 //Send to players..
                 GroupReference *plritr, *plritr_next;
                 for (plritr = (*grpitr)->GetFirstMember(); plritr != NULL; plritr = plritr_next)
@@ -1276,7 +1284,9 @@ void LfgMgr::UpdateFormedGroups()
                     plritr_next = plritr->next();
                     SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_PROPOSAL_FAILED);
                     SendLfgUpdateParty(plritr->getSource(), LFG_UPDATETYPE_PROPOSAL_FAILED);
-                    RemoveFromQueue(plritr->getSource(), false);
+                    if((*grpitr)->GetProposalAnswers()->find(plritr->getSource()->GetGUID()) == (*grpitr)->GetProposalAnswers()->end())
+                        (*grpitr)->RemoveMember(plritr->getSource()->GetGUID(), 0);
+                    //RemoveFromQueue(plritr->getSource(), false);
                 }
                 formedGroups[i].erase(grpitr);
 
@@ -1291,21 +1301,41 @@ void LfgMgr::UpdateFormedGroups()
                 for(ProposalAnswersMap::iterator itr = (*grpitr)->GetProposalAnswers()->begin(); itr != (*grpitr)->GetProposalAnswers()->end(); ++itr)
                 {
                     if(itr->second != 1)
+                    {
                         type = LFG_PROPOSAL_FAILED;
+                        if(Player *plr = sObjectMgr.GetPlayer(itr->first))
+                        {
+                            SendLfgUpdatePlayer(plr, LFG_UPDATETYPE_PROPOSAL_FAILED);
+                            SendLfgUpdateParty(plr, LFG_UPDATETYPE_PROPOSAL_FAILED);   
+                        }
+                        (*grpitr)->RemoveMember(itr->first, 0);
+                    }
                 }
                 (*grpitr)->SendProposalUpdate(type);
                 //Failed, remove players which did not agree and move rest to queue
                 if(type == LFG_PROPOSAL_FAILED)
                 {
+                    if(m_queuedDungeons[i].find((*grpitr)->GetDungeonInfo()->ID) != m_queuedDungeons[i].end())
+                    {
+                        QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].find((*grpitr)->GetDungeonInfo()->ID);
+                        itr->second->groups.insert((*grpitr));
+                    }
+                    else
+                    {
+                        QueuedDungeonInfo *newInfo = new QueuedDungeonInfo();
+                        newInfo->dungeonInfo = (*grpitr)->GetDungeonInfo();
+                        newInfo->groups.insert(*grpitr);
+                        m_queuedDungeons[i].insert(std::pair<uint32, QueuedDungeonInfo*>(newInfo->dungeonInfo->ID, newInfo));
+                    }
                     GroupReference *plritr, *plritr_next;
                     for (plritr = (*grpitr)->GetFirstMember(); plritr != NULL; plritr = plritr_next)
                     {
                         plritr_next = plritr->next();
                         SendLfgUpdatePlayer(plritr->getSource(), LFG_UPDATETYPE_PROPOSAL_FAILED);
                         SendLfgUpdateParty(plritr->getSource(), LFG_UPDATETYPE_PROPOSAL_FAILED);
-                        RemoveFromQueue(plritr->getSource(), false);
+                        //RemoveFromQueue(plritr->getSource(), false);
                     }
-                    delete *grpitr;
+                    //delete *grpitr;
                     formedGroups[i].erase(grpitr);
                     if(sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE))
                         UpdateQueues();

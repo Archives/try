@@ -1049,6 +1049,21 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(pVictim->HasAura(59978))
             CastSpell(pVictim, 59979, true);
 
+        //Lightwell Renew removing
+        Unit::AuraList const& mPeriodicHealAuras = pVictim->GetAurasByType(SPELL_AURA_PERIODIC_HEAL);
+        for(Unit::AuraList::const_iterator i = mPeriodicHealAuras.begin();i != mPeriodicHealAuras.end(); ++i)
+        {
+            SpellEntry const *lightwell_renew = (*i)->GetSpellProto();
+            //Lightwell Renew
+            if(lightwell_renew->SpellFamilyName == SPELLFAMILY_PRIEST && lightwell_renew->SpellIconID == 1878)
+                //at hit > 30% of victim's health
+                if(damage > (pVictim->GetMaxHealth() * 3/10))
+                {
+                    pVictim->RemoveAurasDueToSpellByCancel(lightwell_renew->Id);
+                    break;
+                }
+        }
+
         if(damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE)
         {
             if (!spellProto || !(spellProto->AuraInterruptFlags&AURA_INTERRUPT_FLAG_DIRECT_DAMAGE))
@@ -6156,6 +6171,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 12654;
                     break;
                 }
+                //Ignite mana return
+                case 12654:
+                {
+                    triggered_spell_id = 67545;
+                    target = this;
+                    break;
+                }
                 // Combustion
                 case 11129:
                 {
@@ -10026,7 +10048,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             }
             // Torment the weak affected (Arcane Barrage, Arcane Blast, Frostfire Bolt, Arcane Missiles, Fireball)
             if ((spellProto->SpellFamilyFlags & UI64LIT(0x0000900020200021)) &&
-                (pVictim->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED) || pVictim->HasAuraType(SPELL_AURA_HASTE_ALL)))
+                (pVictim->HasAuraType(SPELL_AURA_MOD_DECREASE_SPEED) || pVictim->HasAuraType(SPELL_AURA_HASTE_ALL) || pVictim->HasAuraType(SPELL_AURA_HASTE_MELEE)))
             {
                 //Search for Torment the weak dummy aura
                 Unit::AuraList const& ttw = GetAurasByType(SPELL_AURA_DUMMY);
@@ -10672,6 +10694,15 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
                 break;
         }
     }
+
+    // Lightwell Renew
+    if(spellProto->SpellFamilyName == SPELLFAMILY_PRIEST && spellProto->SpellIconID == 1878)
+        // need to get its owner to check glyph's dummy aura
+        if (Unit* lightwellOwner = GetOwner())
+            // Glyph of Lightwell
+            if(Aura *dummy = owner->GetDummyAura(55673))
+                DoneTotalMod *= (dummy->GetModifier()->m_amount+100.0f)/100.0f;
+
 
     // Nourish 20% of heal increase if target is affected by Druids HOTs
     if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && (spellProto->SpellFamilyFlags & UI64LIT(0x0200000000000000)))
@@ -15390,3 +15421,110 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form)
     }
     return 0;
 }
+
+
+// diff contains the time in milliseconds since last regen.
+void Unit::Regenerate(Powers power, uint32 diff)
+{
+    uint32 curValue = GetPower(power);
+    uint32 maxValue = GetMaxPower(power);
+
+    float addvalue = 0.0f;
+
+    switch (power)
+    {
+        case POWER_MANA:
+        {
+            bool recentCast = IsUnderLastManaUseEffect();
+            float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
+            if(GetTypeId() == TYPEID_PLAYER)
+            {
+                if (recentCast)
+                {
+                    // Mangos Updates Mana in intervals of 2s, which is correct
+                    addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 2.00f;
+                }
+                else
+                {
+                    addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) * ManaIncreaseRate * 2.00f;
+                }
+            }
+            else
+            {
+                if (recentCast)
+                    addvalue = maxValue / 3;
+                else 
+                    addvalue = uint32((GetStat(STAT_SPIRIT) / 5.0f + 17.0f) * ManaIncreaseRate);
+                //SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+            }
+        }   break;
+        case POWER_RAGE:                                    // Regenerate rage
+        {
+            float RageDecreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_RAGE_LOSS);
+            addvalue = 20 * RageDecreaseRate;               // 2 rage by tick (= 2 seconds => 1 rage/sec)
+        }   break;
+        case POWER_ENERGY:                                  // Regenerate energy (rogue)
+            addvalue = 20;
+            break;
+        case POWER_RUNIC_POWER:
+        {
+            float RunicPowerDecreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_LOSS);
+            addvalue = 30 * RunicPowerDecreaseRate;         // 3 RunicPower by tick
+        }   break;
+        case POWER_RUNE:
+        {
+            if (getClass() != CLASS_DEATH_KNIGHT || GetTypeId() != TYPEID_PLAYER)
+                break;
+
+            Player *player = (Player*)this;
+            for(uint32 rune = 0; rune < MAX_RUNES; ++rune)
+            {
+                if(uint16 cd = player->GetRuneCooldown(rune))       // if we have cooldown, reduce it...
+                {
+                    uint32 cd_diff = diff;
+                    AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
+                    for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
+                        if ((*i)->GetModifier()->m_miscvalue == power && (*i)->GetMiscBValue()==player->GetCurrentRune(rune))
+                            cd_diff = cd_diff * ((*i)->GetModifier()->m_amount + 100) / 100;
+
+                    player->SetRuneCooldown(rune, (cd < cd_diff) ? 0 : cd - cd_diff);
+                }
+            }
+        }   break;
+        case POWER_FOCUS:
+            addvalue = 10 * sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_FOCUS);
+            break;
+        case POWER_HAPPINESS:
+        case POWER_HEALTH:
+            break;
+    }
+
+    // Mana regen calculated in Player::UpdateManaRegen()
+    // Exist only for POWER_MANA, POWER_ENERGY, POWER_FOCUS auras
+    if(power != POWER_MANA)
+    {
+        AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
+        for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
+            if ((*i)->GetModifier()->m_miscvalue == power)
+                addvalue *= ((*i)->GetModifier()->m_amount + 100) / 100.0f;
+    }
+
+    // addvalue computed on a 2sec basis. => update to diff time
+    addvalue *= float(diff) / REGEN_TIME_FULL;
+
+    if (power != POWER_RAGE && power != POWER_RUNIC_POWER)
+    {
+        curValue += uint32(addvalue);
+        if (curValue > maxValue)
+            curValue = maxValue;
+    }
+    else
+    {
+        if(curValue <= uint32(addvalue))
+            curValue = 0;
+        else
+            curValue -= uint32(addvalue);
+    }
+    SetPower(power, curValue);
+}
+

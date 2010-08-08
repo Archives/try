@@ -1789,12 +1789,12 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     ExitVehicle();
 
     // Leave lfg on teleport when instance is completed
-    if(Group *group = ((Player*)unitTarget)->GetGroup())
+    if(Group *group = GetGroup())
     {
         if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
         {
-            _player->RemoveAurasDueToSpell(LFG_BOOST);
-            group->RemoveMember(unitTarget->GetGUID(), 0);
+            RemoveAurasDueToSpell(LFG_BOOST);
+            group->RemoveMember(GetGUID(), 0);
         }
     }
 
@@ -2168,97 +2168,6 @@ void Player::RegenerateAll(uint32 diff)
         Regenerate(POWER_RUNE, diff);
 
     m_regenTimer = REGEN_TIME_FULL;
-}
-
-// diff contains the time in milliseconds since last regen.
-void Player::Regenerate(Powers power, uint32 diff)
-{
-    uint32 curValue = GetPower(power);
-    uint32 maxValue = GetMaxPower(power);
-
-    float addvalue = 0.0f;
-
-    switch (power)
-    {
-        case POWER_MANA:
-        {
-            bool recentCast = IsUnderLastManaUseEffect();
-            float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
-            if (recentCast)
-            {
-                // Mangos Updates Mana in intervals of 2s, which is correct
-                addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 2.00f;
-            }
-            else
-            {
-                addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) * ManaIncreaseRate * 2.00f;
-            }
-        }   break;
-        case POWER_RAGE:                                    // Regenerate rage
-        {
-            float RageDecreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_RAGE_LOSS);
-            addvalue = 20 * RageDecreaseRate;               // 2 rage by tick (= 2 seconds => 1 rage/sec)
-        }   break;
-        case POWER_ENERGY:                                  // Regenerate energy (rogue)
-            addvalue = 20;
-            break;
-        case POWER_RUNIC_POWER:
-        {
-            float RunicPowerDecreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_RUNICPOWER_LOSS);
-            addvalue = 30 * RunicPowerDecreaseRate;         // 3 RunicPower by tick
-        }   break;
-        case POWER_RUNE:
-        {
-            if (getClass() != CLASS_DEATH_KNIGHT)
-                break;
-
-            for(uint32 rune = 0; rune < MAX_RUNES; ++rune)
-            {
-                if(uint16 cd = GetRuneCooldown(rune))       // if we have cooldown, reduce it...
-                {
-                    uint32 cd_diff = diff;
-                    AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
-                    for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
-                        if ((*i)->GetModifier()->m_miscvalue == power && (*i)->GetMiscBValue()==GetCurrentRune(rune))
-                            cd_diff = cd_diff * ((*i)->GetModifier()->m_amount + 100) / 100;
-
-                    SetRuneCooldown(rune, (cd < cd_diff) ? 0 : cd - cd_diff);
-                }
-            }
-        }   break;
-        case POWER_FOCUS:
-        case POWER_HAPPINESS:
-        case POWER_HEALTH:
-            break;
-    }
-
-    // Mana regen calculated in Player::UpdateManaRegen()
-    // Exist only for POWER_MANA, POWER_ENERGY, POWER_FOCUS auras
-    if(power != POWER_MANA)
-    {
-        AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
-        for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
-            if ((*i)->GetModifier()->m_miscvalue == power)
-                addvalue *= ((*i)->GetModifier()->m_amount + 100) / 100.0f;
-    }
-
-    // addvalue computed on a 2sec basis. => update to diff time
-    addvalue *= float(diff) / REGEN_TIME_FULL;
-
-    if (power != POWER_RAGE && power != POWER_RUNIC_POWER)
-    {
-        curValue += uint32(addvalue);
-        if (curValue > maxValue)
-            curValue = maxValue;
-    }
-    else
-    {
-        if(curValue <= uint32(addvalue))
-            curValue = 0;
-        else
-            curValue -= uint32(addvalue);
-    }
-    SetPower(power, curValue);
 }
 
 void Player::RegenerateHealth(uint32 diff)
@@ -5726,6 +5635,17 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
 
     if ( Roll <= Chance )
     {
+        SkillLineEntry const *pSkill = sSkillLineStore.LookupEntry(SkillId);
+
+        if(!pSkill)
+        {
+            sLog.outError("Skill not found in SkillLineStore: skill #%u", SkillId);
+            return false;
+        }
+
+        if (pSkill->categoryId == SKILL_CATEGORY_PROFESSION && pSkill->canLink)
+            ApplySkillDependentEnchantments(SkillId, false);
+
         uint32 new_value = SkillValue+step;
         if(new_value > MaxValue)
             new_value = MaxValue;
@@ -5741,6 +5661,10 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
                 break;
             }
         }
+
+        if (pSkill->categoryId == SKILL_CATEGORY_PROFESSION && pSkill->canLink)
+            ApplySkillDependentEnchantments(SkillId, true);
+
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,SkillId);
         DEBUG_LOG("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
         return true;
@@ -5927,6 +5851,18 @@ void Player::SetSkill(uint16 id, uint16 currVal, uint16 maxVal, uint16 step /*=0
     if(!id)
         return;
 
+    SkillLineEntry const *pSkill = sSkillLineStore.LookupEntry(id);
+
+    if(!pSkill)
+    {
+        sLog.outError("Skill not found in SkillLineStore: skill #%u", id);
+        return;
+    }
+
+    if (pSkill->categoryId == SKILL_CATEGORY_PROFESSION && pSkill->canLink)
+        ApplySkillDependentEnchantments(id, false);
+
+
     SkillStatusMap::iterator itr = mSkillStatus.find(id);
 
     // has skill
@@ -5970,12 +5906,6 @@ void Player::SetSkill(uint16 id, uint16 currVal, uint16 maxVal, uint16 step /*=0
         {
             if (!GetUInt32Value(PLAYER_SKILL_INDEX(i)))
             {
-                SkillLineEntry const *pSkill = sSkillLineStore.LookupEntry(id);
-                if(!pSkill)
-                {
-                    sLog.outError("Skill not found in SkillLineStore: skill #%u", id);
-                    return;
-                }
 
                 SetUInt32Value(PLAYER_SKILL_INDEX(i), MAKE_PAIR32(id, step));
                 SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(i),MAKE_SKILL_VALUE(currVal, maxVal));
@@ -6008,10 +5938,13 @@ void Player::SetSkill(uint16 id, uint16 currVal, uint16 maxVal, uint16 step /*=0
 
                 // Learn all spells for skill
                 learnSkillRewardedSpells(id, currVal);
-                return;
+                break;
             }
         }
     }
+
+    if (pSkill->categoryId == SKILL_CATEGORY_PROFESSION && pSkill->canLink)
+        ApplySkillDependentEnchantments(id, true);
 }
 
 bool Player::HasSkill(uint32 skill) const
@@ -12762,6 +12695,12 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
     if (!ignore_condition && pEnchant->EnchantmentCondition && !((Player*)this)->EnchantmentFitsRequirements(pEnchant->EnchantmentCondition, -1))
         return;
 
+    if (pEnchant->requiredLevel > getLevel())
+        return;
+
+    if (pEnchant->requiredSkill && pEnchant->requiredSkillValue > GetSkillValue(pEnchant->requiredSkill))
+        return;
+
     if (!item->IsBroken())
     {
         for (int s = 0; s < 3; ++s)
@@ -13084,6 +13023,29 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
         {
             // duration == 0 will remove EnchantDuration
             AddEnchantmentDuration(item, slot, 0);
+        }
+    }
+}
+
+void Player::ApplySkillDependentEnchantments(uint16 skill, bool apply)
+{
+    for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+    {
+        Item* pItem = m_items[slot];
+
+        if (!pItem)
+            continue;
+
+        for (uint32 i = 0; i < MAX_ENCHANTMENT_SLOT; ++i)
+        {
+            uint32 enchantId = pItem->GetEnchantmentId(EnchantmentSlot(i));
+            if (!enchantId)
+                continue;
+
+            SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchantId);
+
+            if (pEnchant && pEnchant->requiredSkill == skill)
+                ApplyEnchantment(pItem, EnchantmentSlot(i), apply);
         }
     }
 }
