@@ -482,26 +482,18 @@ void Creature::Update(uint32 diff)
             // CORPSE/DEAD state will processed at next tick (in other case death timer will be updated unexpectedly)
             if(!isAlive())
                 break;
-            if (m_regenTimer)
-            {
-                if(diff >= m_regenTimer)
-                    m_regenTimer = 0;
-                else
-                    m_regenTimer -= diff;
-            }
 
-            if (!m_regenTimer)
+            if(getPowerType() == POWER_MANA)
             {
-                Regenerate(POWER_MANA, REGEN_TIME_FULL);
-                m_regenTimer = REGEN_TIME_FULL;
+                if (m_regenTimer <= diff)
+                {
+                    Regenerate(POWER_MANA, REGEN_TIME_FULL);
+                    m_regenTimer = REGEN_TIME_FULL;
+                }else m_regenTimer -= diff;
             }
 
             if (!isInCombat() || IsPolymorphed())
                 RegenerateHealth();
-
-            RegenerateMana();
-
-            m_regenTimer = REGEN_TIME_FULL;
             break;
         }
         case DEAD_FALLING:

@@ -25,7 +25,7 @@
 #include "InstanceData.h"
 
 Vehicle::Vehicle() : Creature(CREATURE_SUBTYPE_VEHICLE), m_vehicleId(0), m_vehicleInfo(NULL), m_spawnduration(0),
-                     despawn(false), m_creation_time(0), m_VehicleData(NULL)
+                     despawn(false), m_creation_time(0), m_VehicleData(NULL),m_regenTimer(REGEN_TIME_FULL)
 {
     m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
 }
@@ -71,6 +71,17 @@ void Vehicle::setDeathState(DeathState s)                       // overwrite vir
 
 void Vehicle::Update(uint32 diff)
 {
+    if(getPowerType() == POWER_ENERGY)
+    {
+        if(m_regenTimer <= diff)
+        {
+             Regenerate(getPowerType(), REGEN_TIME_FULL);
+             m_regenTimer = REGEN_TIME_FULL;
+        }
+        else
+            m_regenTimer -= diff;
+    }
+
     Creature::Update(diff);
 
     if(despawn)
@@ -79,24 +90,6 @@ void Vehicle::Update(uint32 diff)
         if(m_spawnduration < 0)
             Dismiss();
         despawn = false;
-    }
-
-    if (m_regenTimer)
-    {
-        if(diff >= m_regenTimer)
-            m_regenTimer = 0;
-        else
-            m_regenTimer -= diff;
-    }
-
-    if (!m_regenTimer)
-    {
-        // hack: needs more research of power type from the dbc. 
-        // It must contains some info about vehicles like Salvaged Chopper.
-        if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
-            return;
-        Regenerate(getPowerType(), REGEN_TIME_FULL);
-        m_regenTimer = REGEN_TIME_FULL;
     }
 }
 
@@ -149,6 +142,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
         SetMaxPower(POWER_ENERGY, 100);
         SetPower(POWER_ENERGY, 100);
         SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+        m_regenTimer = REGEN_TIME_FULL;
     }
     else if(m_vehicleInfo->m_powerType == POWER_TYPE_PYRITE)
     {
@@ -169,6 +163,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
             if(spellInfo->powerType == POWER_MANA)
             {
                 SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+                m_regenTimer = REGEN_TIME_FULL;
                 break;
             }
 
@@ -178,6 +173,7 @@ bool Vehicle::Create(uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, u
                 SetMaxPower(POWER_ENERGY, 100);
                 SetPower(POWER_ENERGY, 100);
                 SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+                m_regenTimer = REGEN_TIME_FULL;
                 break;
             }
         }

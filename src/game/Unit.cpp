@@ -15405,14 +15405,25 @@ void Unit::Regenerate(Powers power, uint32 diff)
         {
             bool recentCast = IsUnderLastManaUseEffect();
             float ManaIncreaseRate = sWorld.getConfig(CONFIG_FLOAT_RATE_POWER_MANA);
-            if (recentCast)
+            if(GetTypeId() == TYPEID_PLAYER)
             {
-                // Mangos Updates Mana in intervals of 2s, which is correct
-                addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 2.00f;
+                if (recentCast)
+                {
+                    // Mangos Updates Mana in intervals of 2s, which is correct
+                    addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 2.00f;
+                }
+                else
+                {
+                    addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) * ManaIncreaseRate * 2.00f;
+                }
             }
             else
             {
-                addvalue = GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) * ManaIncreaseRate * 2.00f;
+                if (recentCast)
+                    addvalue = maxValue / 3;
+                else 
+                    addvalue = uint32((GetStat(STAT_SPIRIT) / 5.0f + 17.0f) * ManaIncreaseRate);
+                //SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
             }
         }   break;
         case POWER_RAGE:                                    // Regenerate rage
@@ -15430,20 +15441,21 @@ void Unit::Regenerate(Powers power, uint32 diff)
         }   break;
         case POWER_RUNE:
         {
-            if (getClass() != CLASS_DEATH_KNIGHT)
+            if (getClass() != CLASS_DEATH_KNIGHT || GetTypeId() != TYPEID_PLAYER)
                 break;
 
+            Player *player = (Player*)this;
             for(uint32 rune = 0; rune < MAX_RUNES; ++rune)
             {
-                if(uint16 cd = GetRuneCooldown(rune))       // if we have cooldown, reduce it...
+                if(uint16 cd = player->GetRuneCooldown(rune))       // if we have cooldown, reduce it...
                 {
                     uint32 cd_diff = diff;
                     AuraList const& ModPowerRegenPCTAuras = GetAurasByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
                     for(AuraList::const_iterator i = ModPowerRegenPCTAuras.begin(); i != ModPowerRegenPCTAuras.end(); ++i)
-                        if ((*i)->GetModifier()->m_miscvalue == power && (*i)->GetMiscBValue()==GetCurrentRune(rune))
+                        if ((*i)->GetModifier()->m_miscvalue == power && (*i)->GetMiscBValue()==player->GetCurrentRune(rune))
                             cd_diff = cd_diff * ((*i)->GetModifier()->m_amount + 100) / 100;
 
-                    SetRuneCooldown(rune, (cd < cd_diff) ? 0 : cd - cd_diff);
+                    player->SetRuneCooldown(rune, (cd < cd_diff) ? 0 : cd - cd_diff);
                 }
             }
         }   break;
