@@ -5500,8 +5500,9 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
     if ((!max) || (!value) || (value >= max))
         return false;
 
-    // modifier lowered from 512 to 64 
-    if (value*64 < max*urand(0,64))
+    // modifier lowered from 512 to 64
+    // chance handled elsewhere
+    //if (value*64 < max*urand(0,64))
     {
         uint32 new_value = value+step;
         if(new_value > max)
@@ -5732,7 +5733,7 @@ void Player::UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool de
     if(skilldif <= 0)
         return;
 
-    float chance = float(3 * lvldif * skilldif) / plevel;
+    float chance = float(lvldif * skilldif) / (plevel * 10.0f);
     // absolete from vanilla
     //if(!defence)
     //{
