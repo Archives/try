@@ -25,7 +25,7 @@
 #include "InstanceData.h"
 
 Vehicle::Vehicle() : Creature(CREATURE_SUBTYPE_VEHICLE), m_vehicleId(0), m_vehicleInfo(NULL), m_spawnduration(0),
-                     despawn(false), m_creation_time(0), m_VehicleData(NULL),m_regenTimer(REGEN_TIME_FULL)
+                     despawn(false), m_creation_time(0), m_VehicleData(NULL)
 {
     m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
 }

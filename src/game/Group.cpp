@@ -1066,7 +1066,7 @@ void Group::BroadcastPacket(WorldPacket *packet, bool ignorePlayersInBGRaid, int
         if(!pl || !pl->GetSession() || (ignore != 0 && pl->GetGUID() == ignore) || (ignorePlayersInBGRaid && pl->GetGroup() != this) )
             continue;
 
-        if (group == -1 || itr->getSubGroup() == group)
+        if (group == -1 || pl->GetSubGroup() == group)
             pl->GetSession()->SendPacket(packet);
     }
 }

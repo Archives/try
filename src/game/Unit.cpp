@@ -6176,13 +6176,6 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     triggered_spell_id = 12654;
                     break;
                 }
-                //Ignite mana return
-                case 12654:
-                {
-                    triggered_spell_id = 67545;
-                    target = this;
-                    break;
-                }
                 // Combustion
                 case 11129:
                 {
