@@ -42,7 +42,9 @@ enum LfgWaitTimeSlots
     LFG_WAIT_TIME_HEAL                 = 3,
     LFG_WAIT_TIME_DPS                  = 4
 };
+
 #define LFG_WAIT_TIME_SLOT_MAX           5
+
 enum LfgRoles
 {
     NONE   = 0x00,
@@ -213,30 +215,6 @@ enum QueueFaction
 };
 #define MAX_LFG_FACTION                  2
 
-/*
-enum QueueTypes
-{
-    QUEUE_TANK                         = 0,
-    QUEUE_HEALER                       = 1,
-    QUEUE_DAMAGE                       = 2,
-
-    QUEUE_TH                           = 3,   // Tank + heal
-    QUEUE_TD                           = 4,   // Tank + damage
-    QUEUE_HD                           = 5,   // Heal + damage
-    QUEUE_DD                           = 6,   // Damage + damage
-
-    QUEUE_THD                          = 7,   // Tank + heal + damage
-    QUEUE_TDD                          = 8,   // Tank + damage + damage
-    QUEUE_HDD                          = 9,   // Heal + damage + damage
-    QUEUE_DDD                          = 10,  // Damage + damage + damage
-
-    QUEUE_THDD                         = 11,  // Tank + Heal + damage + damage
-    QUEUE_TDDD                         = 12,  // Tank + damage + damage + damage
-    QUEUE_HDDD                         = 13,  // Heal + damage + damage + damage
-
-    QUEUE_THDDD                        = 14,  // Tank + Heal + damage + damage + damage
-}; */
-
 typedef std::set<uint64> PlayerList;
 
 struct DungeonInfo             //used in db
@@ -302,6 +280,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         bool IsRandom() const { return m_isRandom; }
         uint8 GetPlayerRole(uint64 guid, bool withLeader = true, bool joinedAs = false) const;
         void KilledCreature(Creature *creature);
+        void ResetGroup();
         
     private:
         //ACE_Thread_Mutex m_queueLock;
@@ -371,6 +350,7 @@ class MANGOS_DLL_SPEC LfgMgr
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
 
     private:
+        ACE_Thread_Mutex m_queueLock;
         void UpdateQueues();
         void UpdateFormedGroups();
 
