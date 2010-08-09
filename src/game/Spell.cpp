@@ -5697,10 +5697,23 @@ SpellCastResult Spell::CheckCasterAuras() const
     SpellCastResult prevented_reason = SPELL_CAST_OK;
     // Have to check if there is a stun aura. Otherwise will have problems with ghost aura apply while logging out
     uint32 unitflag = m_caster->GetUInt32Value(UNIT_FIELD_FLAGS);     // Get unit state
-    if (unitflag & UNIT_FLAG_STUNNED && (!(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_STUNNED) ||
+    if (unitflag & UNIT_FLAG_STUNNED && (!(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_STUNNED)))/* ||
         // Pain Suppression can be casted through stun only with glyph
-        (m_spellInfo->Id == 33206 && !m_caster->HasAura(63248))))
+        (m_spellInfo->Id == 33206 && !m_caster->HasAura(63248))))*/
         prevented_reason = SPELL_FAILED_STUNNED;
+    /*if (unitflag & UNIT_FLAG_STUNNED)
+    {
+        Unit::AuraList const& stunList = m_caster->GetAurasByType(SPELL_AURA_MOD_STUN);
+        for(Unit::AuraList::const_iterator itr = stunList.begin(); itr != stunList.end();++itr)
+        {
+            uint32 exceptionflag = (*itr)->GetSpellProto()->Mechanic == MECHANIC_STUN ? SPELL_ATTR_EX5_USABLE_WHILE_STUNNED : SPELL_ATTR_EX5_USABLE_WHILE_FEARED;
+            if(!(m_spellInfo->AttributesEx5 & exceptionflag))		
+            {
+                prevented_reason = SPELL_FAILED_STUNNED;
+                break;
+            }
+        }
+    }*/
     else if (unitflag & UNIT_FLAG_CONFUSED && !(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_CONFUSED))
         prevented_reason = SPELL_FAILED_CONFUSED;
     else if (unitflag & UNIT_FLAG_FLEEING && !(m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_FEARED))
@@ -5774,23 +5787,6 @@ SpellCastResult Spell::CheckCasterAuras() const
             return prevented_reason;
     }
     
-    // in case of SPELL_ATTR_EX5_USABLE_WHILE_STUNNED must be also checked mechanic of spell
-    if (unitflag & UNIT_FLAG_STUNNED && m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_USABLE_WHILE_STUNNED)
-    {
-        if (m_spellInfo->Id == 42292 || m_spellInfo->Id ==  59752)
-            return SPELL_CAST_OK;
-
-        Unit::AuraMap const& auras = m_caster->GetAuras();
-        for(Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-        {
-            if (!itr->second)
-                continue;
-             
-             if(itr->second->GetModifier()->m_auraname == SPELL_AURA_MOD_STUN)
-                 if (!(GetSpellMechanicMask(itr->second->GetSpellProto(), itr->second->GetEffIndex()) & MECHANIC_STUN))
-                      return SPELL_FAILED_STUNNED;
-        }
-    }
     return SPELL_CAST_OK;
 }
 

@@ -1049,6 +1049,21 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if(pVictim->HasAura(59978))
             CastSpell(pVictim, 59979, true);
 
+        //Lightwell Renew removing
+        Unit::AuraList const& mPeriodicHealAuras = pVictim->GetAurasByType(SPELL_AURA_PERIODIC_HEAL);
+        for(Unit::AuraList::const_iterator i = mPeriodicHealAuras.begin();i != mPeriodicHealAuras.end(); ++i)
+        {
+            SpellEntry const *lightwell_renew = (*i)->GetSpellProto();
+            //Lightwell Renew
+            if(lightwell_renew->SpellFamilyName == SPELLFAMILY_PRIEST && lightwell_renew->SpellIconID == 1878)
+                //at hit > 30% of victim's health
+                if(damage > (pVictim->GetMaxHealth() * 3/10))
+                {
+                    pVictim->RemoveAurasDueToSpellByCancel(lightwell_renew->Id);
+                    break;
+                }
+        }
+
         if(damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE)
         {
             if (!spellProto || !(spellProto->AuraInterruptFlags&AURA_INTERRUPT_FLAG_DIRECT_DAMAGE))
@@ -6589,12 +6604,20 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     // triggered_spell_id in spell data
                     break;
                 }
-                //Glyph of Prayer of Healing
+                // Glyph of Prayer of Healing
                 case 55680:
                 {
                     basepoints[0] = triggerAmount * damage / 200; //10% per tick
                     triggered_spell_id = 56161;
                     break;
+                }
+                // Glyph of Pain Suppression
+                case 63248:
+                {
+                    if (!HasAura(63248))
+                        return false;
+
+                    return true;
                 }
             }
             break;
@@ -10087,7 +10110,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
             if(spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
             {
                 if (pVictim->GetHealth() * 100 / pVictim->GetMaxHealth() <= 25)
-      	            DoneTotalMod *= 4;
+                    DoneTotalMod *= 4;
             }
             break;
         }
@@ -10671,6 +10694,15 @@ uint32 Unit::SpellHealingBonusDone(Unit *pVictim, SpellEntry const *spellProto, 
                 break;
         }
     }
+
+    // Lightwell Renew
+    if(spellProto->SpellFamilyName == SPELLFAMILY_PRIEST && spellProto->SpellIconID == 1878)
+        // need to get its owner to check glyph's dummy aura
+        if (Unit* lightwellOwner = GetOwner())
+            // Glyph of Lightwell
+            if(Aura *dummy = owner->GetDummyAura(55673))
+                DoneTotalMod *= (dummy->GetModifier()->m_amount+100.0f)/100.0f;
+
 
     // Nourish 20% of heal increase if target is affected by Druids HOTs
     if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && (spellProto->SpellFamilyFlags & UI64LIT(0x0200000000000000)))

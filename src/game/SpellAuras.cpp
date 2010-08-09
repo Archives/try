@@ -2540,6 +2540,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 58591:                                 // Stoneclaw Totem X
                         m_target->CastSpell( m_target, 58585, true );
                         return;
+                    case 59907:                             // Lightwell charges
+                    {
+                        if (m_target->GetTypeId() == TYPEID_UNIT)
+                            ((Creature*)m_target)->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+                        return;
+                    }
                 }
                 break;
             }
@@ -2793,6 +2799,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             case 61777:
             {
                 target->CastSpell(target, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_0), true);
+                return;
+            }
+            case 59907:                                     // Lightwell charges - despawn creature if no charges remain
+            {
+                if (m_target->GetTypeId() == TYPEID_UNIT)
+                    ((Creature*)m_target)->AddObjectToRemoveList();
                 return;
             }
         }

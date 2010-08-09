@@ -580,8 +580,9 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     if(cainfo)
         vehicleId = cainfo->vehicle_id;
 
-    if (_player->isInCombat() && !unit->isVehicle() && !vehicleId)                              // client prevent click and set different icon at combat state
-        return; 
+    // na pycu check, nefici s nim nic :P hlavne Lightwell a vehicly
+  /* if (_player->isInCombat() && !unit->isVehicle() && !vehicleId)                              // client prevent click and set different icon at combat state
+            return; */
     
     if(!_player->IsWithinDistInMap(unit, 10))
         return;
