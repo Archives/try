@@ -6145,6 +6145,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     return;
                 }
+                case 50725:                                 // Vigilance 
+                { 
+                    // refresh Taunt cooldown 
+                    if(m_originalCaster && m_originalCaster->GetTypeId() == TYPEID_PLAYER) 
+                        ((Player*)m_originalCaster)->RemoveSpellCooldown(355, true); 
+                    return; 
+                }
                 case 51770:                                 // Emblazon Runeblade
                 {
                     Unit* caster = GetAffectiveCaster();
@@ -6477,19 +6484,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
             }
             break;
-        }
-        case SPELLFAMILY_WARRIOR: 
-        { 
-            // Vigilance 
-            if(m_spellInfo->Id == 50725) 
-            { 
-                // refresh Taunt cooldown 
-                Unit *caster = GetCaster(); 
-                if(caster && caster->GetTypeId() == TYPEID_PLAYER) 
-                    ((Player*)caster)->RemoveSpellCooldown(355, true); 
-                return; 
-            } 
-            break; 
         }
         case SPELLFAMILY_WARLOCK:
         {
