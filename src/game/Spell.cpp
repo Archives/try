@@ -1240,7 +1240,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
     if (realCaster && realCaster->GetTypeId() == TYPEID_PLAYER)
         ((Player*)realCaster)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL2, m_spellInfo->Id, 0, unit);
 
-    if (realCaster && realCaster != unit)
+    if (realCaster)
     {
         // Recheck  UNIT_FLAG_NON_ATTACKABLE for delayed spells
         if (m_spellInfo->speed > 0.0f &&
