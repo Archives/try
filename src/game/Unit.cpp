@@ -14728,7 +14728,27 @@ bool Unit::HandleMendingAuraProc( Aura* triggeredByAura )
         {
             caster->ApplySpellMod(spellProto->Id, SPELLMOD_RADIUS, radius,NULL);
 
-            if(Player* target = ((Player*)this)->GetNextRandomRaidMember(radius))
+            Player* target = NULL;
+
+            Group *pGroup = caster->GetGroup();
+            if(pGroup)
+            {
+                PrioritizeHealthUnitQueue HealthQueue;
+                        
+                for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+                {
+                    Player* Target = itr->getSource();
+        
+                    // IsHostileTo check duel and controlled by enemy
+                    if( Target && Target != this && IsWithinDistInMap(Target, radius) &&
+                        !Target->HasInvisibilityAura() && !IsHostileTo(Target) )
+                        HealthQueue.push(PrioritizeHealthUnitWraper(Target));
+                }
+                if (!HealthQueue.empty())
+                    target = (Player*)HealthQueue.top().getUnit();
+            }
+
+            if(target)
             {
                 // aura will applied from caster, but spell casted from current aura holder
                 SpellModifier *mod = new SpellModifier(SPELLMOD_CHARGES,SPELLMOD_FLAT,jumps-5,spellProto->Id,spellProto->SpellFamilyFlags,spellProto->SpellFamilyFlags2);

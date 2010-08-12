@@ -76,30 +76,6 @@ struct PrioritizeMana
 
 typedef std::priority_queue<PrioritizeManaUnitWraper, std::vector<PrioritizeManaUnitWraper>, PrioritizeMana> PrioritizeManaUnitQueue;
 
-class PrioritizeHealthUnitWraper
-{
-public:
-    explicit PrioritizeHealthUnitWraper(Unit* unit) : i_unit(unit)
-    {
-        i_percent = unit->GetHealth() * 100 / unit->GetMaxHealth();
-    }
-    Unit* getUnit() const { return i_unit; }
-    uint32 getPercent() const { return i_percent; }
-private:
-    Unit* i_unit;
-    uint32 i_percent;
-};
-
-struct PrioritizeHealth
-{
-    int operator()( PrioritizeHealthUnitWraper const& x, PrioritizeHealthUnitWraper const& y ) const
-    {
-        return x.getPercent() > y.getPercent();
-    }
-};
-
-typedef std::priority_queue<PrioritizeHealthUnitWraper, std::vector<PrioritizeHealthUnitWraper>, PrioritizeHealth> PrioritizeHealthUnitQueue;
-
 bool IsQuestTameSpell(uint32 spellId)
 {
     SpellEntry const *spellproto = sSpellStore.LookupEntry(spellId);
