@@ -3006,6 +3006,19 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
     if(!unitTarget || unitTarget->isInFlight())
         return;
 
+    //Remove from lfg
+    if(unitTarget->GetTypeId() == TYPEID_PLAYER)
+    {
+        if(Group *group = ((Player*)unitTarget)->GetGroup())
+        {
+            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+            {
+                unitTarget->RemoveAurasDueToSpell(LFG_BOOST);
+                group->RemoveMember(unitTarget->GetGUID(), 0);
+            }
+        }
+    }
+
     switch (m_spellInfo->EffectImplicitTargetB[eff_idx])
     {
         case TARGET_INNKEEPER_COORDINATES:

@@ -93,6 +93,12 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
         SendPartyResult(PARTY_OP_INVITE, membername, ERR_IGNORING_YOU_S);
         return;
     }
+    // Cant join party when in lfg
+    if(!player->m_lookingForGroup.queuedDungeons.empty() || !_player->m_lookingForGroup.queuedDungeons.empty())
+    {
+        SendPartyResult(PARTY_OP_INVITE, membername, ERR_LFG_PENDING);
+        return;
+    }
 
     Group *group = GetPlayer()->GetGroup();
     if( group && group->isBGGroup() )

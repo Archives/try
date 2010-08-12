@@ -803,6 +803,15 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
                 SendAreaTriggerMessage(GetMangosString(LANG_LEVEL_MINREQUIRED), missingLevel);
             return;
         }
+        //Remove from lfg
+        if(Group *group = _player->GetGroup())
+        {
+            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+            {
+                _player->RemoveAurasDueToSpell(LFG_BOOST);
+                group->RemoveMember(_player->GetGUID(), 0);
+            }
+        }
     }
 
     GetPlayer()->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT);

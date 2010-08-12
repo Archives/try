@@ -1788,16 +1788,6 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     }
     ExitVehicle();
 
-    // Leave lfg on teleport when instance is completed
-    if(Group *group = GetGroup())
-    {
-        if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
-        {
-            RemoveAurasDueToSpell(LFG_BOOST);
-            group->RemoveMember(GetGUID(), 0);
-        }
-    }
-
     // The player was ported to another map and looses the duel immediately.
     // We have to perform this check before the teleport, otherwise the
     // ObjectAccessor won't find the flag.

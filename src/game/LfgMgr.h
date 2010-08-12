@@ -236,7 +236,7 @@ typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {
     public:
-        LfgGroup();
+        LfgGroup(bool premade = false);
         ~LfgGroup();
 
         void SetGroupId(uint32 newid) { m_Id = newid; }
@@ -261,12 +261,15 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
         ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
         void UpdateRoleCheck(uint32 diff = 0);
+        PlayerList *GetPremadePlayers() const { return &premadePlayers; }
 
         void SetTank(uint64 tank) { m_tank = tank; }
         void SetHeal(uint64 heal) { m_heal = heal; }
 
         void SetDungeonInfo(LFGDungeonEntry const *dungeonInfo) { m_dungeonInfo = dungeonInfo; }
         LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
+        uint32 GetRandomEntry() const { return randomDungeonEntry; }
+
 
         std::set<uint64> GetPremadePlayers() { return premadePlayers; }
         bool RemoveOfflinePlayers();
@@ -289,7 +292,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         uint64 m_heal;
         PlayerList *dps;
         LFGDungeonEntry const *m_dungeonInfo;
-        std::set<uint64> premadePlayers;
+        PlayerList premadePlayers;
         ProposalAnswersMap m_answers;
         ProposalAnswersMap m_rolesProposal;
         uint8 m_membersBeforeRoleCheck;
@@ -344,10 +347,12 @@ class MANGOS_DLL_SPEC LfgMgr
         LfgGroup *GetLfgGroupById(uint32 groupid);
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
         void AddGroupToDelete(LfgGroup *group);
-        void AddCheckedGroup(LfgGroup *group);
+        void AddCheckedGroup(LfgGroup *group, bool toQueue);
 
         uint32 GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
+
+        bool IsPlayerInQueue(uint64 guid, uint32 id);
 
     private:
         ACE_Thread_Mutex m_queueLock;

@@ -85,18 +85,27 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         {
             if(group->isRaidGroup())
                 error = LFG_JOIN_MIXED_RAID_DUNGEON;
+            else if(group->GetMembersCount() == 5)
+                error = LFG_JOIN_GROUPFULL;
             else
             {
-                for (GroupReference *itr = group->GetFirstMember(); itr != NULL && error == LFG_JOIN_OK; itr = itr->next())
+                Group::member_citerator citr, citr_next;
+                for(citr = group->GetMemberSlots()->begin(); citr != group->GetMemberSlots()->end(); citr = citr_next)
                 {
-                    if (Player *plr = itr->getSource())
+                    citr_next = citr;
+                    ++citr_next;
+                    
+                    Player *plr = sObjectMgr.GetPlayer(citr->guid);
+                    if(!plr || !plr->GetSession())
                     {
-                        if (plr->HasAura(LFG_DESERTER))
-                            error = LFG_JOIN_PARTY_DESERTER;
-                        else if(dungeonInfo->type == LFG_TYPE_RANDOM && plr->HasAura(LFG_RANDOM_COOLDOWN))
-                            error = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
-                    }else
                         error = LFG_JOIN_DISCONNECTED;
+                        break;
+                    }
+                    
+                    if (plr->HasAura(LFG_DESERTER))
+                        error = LFG_JOIN_PARTY_DESERTER;
+                    else if(dungeonInfo->type == LFG_TYPE_RANDOM && plr->HasAura(LFG_RANDOM_COOLDOWN))
+                        error = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
                 }
             }
         }
