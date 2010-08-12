@@ -1420,7 +1420,8 @@ void BattleGround::AddPlayer(Player *plr)
     {
         plr->RemoveArenaSpellCooldowns();
         plr->RemoveArenaAuras();
-        plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);
+        // this is probably obsolete, surely for rogue poisons
+        /*plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);*/
         if(team == ALLIANCE)                                // gold
         {
             if (plr->GetTeam() == HORDE)
