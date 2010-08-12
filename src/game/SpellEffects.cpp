@@ -6392,7 +6392,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (unitTarget->HasAura(renewSpell))
                         return;
 
-                    m_caster->CastSpell(unitTarget, renewSpell, true);
+                    creator->CastSpell(unitTarget, renewSpell, true);
 
                     if (Aura* aur = m_caster->GetAura(59907, EFFECT_INDEX_0))
                     {
