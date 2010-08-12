@@ -643,9 +643,7 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         sLog.outError( "HandlePetCastSpellOpcode: Pet %u isn't pet of player %s .", uint32(GUID_LOPART(guid)),GetPlayer()->GetName() );
         return;
     }
-
-    if (pet->GetGlobalCooldown() > 0)
-        return;
+    
 
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellid);
     if (!spellInfo)
@@ -653,6 +651,9 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
         sLog.outError("WORLD: unknown PET spell id %i", spellid);
         return;
     }
+
+    if (pet->GetGlobalCooldown() > 0 && spellInfo->StartRecoveryCategory > 0)
+        return;
 
     // do not cast not learned spells
     if (!pet->HasSpell(spellid) || IsPassiveSpell(spellInfo))
