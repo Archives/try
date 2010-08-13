@@ -10881,13 +10881,13 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
         {
             // default case, Bladestorm excluded
-            if ((*it)->GetId() != 46924)
+            if ((*iter)->GetId() != 46924)
             {
                 if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
                     return true;
             }
             // Bladestorm Immunity custom handling
-            else if((1 << (mechanic - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK)
+            else
                 return true;
         }
     }

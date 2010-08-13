@@ -382,7 +382,17 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
     }
     else
     {
-        plr->m_lookingForGroup.groups.erase(originalDungeonId);
+        for(GroupMap::iterator itr = plr->m_lookingForGroup.groups.begin(); itr != plr->m_lookingForGroup.groups.end(); ++itr)
+        {
+            if(itr->first != originalDungeonId)
+            {
+                itr->second->RemoveMember(plr->GetGUID(), 0);
+                if(itr->second->GetMembersCount() == 0)
+                    sLfgMgr.AddGroupToDelete(itr->second);
+            }
+        }
+        plr->m_lookingForGroup.groups.clear();
+
       /*  if(plr->m_lookingForGroup.m_LfgGroup.find(originalDungeonId) != plr->m_lookingForGroup.m_LfgGroup.end())
         {
         plr->m_lookingForGroup.m_LfgGroup.find(originalDungeonId)->second->unlink();
@@ -953,10 +963,10 @@ LfgMgr::~LfgMgr()
     for(int i = 0; i < MAX_LFG_FACTION; ++i)
     {
         //dungeons...
-        for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end();++itr;)
+        for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end();++itr)
         {
             delete itr->second->dungeonInfo;
-            for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr1 != itr->second->groups.end();++grpitr)
+            for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr != itr->second->groups.end();++grpitr)
                  delete *grpitr;
             delete itr->second;
         }
@@ -1008,9 +1018,9 @@ void LfgMgr::AddToQueue(Player *player, bool updateQueue)
             if(!leader || !leader->GetSession())
                 return;
             LfgDungeonList::iterator itr = leader->m_lookingForGroup.queuedDungeons.begin();
-            newGroup->SetDungeonInfo(*itr);                   
-            newGroup->SetGroupId(sObjectMgr.GenerateGroupId());
-            sObjectMgr.AddGroup(newGroup);
+            lfgGroup->SetDungeonInfo(*itr);                   
+            lfgGroup->SetGroupId(sObjectMgr.GenerateGroupId());
+            sObjectMgr.AddGroup(lfgGroup);
 
             for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
@@ -1056,15 +1066,14 @@ void LfgMgr::AddToQueue(Player *player, bool updateQueue)
         player->GetSession()->SendPacket(&data);
 
         SendLfgUpdatePlayer(player, LFG_UPDATETYPE_JOIN_PROPOSAL);
-        if(IsPlayerInQueue(player->GetGUID(), (*it)->ID))
-        {
-            sLog.outError("LfgMgr: Player %s (GUID: %u) is already joined to queue for dungeon %u!", player->GetName(), player->GetGUID(), (*it)->ID);
-            if(sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE) && updateQueue)
-                UpdateQueues();
-            return;
-        }
+        
         for (LfgDungeonList::const_iterator it = player->m_lookingForGroup.queuedDungeons.begin(); it != player->m_lookingForGroup.queuedDungeons.end(); ++it)
         {
+            if(IsPlayerInQueue(player->GetGUID(), (*it)->ID))
+            {
+                sLog.outError("LfgMgr: Player %s (GUID: %u) is already joined to queue for dungeon %u!", player->GetName(), player->GetGUID(), (*it)->ID);
+                continue;
+            }
             uint8 side = (player->GetTeam() == ALLIANCE) ? LFG_ALLIANCE : LFG_HORDE;
             
             if(m_queuedDungeons[side].find((*it)->ID) != m_queuedDungeons[side].end())
@@ -1093,7 +1102,7 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
         return;
     if(Group *group = player->GetGroup())
     {
-        for(member_citerator citr = group->GetMemberSlots()->begin(); citr != group->GetMemberSlots()->m_memberSlots.end(); ++citr)
+        for(Group::member_citerator citr = group->GetMemberSlots().begin(); citr != group->GetMemberSlots().end(); ++citr)
         {
             Player *plr = sObjectMgr.GetPlayer(citr->guid);
             if(!plr || !plr->GetSession())
@@ -1123,7 +1132,7 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
 
                         if((*grpitr)->GetMembersCount() == 0)
                         {
-                            delete *group;
+                            delete *grpitr;
                             itr->second->groups.erase(grpitr);
                         }
                     }
@@ -1134,7 +1143,6 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
                         m_queuedDungeons[side].erase(itr);
                     }
                 }
-                delete *group;
             }
         }
     }
@@ -1156,7 +1164,7 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
 
                 if((*grpitr)->GetMembersCount() == 0)
                 {
-                    delete *group;
+                    delete *grpitr;
                     itr->second->groups.erase(grpitr);
                 }
             }
@@ -1234,7 +1242,7 @@ void LfgMgr::UpdateQueues()
                     if((*grpitr1) == (*grpitr2) || !(*grpitr1) || !(*grpitr2))
                         continue;
                     Group::member_citerator citr, citr_next;
-                    for(citr = (*grpitr2)->GetMemberSlots()->begin(); citr != (*grpitr2)->GetMemberSlots()->end(); citr = citr_next)
+                    for(citr = (*grpitr2)->GetMemberSlots().begin(); citr != (*grpitr2)->GetMemberSlots().end(); citr = citr_next)
                     {
                         citr_next = citr;
                         ++citr_next;
@@ -1506,10 +1514,10 @@ void LfgMgr::UpdateFormedGroups()
                 (*grpitr)->SendProposalUpdate(LFG_PROPOSAL_FAILED);
                 
                 //Send to players..
-                for(member_citerator citr = (*grpitr)->m_memberSlots.begin(); citr != (*grpitr)->m_memberSlots.end(); ++citr)
+                for(Group::member_citerator citr = (*grpitr)->GetMemberSlots().begin(); citr != (*grpitr)->GetMemberSlots().end(); ++citr)
                 {
                     Player *member = sObjectMgr.GetPlayer(citr->guid);
-                    if(!member || !member->GetSession() || member->GetGUID() == GetLeaderGUID())
+                    if(!member || !member->GetSession() || member->GetGUID() == (*grpitr)->GetLeaderGUID())
                         continue;
                     ProposalAnswersMap::iterator itr = (*grpitr)->GetProposalAnswers()->find(member->GetGUID());
                     if((itr == (*grpitr)->GetProposalAnswers()->end() || itr->second == 0)
@@ -1556,7 +1564,7 @@ void LfgMgr::UpdateFormedGroups()
                 (*grpitr)->SendProposalUpdate(type);          
                 for(ProposalAnswersMap::iterator itr = (*grpitr)->GetProposalAnswers()->begin(); itr != (*grpitr)->GetProposalAnswers()->end(); ++itr)
                 {
-                    if(itr->second != 1 && (*grpitr)->GetPremadePlayers()->find(itr->first) == (*grpitr)->GetPremadePlayers()->end()))
+                    if(itr->second != 1 && (*grpitr)->GetPremadePlayers()->find(itr->first) == (*grpitr)->GetPremadePlayers()->end())
                     {
                         uint64 guid = itr->first;
                         if(Player *plr = sObjectMgr.GetPlayer(guid))
@@ -1585,10 +1593,10 @@ void LfgMgr::UpdateFormedGroups()
                         newInfo->groups.insert(*grpitr);
                         m_queuedDungeons[i].insert(std::pair<uint32, QueuedDungeonInfo*>(newInfo->dungeonInfo->ID, newInfo));
                     }
-                    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+                    for(Group::member_citerator citr = (*grpitr)->GetMemberSlots().begin(); citr != (*grpitr)->GetMemberSlots().end(); ++citr)
                     {
                         Player *member = sObjectMgr.GetPlayer(citr->guid);
-                        if(!member || !member->GetSession() || member->GetGUID() == GetLeaderGUID())
+                        if(!member || !member->GetSession() || member->GetGUID() == (*grpitr)->GetLeaderGUID())
                             continue;
                         SendLfgUpdatePlayer(member, LFG_UPDATETYPE_ADDED_TO_QUEUE);
                     }
@@ -1602,10 +1610,10 @@ void LfgMgr::UpdateFormedGroups()
                 //We are good to go, sir
                 else
                 {
-                    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+                    for(Group::member_citerator citr = (*grpitr)->GetMemberSlots().begin(); citr != (*grpitr)->GetMemberSlots().end(); ++citr)
                     {
                         Player *member = sObjectMgr.GetPlayer(citr->guid);
-                        if(!member || !member->GetSession() || member->GetGUID() == GetLeaderGUID())
+                        if(!member || !member->GetSession() || member->GetGUID() == (*grpitr)->GetLeaderGUID())
                             continue;
                         SendLfgUpdatePlayer(member, LFG_UPDATETYPE_GROUP_FOUND);
                         SendLfgUpdatePlayer(member, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
@@ -2071,9 +2079,9 @@ bool LfgMgr::IsPlayerInQueue(uint64 guid, uint32 id)
 
     if(m_queuedDungeons[side].find(id) != m_queuedDungeons[side].end())
     {
-        if(m_queuedDungeons[side].find(id)->second->players.find(guid) != m_queuedDungeons[side].find(dungId)->second->players.end())
+        if(m_queuedDungeons[side].find(id)->second->players.find(guid) != m_queuedDungeons[side].find(id)->second->players.end())
             return true;
-        for(GroupList::iterator itr = m_queuedDungeons[side].find(id)->second->groups.begin(); itr != m_queuedDungeons[side].find(id)->second->groups.end(); ++itr)
+        for(GroupsList::iterator itr = m_queuedDungeons[side].find(id)->second->groups.begin(); itr != m_queuedDungeons[side].find(id)->second->groups.end(); ++itr)
         {
             if((*itr)->IsMember(guid))
                 return true;

@@ -261,7 +261,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
         ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
         void UpdateRoleCheck(uint32 diff = 0);
-        PlayerList *GetPremadePlayers() const { return &premadePlayers; }
+        PlayerList *GetPremadePlayers() { return &premadePlayers; }
 
         void SetTank(uint64 tank) { m_tank = tank; }
         void SetHeal(uint64 heal) { m_heal = heal; }
@@ -270,8 +270,6 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
         uint32 GetRandomEntry() const { return randomDungeonEntry; }
 
-
-        std::set<uint64> GetPremadePlayers() { return premadePlayers; }
         bool RemoveOfflinePlayers();
         bool UpdateCheckTimer(uint32 time);
         void TeleportToDungeon();

@@ -93,7 +93,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
             else
             {
                 Group::member_citerator citr, citr_next;
-                for(citr = group->GetMemberSlots()->begin(); citr != group->GetMemberSlots()->end(); citr = citr_next)
+                for(citr = group->GetMemberSlots().begin(); citr != group->GetMemberSlots().end(); citr = citr_next)
                 {
                     citr_next = citr;
                     ++citr_next;
