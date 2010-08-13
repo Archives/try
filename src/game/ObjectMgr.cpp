@@ -3443,7 +3443,7 @@ void ObjectMgr::LoadGroups()
         Field *fields = result->Fetch();
         ++count;
         //LfgGroup
-        if(fields[14].GetUInt8() & GROUPTYPE_LFD)
+        if(fields[14].GetUInt8() & GROUPTYPE_LFD_2)
         {
             LfgGroup *group = new LfgGroup;
             if (!group->LoadGroupFromDB(fields))

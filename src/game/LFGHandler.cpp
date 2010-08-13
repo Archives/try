@@ -55,6 +55,9 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         error = LFG_JOIN_PARTY_DESERTER;
     else if(_player->GetGroup() && _player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
             error = LFG_JOIN_NOT_MEET_REQS;
+    //TODO: Implement this
+    else if(count > 1 && _player->GetGroup())
+        error = LFG_JOIN_DUNGEON_INVALID;
 
     if(error != LFG_JOIN_OK)
     {
