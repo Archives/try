@@ -965,7 +965,6 @@ LfgMgr::~LfgMgr()
         //dungeons...
         for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end();++itr)
         {
-            delete itr->second->dungeonInfo;
             for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr != itr->second->groups.end();++grpitr)
                  delete *grpitr;
             delete itr->second;
@@ -1138,7 +1137,6 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
                     }
                     if(itr->second->groups.empty() && itr->second->players.empty())
                     {
-                        delete itr->second->dungeonInfo;
                         delete itr->second;
                         m_queuedDungeons[side].erase(itr);
                     }
@@ -1170,14 +1168,12 @@ void LfgMgr::RemoveFromQueue(Player *player, bool updateQueue)
             }
             if(itr->second->groups.empty() && itr->second->players.empty())
             {
-                delete itr->second->dungeonInfo;
-                delete itr->second;
                 m_queuedDungeons[side].erase(itr);
             }
         }
         LfgDungeonList *queuedList = &player->m_lookingForGroup.queuedDungeons;
-        for(LfgDungeonList::iterator lfg = queuedList->begin(); lfg != queuedList->end(); ++lfg)
-            delete *lfg;
+       // for(LfgDungeonList::iterator lfg = queuedList->begin(); lfg != queuedList->end(); ++lfg)
+         //   delete (*lfg)->;
         queuedList->clear();
     }
     if(sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE) && updateQueue)
