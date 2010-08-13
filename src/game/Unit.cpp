@@ -10887,7 +10887,7 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
                     return true;
             }
             // Bladestorm Immunity custom handling
-            else
+            else if((1 << (mechanic - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK)
                 return true;
         }
     }
