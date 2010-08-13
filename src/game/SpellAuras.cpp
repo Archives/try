@@ -4459,16 +4459,7 @@ void Aura::HandleAuraModDisarmOffhand(bool apply, bool Real)
 
     // not sure for it's correctness
     if(apply)
-    {
         m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
-        
-        // Remove all auras which requires Shields
-        Unit::AuraMap const& auras = m_target->GetAuras();
-        for(Unit::AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
-            if(itr->second->GetSpellProto()->EquippedItemClass == ITEM_CLASS_ARMOR)
-                m_target->RemoveAurasDueToSpell(itr->second->GetSpellProto()->Id);
-    }
-
     else
         m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARMED_OFFHAND);
 
@@ -4728,7 +4719,7 @@ void Aura::HandleModStealth(bool apply, bool Real)
                 if ((*i)->GetSpellProto()->SpellIconID == 2114)
                     target->CastSpell(target, 31666, true);
                 // Overkill
-                else if ((*i)->GetId() == 58426 && GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000))
+                else if ((*i)->GetId() == 58426 && (GetSpellProto()->SpellFamilyFlags & UI64LIT(0x0000000000400000)|| UI64LIT(0x0000000000000800)))
                 {
                     if (Aura* aura = target->GetAura(58427, EFFECT_INDEX_0))
                     {

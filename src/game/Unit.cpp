@@ -10874,8 +10874,17 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
 
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
-            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+        {
+            // default case, Bladestorm excluded
+            if ((*it)->GetId() != 46924)
+            {
+                if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+                    return true;
+            }
+            // Bladestorm Immunity custom handling
+            else if((1 << (mechanic - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK)
                 return true;
+        }
     }
 
     return false;
@@ -10890,13 +10899,6 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex 
         if (itr->type == effect)
             return true;
 
-    AuraList const& bladestormAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
-    for(AuraList::const_iterator it = bladestormAuraApply.begin(); it != bladestormAuraApply.end(); ++it)
-        if (((*it)->GetId() == 46924) &&                                                // Bladestorm Immunity custom handling
-            ((1 << (spellInfo->EffectMechanic[index] - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
-            (1 << (spellInfo->Mechanic - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
-            return true;
-
     if(uint32 mechanic = spellInfo->EffectMechanic[index])
     {
         SpellImmuneList const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
@@ -10906,9 +10908,17 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex 
 
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
-            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)) &&
-                ((*iter)->GetId() != 46924))                                               // Bladestorm Immunity already handled
+        {
+            // default case, Bladestorm excluded
+            if ((*iter)->GetId() != 46924)
+            {
+                if((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+                    return true;
+            }
+            // Bladestorm Immunity custom handling
+            else if ((1 << (mechanic - 1)) & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK)
                 return true;
+        }
     }
 
     if(uint32 aura = spellInfo->EffectApplyAuraName[index])

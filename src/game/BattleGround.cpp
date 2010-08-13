@@ -484,15 +484,7 @@ void BattleGround::Update(uint32 diff)
 
                 for(BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
                     if (Player *plr = sObjectMgr.GetPlayer(itr->first))
-                    {
-                        WorldPacket status;
-                        BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(m_TypeID, GetArenaType());
-                        uint32 queueSlot = plr->GetBattleGroundQueueIndex(bgQueueTypeId);
-                        sBattleGroundMgr.BuildBattleGroundStatusPacket(&status, this, queueSlot, GetStatus(), 0, GetStartTime(), GetArenaType());
-                        plr->GetSession()->SendPacket(&status);
-
                         plr->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
-                    }
 
                 CheckArenaWinConditions();
             }
@@ -512,6 +504,17 @@ void BattleGround::Update(uint32 diff)
             }
         }
     }
+    // For arena unit frames
+    if (GetStatus() == STATUS_IN_PROGRESS && GetPlayersSize() && isArena())
+        for(BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+            if (Player *plr = sObjectMgr.GetPlayer(itr->first))
+            {
+                WorldPacket status;
+                BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(m_TypeID, GetArenaType());
+                uint32 queueSlot = plr->GetBattleGroundQueueIndex(bgQueueTypeId);
+                sBattleGroundMgr.BuildBattleGroundStatusPacket(&status, this, queueSlot, GetStatus(), 0, GetStartTime(), GetArenaType());
+                plr->GetSession()->SendPacket(&status);
+            }
 
     /*********************************************************/
     /***           BATTLEGROUND ENDING SYSTEM              ***/
@@ -1417,7 +1420,8 @@ void BattleGround::AddPlayer(Player *plr)
     {
         plr->RemoveArenaSpellCooldowns();
         plr->RemoveArenaAuras();
-        plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);
+        // this is probably obsolete, surely for rogue poisons
+        /*plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);*/
         if(team == ALLIANCE)                                // gold
         {
             if (plr->GetTeam() == HORDE)
