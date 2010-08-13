@@ -87,13 +87,8 @@ inline void MaNGOS::CreatureRelocationNotifier::Visit(PlayerMapType &m)
 
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
         if (Player* player = iter->getSource())
-<<<<<<< HEAD
             if (player->isAlive() && !player->isInFlight())
-                PlayerCreatureRelocationWorker(player, player->GetCamera().GetBody(), &i_creature);
-=======
-            if (player->isAlive() && !player->IsTaxiFlying())
                 PlayerCreatureRelocationWorker(player, &i_creature);
->>>>>>> 00c1f22... [K89] Visibility & Reloc by Silverice
 }
 
 template<>
