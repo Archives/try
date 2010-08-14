@@ -3466,6 +3466,36 @@ void Spell::finish(bool ok)
     if(!m_TriggerSpells.empty())
         CastTriggerSpells();
 
+    // Need to find out correct category for some item spells (like Medallion of the Horde/Alliance -> PvP trinket)
+    uint32 category = 0;
+
+    if(m_CastItem)
+    {
+        if(ItemPrototype const* proto = m_CastItem->GetProto())
+        {
+            for(int idx = 0; idx < 5; ++idx)
+            {
+                if(proto->Spells[idx].SpellId == m_spellInfo->Id)
+                {
+                    category = proto->Spells[idx].SpellCategory;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(m_caster->GetTypeId() == TYPEID_PLAYER)
+    {
+        // Will of the Forsaken category
+        if(category == 1166 || m_spellInfo->Category == 1166)
+            // PvP trinket Cooldown
+            m_caster->CastSpell(m_caster, 72757, false);
+        // PvP trinket category
+        if(category == 1182 || m_spellInfo->Category == 1182)
+            // Will of the Forsaken Cooldown
+            m_caster->CastSpell(m_caster, 72752, false);
+    }
+
     // Stop Attack for some spells
     if( m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET )
         m_caster->AttackStop();
@@ -7085,14 +7115,10 @@ void Spell::AddPrecastAndTriggeredSpells()
         {
             if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)  // Bandages
                 AddPrecastSpell(11196);                     // Recently Bandaged
-            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
-                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
             else if(m_spellInfo->Id == 20594)               // Stoneskin
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
             else if(m_spellInfo->Id == 71904)               // Chaos Bane strength buff
                 AddTriggeredSpell(73422);
-            else if(m_spellInfo->Id == 42292)               // PvP trinket
-                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
             break;
         }
         case SPELLFAMILY_MAGE:
