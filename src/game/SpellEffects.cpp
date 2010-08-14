@@ -2188,6 +2188,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                         if (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && (spellInfo->SpellFamilyFlags & UI64LIT(0x0000024000000860)))
                             ((Player*)m_caster)->RemoveSpellCooldown((itr++)->first,true);
+                        // Glyph of Preparation
+                        else if (m_caster->HasAura(56819))
+                        {
+                            if (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && (spellInfo->SpellFamilyFlags & UI64LIT(0x0010080040000010)))
+                                ((Player*)m_caster)->RemoveSpellCooldown((itr++)->first,true);
+                            else
+                                ++itr;
+                        }
                         else
                             ++itr;
                     }
