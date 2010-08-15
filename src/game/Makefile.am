@@ -170,6 +170,8 @@ libmangosgame_a_SOURCES = \
 	Level1.cpp \
 	Level2.cpp \
 	Level3.cpp \
+	LfgGroup.cpp \
+	LfgGroup.h \
 	LFGHandler.cpp \
 	LfgMgr.cpp \
 	LfgMgr.h \

@@ -24,6 +24,7 @@
 #include "Utilities/EventProcessor.h"
 #include "DBCEnums.h"
 #include "Group.h"
+#include "LfgGroup.h"
 #include "ace/Recursive_Thread_Mutex.h"
 
 enum LfgTimers
@@ -231,79 +232,6 @@ struct DungeonInfo             //used in db
 };
 typedef std::map<uint32, DungeonInfo*> DungeonInfoMap;
 
-typedef std::map<uint64, uint8> ProposalAnswersMap; // Guid and accept
-//Used not only inside dungeons, but also as queued group
-class MANGOS_DLL_SPEC LfgGroup : public Group
-{
-    public:
-        LfgGroup(bool premade = false);
-        ~LfgGroup();
-
-        void SetGroupId(uint32 newid) { m_Id = newid; }
-        uint32 GetKilledBosses() { return m_killedBosses; }
-        bool LoadGroupFromDB(Field *fields);
-
-        void SendLfgPartyInfo(Player *plr);
-        void SendLfgQueueStatus();
-        void SendGroupFormed();
-        void SendProposalUpdate(uint8 state);
-        void SendRoleCheckUpdate(uint8 state);
-        LfgLocksMap *GetLocksList() const;
-        
-        //Override these methods
-        bool AddMember(const uint64 &guid, const char* name);
-        uint32 RemoveMember(const uint64 &guid, const uint8 &method);
-        void SendUpdate();
-
-        uint64 GetTank() const { return m_tank; };
-        uint64 GetHeal() const { return m_heal; };
-        PlayerList *GetDps() { return dps; };
-        ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
-        ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
-        void UpdateRoleCheck(uint32 diff = 0);
-        PlayerList *GetPremadePlayers() { return &premadePlayers; }
-
-        void SetTank(uint64 tank) { m_tank = tank; }
-        void SetHeal(uint64 heal) { m_heal = heal; }
-
-        void SetDungeonInfo(LFGDungeonEntry const *dungeonInfo) { m_dungeonInfo = dungeonInfo; }
-        LFGDungeonEntry const *GetDungeonInfo() { return m_dungeonInfo; }
-        uint32 GetRandomEntry() const { return randomDungeonEntry; }
-
-        bool RemoveOfflinePlayers();
-        bool UpdateCheckTimer(uint32 time);
-        void TeleportToDungeon();
-        void TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 originalDungeonId = 0);
-        bool HasCorrectLevel(uint8 level);
-        bool IsInDungeon() const { return m_inDungeon; }
-        void SetInstanceStatus(uint8 status) { m_instanceStatus = status; }
-        uint8 GetInstanceStatus() const { return m_instanceStatus; }
-        bool IsRandom() const { return m_isRandom; }
-        uint8 GetPlayerRole(uint64 guid, bool withLeader = true, bool joinedAs = false) const;
-        void KilledCreature(Creature *creature);
-        void ResetGroup();
-        
-    private:
-        //ACE_Thread_Mutex m_queueLock;
-
-        uint64 m_tank;
-        uint64 m_heal;
-        PlayerList *dps;
-        LFGDungeonEntry const *m_dungeonInfo;
-        PlayerList premadePlayers;
-        ProposalAnswersMap m_answers;
-        ProposalAnswersMap m_rolesProposal;
-        uint8 m_membersBeforeRoleCheck;
-
-        uint32 m_killedBosses;
-        int32 m_readycheckTimer;
-        uint8 m_baseLevel;
-        uint8 m_instanceStatus;
-        bool m_inDungeon;
-        bool m_isRandom;
-        uint32 randomDungeonEntry;
-};
-
 typedef std::set<LfgGroup*> GroupsList;
 typedef std::map<uint32, LfgGroup*> GroupMap;
 
@@ -346,6 +274,7 @@ class MANGOS_DLL_SPEC LfgMgr
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
         void AddGroupToDelete(LfgGroup *group);
         void AddCheckedGroup(LfgGroup *group, bool toQueue);
+        void AddVoteKickGroup(LfgGroup *group) { voteKickGroups.insert(group); }
 
         uint32 GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles);
         LfgReward *GetDungeonReward(uint32 dungeon, bool done, uint8 level);
@@ -364,6 +293,7 @@ class MANGOS_DLL_SPEC LfgMgr
         QueuedDungeonsMap m_queuedDungeons[MAX_LFG_FACTION];
         GroupsList formedGroups[MAX_LFG_FACTION];
         GroupsList rolecheckGroups;
+        GroupsList voteKickGroups;
         GroupsList groupsForDelete;
 
         uint32 m_groupids;
