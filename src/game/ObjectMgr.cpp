@@ -47,6 +47,7 @@
 #include "GossipDef.h"
 #include "Mail.h"
 #include "InstanceData.h"
+#include "LfgGroup.h"
 
 #include <limits>
 

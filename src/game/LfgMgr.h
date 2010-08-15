@@ -24,8 +24,10 @@
 #include "Utilities/EventProcessor.h"
 #include "DBCEnums.h"
 #include "Group.h"
-#include "LfgGroup.h"
+
 #include "ace/Recursive_Thread_Mutex.h"
+
+class LfgGroup;
 
 enum LfgTimers
 {

@@ -24,6 +24,7 @@
 #include "ObjectMgr.h"
 #include "World.h"
 #include "LfgMgr.h"
+#include "LfgGroup.h"
 #include "DBCStores.h"
 
 void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)

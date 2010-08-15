@@ -16,32 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __LFGMGR_H
-#define __LFGMGR_H
-
-#include "Common.h"
-#include "Policies/Singleton.h"
-#include "Utilities/EventProcessor.h"
-#include "DBCEnums.h"
-#include "Group.h"
-#include "ace/Recursive_Thread_Mutex.h"/*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 #ifndef __LFGGROUP_H
 #define __LFGGROUP_H
 
@@ -71,7 +45,7 @@ struct VoteToKick
     }
 
     bool PlayerVoted(uint64 guid) { return votes.find(guid) != votes.end(); }
-    uint8 GetVote(uint64) 
+    uint8 GetVote(uint64 guid) 
     {
         ProposalAnswersMap::iterator itr = votes.find(guid);
         if(itr != votes.end())
@@ -85,11 +59,11 @@ struct VoteToKick
             return votes.size();
         else
         {
-            uint32 votes = 0;
+            uint32 votesCount = 0;
             for(ProposalAnswersMap::iterator itr = votes.begin(); itr != votes.end(); ++itr)
                 if(itr->second)
-                    ++votes;
-            return votes;
+                    ++votesCount;
+            return votesCount;
         }
     }
     int32 GetTimeLeft() { return 60-(getMSTimeDiff(beginTime, getMSTime())/1000); }
@@ -99,7 +73,7 @@ struct VoteToKick
     uint64 victim;
     uint32 beginTime;
     std::string reason;
-}
+};
 
 class MANGOS_DLL_SPEC LfgGroup : public Group
 {

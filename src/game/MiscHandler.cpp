@@ -41,6 +41,7 @@
 #include "Pet.h"
 #include "SocialMgr.h"
 #include "DBCEnums.h"
+#include "LfgGroup.h"
 
 void WorldSession::HandleRepopRequestOpcode( WorldPacket & recv_data )
 {

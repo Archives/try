@@ -954,7 +954,7 @@ void LfgGroup::SendRoleCheckUpdate(uint8 state)
     }
 }
 
-void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason);
+void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason)
 {
     //Checks first
     PartyResult error = ERR_PARTY_RESULT_OK;
@@ -988,14 +988,14 @@ void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason);
 }
 
 // return true = remove from update list, false = continue
-bool LfgGroup::UpdateVoteToKick(uint32 diff = 0)
+bool LfgGroup::UpdateVoteToKick(uint32 diff)
 {
     if(!m_voteToKick.isInProggres)
         return true;
 
     if(diff)
     {
-        if(GetTimeLeft() <= 0)
+        if(m_voteToKick.GetTimeLeft() <= 0)
         {
             m_voteToKick.isInProggres = false;
             for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
@@ -1047,6 +1047,9 @@ bool LfgGroup::UpdateVoteToKick(uint32 diff = 0)
 
 void LfgGroup::SendBootPlayer(Player *plr)
 {
+    if(plr->GetGUID() == m_voteToKick.victim)
+        return;
+
     WorldPacket data(SMSG_LFG_BOOT_PLAYER, 27 + m_voteToKick.reason.length());
     data << uint8(m_voteToKick.isInProggres);               // Vote in progress
     data << uint8(m_voteToKick.PlayerVoted(plr->GetGUID()));// Did Vote
