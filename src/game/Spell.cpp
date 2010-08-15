@@ -1249,7 +1249,8 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             }
 
             // can cause back attack (if detected), stealth removed at Spell::cast if spell break it
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_INITIAL_AGGRO) && 
+                (!IsPositiveSpell(m_spellInfo->Id) || IsDispelSpell(m_spellInfo)) &&
                 m_caster->isVisibleForOrDetect(unit, unit, false))
             {
                 // use speedup check to avoid re-remove after above lines
