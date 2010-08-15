@@ -39,6 +39,12 @@ class MANGOS_DLL_SPEC ConfusedMovementGenerator
         bool Update(T &, const uint32 &);
 
         MovementGeneratorType GetMovementGeneratorType() const { return CONFUSED_MOTION_TYPE; }
+        bool GetDestination(float& x, float& y, float& z) const
+        {
+            if(!i_destinationHolder.HasDestination()) return false;
+            i_destinationHolder.GetDestination(x,y,z);
+            return true;               
+        }
     private:
         void _InitSpecific(T &, bool &, bool &);
         TimeTracker i_nextMoveTime;

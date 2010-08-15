@@ -37,6 +37,12 @@ class MANGOS_DLL_SPEC FleeingMovementGenerator
         bool Update(T &, const uint32 &);
 
         MovementGeneratorType GetMovementGeneratorType() const { return FLEEING_MOTION_TYPE; }
+        bool GetDestination(float& x, float& y, float& z) const
+        {
+            if(!i_destinationHolder.HasDestination()) return false;
+            i_destinationHolder.GetDestination(x,y,z);
+            return true;               
+        }
 
     private:
         void _setTargetLocation(T &owner);
