@@ -145,13 +145,6 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
     if (!i_destinationHolder.HasArrived() && creature.IsStopped())
         creature.addUnitState(UNIT_STAT_ROAMING_MOVE);
 
-    if(i_destinationHolder.HasArrived())
-    {
-        float x, y, z;
-        i_destinationHolder.GetDestination(x,y,z);
-        creature.GetMap()->CreatureRelocation(&creature, x, y, z,  creature.GetOrientation());
-    }
-
     CreatureTraveller traveller(creature);
 
     if (i_destinationHolder.UpdateTraveller(traveller, diff, false, true))
