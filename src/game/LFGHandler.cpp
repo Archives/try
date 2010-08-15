@@ -24,6 +24,7 @@
 #include "ObjectMgr.h"
 #include "World.h"
 #include "LfgMgr.h"
+#include "LfgGroup.h"
 #include "DBCStores.h"
 
 void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
@@ -241,11 +242,31 @@ void WorldSession::HandleLfgSetRoles(WorldPacket& recv_data)
 
     if(Group *group = _player->GetGroup())
     {
+        LfgGroup *lfgGroup;
         if(group->isLfgGroup())
+            lfgGroup = (LfgGroup*)group;
+        else
         {
-            ((LfgGroup*)group)->GetRoleAnswers()->insert(std::make_pair<uint64, uint8>(_player->GetGUID(), roles));                
-            ((LfgGroup*)group)->UpdateRoleCheck();
+            GroupMap::iterator itr = _player->m_lookingForGroup.groups.begin();
+            lfgGroup = itr->second;
         }
+
+        lfgGroup->GetRoleAnswers()->insert(std::make_pair<uint64, uint8>(_player->GetGUID(), roles));                
+        lfgGroup->UpdateRoleCheck();
     } 
+}
+
+void WorldSession::HandleLfgSetBootVote(WorldPacket& recv_data)
+{
+    DEBUG_LOG("WORLD: Received CMSG_LFG_SET_BOOT_VOTE");
+    uint8 agree;                                             // Agree to kick player
+    recv_data >> agree;
+
+    Group *group = _player->GetGroup();
+    if(!group || !group->isLfgGroup())
+        return;
+
+    ((LfgGroup*)group)->GetVoteToKick()->votes.insert(std::make_pair<uint64, uint8>(_player->GetGUID(), agree));
+    ((LfgGroup*)group)->UpdateVoteToKick();
 }
 

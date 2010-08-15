@@ -34,6 +34,7 @@
 #include "MapInstanced.h"
 #include "Util.h"
 #include "LootMgr.h"
+#include "LfgGroup.h"
 
 #define LOOT_ROLL_TIMEOUT  (1*MINUTE*IN_MILLISECONDS)
 

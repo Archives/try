@@ -21281,10 +21281,10 @@ PartyResult Player::CanUninviteFromGroup() const
     if(!grp)
         return ERR_NOT_IN_GROUP;
 
-    if(!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID()))
+    if((!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID())) && !grp->isLfgGroup())
         return ERR_NOT_LEADER;
 
-    if(InBattleGround() || grp->isLfgGroup())
+    if(InBattleGround())
         return ERR_INVITE_RESTRICTED;
 
     return ERR_PARTY_RESULT_OK;

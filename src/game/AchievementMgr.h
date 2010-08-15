@@ -237,7 +237,7 @@ class Unit;
 class Player;
 class WorldPacket;
 
-class AchievementMgr
+class MANGOS_DLL_SPEC AchievementMgr
 {
     public:
         AchievementMgr(Player* pl);
@@ -271,7 +271,7 @@ class AchievementMgr
         CompletedAchievementMap m_completedAchievements;
 };
 
-class AchievementGlobalMgr
+class MANGOS_DLL_SPEC AchievementGlobalMgr
 {
     public:
         AchievementCriteriaEntryList const& GetAchievementCriteriaByType(AchievementCriteriaTypes type);

@@ -44,6 +44,12 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
         MovementGeneratorType GetMovementGeneratorType() const { return RANDOM_MOTION_TYPE; }
 
         bool GetResetPosition(T&, float& x, float& y, float& z);
+        bool GetDestination(float& x, float& y, float& z) const
+        {
+            if(!i_destinationHolder.HasDestination()) return false;
+            i_destinationHolder.GetDestination(x,y,z);
+            return true;               
+        }
     private:
         TimeTrackerSmall i_nextMoveTime;
 

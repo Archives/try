@@ -29,6 +29,7 @@
 #include "SocialMgr.h"
 #include "Util.h"
 #include "Vehicle.h"
+#include "LfgGroup.h"
 
 /* differeces from off:
     -you can uninvite yourself - is is useful
@@ -240,8 +241,9 @@ void WorldSession::HandleGroupDeclineOpcode( WorldPacket & /*recv_data*/ )
 void WorldSession::HandleGroupUninviteGuidOpcode(WorldPacket & recv_data)
 {
     uint64 guid;
+    std::string reason;
     recv_data >> guid;
-    recv_data.read_skip<std::string>();                     // reason
+    recv_data >> reason; 
 
     // can't uninvite yourself
     if(guid == GetPlayer()->GetGUID())
@@ -263,7 +265,10 @@ void WorldSession::HandleGroupUninviteGuidOpcode(WorldPacket & recv_data)
 
     if(grp->IsMember(guid))
     {
-        Player::RemoveFromGroup(grp,guid);
+        if(grp->isLfgGroup())
+            ((LfgGroup*)grp)->InitVoteKick(guid, _player, reason);
+        else
+            Player::RemoveFromGroup(grp,guid);
         return;
     }
 
@@ -305,7 +310,10 @@ void WorldSession::HandleGroupUninviteOpcode(WorldPacket & recv_data)
 
     if(uint64 guid = grp->GetMemberGUID(membername))
     {
-        Player::RemoveFromGroup(grp,guid);
+        if(grp->isLfgGroup())
+            ((LfgGroup*)grp)->InitVoteKick(guid, _player, "");
+        else
+            Player::RemoveFromGroup(grp,guid);
         return;
     }
 

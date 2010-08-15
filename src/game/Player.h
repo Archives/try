@@ -38,6 +38,7 @@
 #include "BattleGround.h"
 #include "DBCEnums.h"
 #include "LfgMgr.h"
+#include "LfgGroup.h"
 
 #include<string>
 #include<vector>

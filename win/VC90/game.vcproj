@@ -811,10 +811,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\LfgGroup.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\LfgGroup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\LFGHandler.cpp"
 				>
 			</File>
-            <File
+			<File
 				RelativePath="..\..\src\game\LfgMgr.cpp"
 				>
 			</File>
