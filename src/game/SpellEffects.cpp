@@ -5235,6 +5235,9 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
         return;
     if(!unitTarget->isAlive())
         return;
+    // some triggered spells need this check (f.e. Whirlwind...)
+    if(!((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true))
+        return;
 
     // multiple weapon dmg effect workaround
     // execute only the last weapon damage
