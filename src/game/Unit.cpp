@@ -6191,34 +6191,19 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     CastSpell(this, 28682, true, castItem, triggeredByAura);
                     return (procEx & PROC_EX_CRITICAL_HIT); // charge update only at crit hits, no hidden cooldowns
                 }
-                // Empowered Fire
+                // Empowered Fire (Ignite Proc)
                 case 12654:
                 {
-                    if (Unit* caster = triggeredByAura->GetCaster())
+                    target = triggeredByAura->GetCaster(); 
+                    if (target && target->GetTypeId() == TYPEID_PLAYER)
                     {
-                        if (pVictim != caster)
-                            return false;
-                        Unit::AuraList const& auras = caster->GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
-                        for (Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); i++)
-                        {
-                            switch((*i)->GetId())
-                            {
-                                case 31656:
-                                case 31657:
-                                case 31658:
-                                    if(roll_chance_i((*i)->GetSpellProto()->procChance))
-                                    {
-                                        caster->CastSpell( caster, 67545, true );
-                                        return true;
-                                    }
-                                    break;
-                                default:
-                                    continue;
-                            }
-                            break;
-                        }
+                        caster = target; 
+                        // Get Empowered Fire talent 
+                        SpellEntry const *talent = ((Player*)target)->GetKnownTalentRankById(1734); 
+                        if (talent && roll_chance_i(talent->procChance)) 
+                            triggered_spell_id = 67545;
                     }
-                    return false;
+                    break;
                 }
                 // Glyph of Ice Block
                 case 56372:
@@ -14658,8 +14643,8 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry con
     }
     // Aura added by spell can`t trogger from self (prevent drop charges/do triggers)
     // But except periodic triggers (can triggered from self)
-    if(procSpell && procSpell->Id == spellProto->Id && !(spellProto->procFlags & PROC_FLAG_ON_TAKE_PERIODIC))
-        return false;
+    if(procSpell && procSpell->Id == spellProto->Id && !(EventProcFlag & PROC_FLAG_ON_TAKE_PERIODIC)) 
+         return false;
 
     // Check if current equipment allows aura to proc
     if(!isVictim && GetTypeId() == TYPEID_PLAYER)
