@@ -3698,7 +3698,7 @@ void Spell::EffectPersistentAA(SpellEffectIndex eff_idx)
         Unit::AuraList const& stateAuras = modOwner->GetAurasByType(SPELL_AURA_APPLY_HASTE_TO_AURA);
         for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
         {
-            if((*j)->isAffectedOnSpell(GetSpellProto()))
+            if((*j)->isAffectedOnSpell(m_spellInfo))
             {
                 applyHaste = true;
                 break;

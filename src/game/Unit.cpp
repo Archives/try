@@ -959,7 +959,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     //Lfg group info at kill creature
                     if(Group *group = creditedPlayer->GetGroup())
                     {
-                        error_log("Killed v unit");
                         if(group->isLfgGroup())
                             ((LfgGroup*)group)->KilledCreature(cVictim);
                     }
