@@ -5467,18 +5467,18 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                          else 
                              ++itr; 
                      }  */
-                    /*Unit::AuraMap& auras = unitTarget->GetAuras();
+                    Unit::AuraMap& auras = unitTarget->GetAuras();
                     for(Unit::AuraMap::iterator itr = auras.begin(); itr != auras.end(); ++itr)
                     {
                         if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
                              itr->second->GetCasterGUID() == m_caster->GetGUID())
                         {
-                            unitTarget->RemoveSpellAuraHolder(itr->second); 
+                            unitTarget->RemoveAura(itr->second);
                             itr = auras.begin();
                         }
                         else
                             ++itr;
-                    }*/
+                    }
                 } 
  
             }
@@ -8297,6 +8297,7 @@ void Spell::EffectActivateRune(SpellEffectIndex eff_idx)
             plr->SetRuneCooldown(j, 0);
         }
     }
+    plr->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::EffectTitanGrip(SpellEffectIndex /*eff_idx*/)
