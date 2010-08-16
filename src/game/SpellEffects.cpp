@@ -3701,10 +3701,29 @@ void Spell::EffectPersistentAA(SpellEffectIndex eff_idx)
 {
     float radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
 
-    if (Player* modOwner = m_caster->GetSpellModOwner())
-        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius);
-
-    int32 duration = GetSpellDuration(m_spellInfo);
+    int32 duration = GetSpellDuration(m_spellInfo); 
+  
+    if (Player* modOwner = m_caster->GetSpellModOwner()) 
+    {
+        bool applyHaste = false;
+        if((m_spellInfo->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)) // All channeled spells
+            || (m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE))                  // Some auras from 3.3.3
+            applyHaste = true;        
+        //SPELL_AURA_APPLY_HASTE_TO_AURA implentation
+        Unit::AuraList const& stateAuras = modOwner->GetAurasByType(SPELL_AURA_APPLY_HASTE_TO_AURA);
+        for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
+        {
+            if((*j)->isAffectedOnSpell(GetSpellProto()))
+            {
+                applyHaste = true;
+                break;
+            }
+        }
+        if(applyHaste)
+            duration = ApplyHasteToChannelSpell(duration, m_spellInfo, this);
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius); 
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration); 
+    }
     DynamicObject* dynObj = new DynamicObject;
     if (!dynObj->Create(m_caster->GetMap()->GenerateLocalLowGuid(HIGHGUID_DYNAMICOBJECT), m_caster, m_spellInfo->Id, eff_idx, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, duration, radius))
     {
