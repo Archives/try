@@ -6372,6 +6372,23 @@ void Aura::HandleModSpellCritChance(bool apply, bool Real)
     {
         GetTarget()->m_baseSpellCritChance += apply ? m_modifier.m_amount:(-m_modifier.m_amount);
     }
+
+    switch(GetId()) 
+    { 
+        // Elemental Oath (dmg increase while Clearcasting) 
+        case 51466: 
+        case 51470: 
+        { 
+            if (GetTarget()->GetTypeId() != TYPEID_PLAYER) 
+                break; 
+            // we have to simulate missing DBC 
+            m_spellmod = new SpellModifier(SPELLMOD_EFFECT2, SPELLMOD_FLAT, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1), GetId(), UI64LIT(0x400000000000)); 
+ 
+            ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply); 
+        } 
+        default: 
+            break; 
+    }
 }
 
 void Aura::HandleModSpellCritChanceShool(bool /*apply*/, bool Real)
