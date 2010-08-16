@@ -215,6 +215,14 @@ void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
     // everything is fine, do it, PLAYER'S GROUP IS SET IN ADDMEMBER!!!
     if(!group->AddMember(GetPlayer()->GetGUID(), GetPlayer()->GetName()))
         return;
+
+    //Re-check group if in Lfg
+    if(!_player->m_lookingForGroup.queuedDungeons.empty())
+    {
+        sLfgMgr.RemoveFromQueue(_player);
+		if(group->GetMembersCount() != 5)
+        	sLfgMgr.AddToQueue(_player);
+    }
 }
 
 void WorldSession::HandleGroupDeclineOpcode( WorldPacket & /*recv_data*/ )
@@ -265,10 +273,17 @@ void WorldSession::HandleGroupUninviteGuidOpcode(WorldPacket & recv_data)
 
     if(grp->IsMember(guid))
     {
-        if(grp->isLfgGroup())
+        if(grp->GetGroupType() & GROUPTYPE_LFD_1)
             ((LfgGroup*)grp)->InitVoteKick(guid, _player, reason);
         else
+        {
             Player::RemoveFromGroup(grp,guid);
+            if(!_player->m_lookingForGroup.queuedDungeons.empty())
+            {
+                sLfgMgr.RemoveFromQueue(_player, false);
+                sLfgMgr.AddToQueue(_player);
+            }
+        }
         return;
     }
 
@@ -310,10 +325,17 @@ void WorldSession::HandleGroupUninviteOpcode(WorldPacket & recv_data)
 
     if(uint64 guid = grp->GetMemberGUID(membername))
     {
-        if(grp->isLfgGroup())
+        if(grp->GetGroupType() & GROUPTYPE_LFD_1)
             ((LfgGroup*)grp)->InitVoteKick(guid, _player, "");
         else
+        {
             Player::RemoveFromGroup(grp,guid);
+            if(!_player->m_lookingForGroup.queuedDungeons.empty())
+            {
+                sLfgMgr.RemoveFromQueue(_player, false);
+                sLfgMgr.AddToQueue(_player);
+            }
+        }
         return;
     }
 
@@ -515,6 +537,10 @@ void WorldSession::HandleGroupRaidConvertOpcode( WorldPacket & /*recv_data*/ )
     // everything is fine, do it (is it 0 (PARTY_OP_INVITE) correct code)
     SendPartyResult(PARTY_OP_INVITE, "", ERR_PARTY_RESULT_OK);
     group->ConvertToRaid();
+
+    //Remove from lfg
+    if(!_player->m_lookingForGroup.queuedDungeons.empty())
+        sLfgMgr.RemoveFromQueue(_player);
 }
 
 void WorldSession::HandleGroupChangeSubGroupOpcode( WorldPacket & recv_data )
