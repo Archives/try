@@ -6001,6 +6001,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     target = this;
                     break;
                 }
+                // Glyph of Scourge Strike 
+                case 58642: 
+                { 
+                    triggered_spell_id = 69961; 
+                    basepoints[0] = damage; 
+                    break; 
+                }
                 // Kill Command (remove stack)
                 case 58914:
                 {

@@ -6524,6 +6524,26 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if(Aura *pAura = unitTarget->GetAura(spellId, EFFECT_INDEX_0))
                         pAura->SetStackAmount(urand(1,8));
                 }
+                case 69961:                                // Glyph of Scourge Strike proc 
+                { 
+                    if (!unitTarget) 
+                        return; 
+ 
+                    Unit::AuraMap const& auras = unitTarget->GetAuras(); 
+                    for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr) 
+                    { 
+                        if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
+                            itr->second->GetCasterGUID() == m_caster->GetGUID()) 
+                        { 
+                            int32 duration = itr->second->GetAuraDuration(); 
+                            duration += damage * IN_MILLISECONDS; 
+                            if (duration > itr->second->GetAuraMaxDuration() + 3 * damage * IN_MILLISECONDS) 
+                                duration = itr->second->GetAuraMaxDuration() + 3 * damage * IN_MILLISECONDS; 
+                            itr->second->SetAuraDuration(duration); 
+                        } 
+                    } 
+                    break; 
+                 }
             }
             break;
         }
