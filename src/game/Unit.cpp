@@ -9815,7 +9815,10 @@ int32 Unit::SpellBonusWithCoeffs(SpellEntry const *spellProto, int32 total, int3
                     ap_bonus += ((spell->CalculateSimpleValue(EFFECT_INDEX_0) * ap_bonus) / 100.0f);
             }
 
-            total += int32(ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + ap_benefit));
+            if (spellProto->SpellFamilyName == SPELLFAMILY_HUNTER && spellProto->DmgClass != SPELL_DAMAGE_CLASS_MELEE) 
+                total += int32(ap_bonus * (GetTotalAttackPowerValue(RANGED_ATTACK) + ap_benefit)); 
+            else 
+                total += int32(ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + ap_benefit));
         }
     }
     // Default calculation

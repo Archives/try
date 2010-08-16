@@ -5700,18 +5700,6 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 3 * GetStackAmount() / 100);
                 break;
             }
-            case SPELLFAMILY_HUNTER:
-            {
-                // Serpent Sting
-                if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                    // $RAP*0.2/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.2 / 5);
-                // Immolation Trap
-                else if ((m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000004)) && m_spellProto->SpellIconID == 678)
-                    // $RAP*0.1/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 10 / 500);
-                break;
-            }
             case SPELLFAMILY_PALADIN:
             {
                 // Holy Vengeance / Blood Corruption

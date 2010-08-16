@@ -671,16 +671,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     if (m_caster->HasAura(57627))           // Charge 6 sec post-affect
                         damage *= 2;
                 }
-                // Mongoose Bite
-                else if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000002)) && m_spellInfo->SpellVisual[0]==342)
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
-                }
-                // Counterattack
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0008000000000000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
-                }
                 // Steady Shot
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x100000000))
                 {
@@ -688,11 +678,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         return;
                     int32 base = irand((int32)m_caster->GetWeaponDamageRange(RANGED_ATTACK, MINDAMAGE),(int32)m_caster->GetWeaponDamageRange(RANGED_ATTACK, MAXDAMAGE));
                     damage += int32( 2.8f*( base * 1000/m_caster->GetAttackTime(RANGED_ATTACK) + ((Player*)m_caster)->GetAmmoDPS() ));
-                }
-                // Volley
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x00002000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(RANGED_ATTACK)*0.0837f);
                 }
                 break;
             }
