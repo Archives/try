@@ -2015,14 +2015,12 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (spellInfo_2->Id == 54648) && (spellInfo_1->Id == 54646) )
                     return false;
 
-                //Focus magic(30 min buff) and Praxis (T8 set bonus)
-                if( (spellInfo_1->Id == 54646) && (spellInfo_2->Id == 64868) ||
-                    (spellInfo_2->Id == 54646) && (spellInfo_1->Id == 64868) )
+                //Focus magic(30 min buff) and Praxis (T8 set bonus) (generic family)
+                if(spellInfo_2->Id == 54646 && spellInfo_1->Id == 64868)
                     return false;
 
-                //Focus magic(10s buff) and Praxis (T8 set bonus)
-                if( (spellInfo_1->Id == 54648) && (spellInfo_2->Id == 64868) ||
-                    (spellInfo_2->Id == 54648) && (spellInfo_1->Id == 64868) )
+                //Focus magic(10s buff) and Praxis (T8 set bonus) (generic family)
+                if(spellInfo_2->Id == 54648 && spellInfo_1->Id == 64868)
                     return false;
 
                 //Improved scorch and Winter's Chill
@@ -2030,6 +2028,14 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (spellInfo_2->Id == 22959) && (spellInfo_1->Id == 12579) )
                     return false;
             }
+            //Focus magic(30 min buff) and Praxis (T8 set bonus) (generic family)
+            if(spellInfo_1->Id == 54646 && spellInfo_2->Id == 64868)
+                return false;
+ 
+            //Focus magic(10s buff) and Praxis (T8 set bonus) (generic family)
+            if(spellInfo_1->Id == 54648 && spellInfo_2->Id == 64868)
+                return false;
+
             // Detect Invisibility and Mana Shield (multi-family check)
             if( spellInfo_2->Id == 132 && spellInfo_1->SpellIconID == 209 && spellInfo_1->SpellVisual[0] == 968 )
                 return false;
