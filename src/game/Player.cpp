@@ -5723,7 +5723,7 @@ void Player::UpdateCombatSkills(Unit *pVictim, WeaponAttackType attType, bool de
     if(skilldif <= 0)
         return;
 
-    float chance = float(lvldif * skilldif) / (plevel * 10.0f);
+    float chance = float(10.0f * lvldif * skilldif) / float(plevel);
     // absolete from vanilla
     //if(!defence)
     //{
@@ -18797,9 +18797,9 @@ void Player::HandleStealthedUnitsDetection()
                 if((*i)!=this && (*i)->isType(TYPEMASK_UNIT))
                 {
                     SendAurasForTarget(*i);
-                    WorldPacket data;
-                    (*i)->BuildHeartBeatMsg(&data);
-                    GetSession()->SendPacket(&data);
+                    //WorldPacket data; <-- Useless now?
+                    //(*i)->BuildHeartBeatMsg(&data);
+                    //GetSession()->SendPacket(&data);
                 }
             }
         }
@@ -20009,9 +20009,9 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             if(target!=this && target->isType(TYPEMASK_UNIT))
             {
                 SendAurasForTarget((Unit*)target);
-                WorldPacket data;
-                ((Unit*)target)->BuildHeartBeatMsg(&data);
-                GetSession()->SendPacket(&data);
+                //WorldPacket data; <-- Useless now?
+                //((Unit*)target)->BuildHeartBeatMsg(&data);
+                //GetSession()->SendPacket(&data);
             }
 
             if(target->GetTypeId()==TYPEID_UNIT && ((Creature*)target)->isAlive())

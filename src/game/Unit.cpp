@@ -959,7 +959,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     //Lfg group info at kill creature
                     if(Group *group = creditedPlayer->GetGroup())
                     {
-                        error_log("Killed v unit");
                         if(group->isLfgGroup())
                             ((LfgGroup*)group)->KilledCreature(cVictim);
                     }
@@ -1895,9 +1894,8 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 uint32 damage=(*i)->GetModifier()->m_amount;
                 SpellEntry const *i_spellProto = (*i)->GetSpellProto();
                 // add spellpower and attack power coefficients 
-                int32 ap = int32(pVictim->GetTotalAttackPowerValue(BASE_ATTACK)); 
                 int32 sp = pVictim->SpellBaseDamageBonusDone(GetSpellSchoolMask(i_spellProto)); 
-                int32 tmpDamage = pVictim->SpellBonusWithCoeffs(i_spellProto, 0, sp, ap, SPELL_DIRECT_DAMAGE, true); 
+                int32 tmpDamage = pVictim->SpellBonusWithCoeffs(i_spellProto, 0, sp, 0, SPELL_DIRECT_DAMAGE, true);
                 damage += pVictim->CalculateSpellDamage(this, i_spellProto, (*i)->GetEffIndex(), &tmpDamage);                         
                 //Calculate absorb resist ??? no data in opcode for this possibly unable to absorb or resist?
                 //uint32 absorb;
@@ -6002,6 +6000,13 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     target = this;
                     break;
                 }
+                // Glyph of Scourge Strike 
+                case 58642: 
+                { 
+                    triggered_spell_id = 69961; 
+                    basepoints[0] = damage; 
+                    break; 
+                }
                 // Kill Command (remove stack)
                 case 58914:
                 {
@@ -6191,34 +6196,19 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                     CastSpell(this, 28682, true, castItem, triggeredByAura);
                     return (procEx & PROC_EX_CRITICAL_HIT); // charge update only at crit hits, no hidden cooldowns
                 }
-                // Empowered Fire
+                // Empowered Fire (Ignite Proc)
                 case 12654:
                 {
-                    if (Unit* caster = triggeredByAura->GetCaster())
+                    target = triggeredByAura->GetCaster(); 
+                    if (target && target->GetTypeId() == TYPEID_PLAYER)
                     {
-                        if (pVictim != caster)
-                            return false;
-                        Unit::AuraList const& auras = caster->GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
-                        for (Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); i++)
-                        {
-                            switch((*i)->GetId())
-                            {
-                                case 31656:
-                                case 31657:
-                                case 31658:
-                                    if(roll_chance_i((*i)->GetSpellProto()->procChance))
-                                    {
-                                        caster->CastSpell( caster, 67545, true );
-                                        return true;
-                                    }
-                                    break;
-                                default:
-                                    continue;
-                            }
-                            break;
-                        }
+                        caster = target; 
+                        // Get Empowered Fire talent 
+                        SpellEntry const *talent = ((Player*)target)->GetKnownTalentRankById(1734); 
+                        if (talent && roll_chance_i(talent->procChance)) 
+                            triggered_spell_id = 67545;
                     }
-                    return false;
+                    break;
                 }
                 // Glyph of Ice Block
                 case 56372:
@@ -9831,7 +9821,10 @@ int32 Unit::SpellBonusWithCoeffs(SpellEntry const *spellProto, int32 total, int3
                     ap_bonus += ((spell->CalculateSimpleValue(EFFECT_INDEX_0) * ap_bonus) / 100.0f);
             }
 
-            total += int32(ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + ap_benefit));
+            if (spellProto->SpellFamilyName == SPELLFAMILY_HUNTER && spellProto->DmgClass != SPELL_DAMAGE_CLASS_MELEE) 
+                total += int32(ap_bonus * (GetTotalAttackPowerValue(RANGED_ATTACK) + ap_benefit)); 
+            else 
+                total += int32(ap_bonus * (GetTotalAttackPowerValue(BASE_ATTACK) + ap_benefit));
         }
     }
     // Default calculation
@@ -11131,57 +11124,6 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
             }
         }
     }
- 
-    // .. taken pct: SPELL_AURA_284 
-    AuraList const& mAuraListAura284 = pVictim->GetAurasByType(SPELL_AURA_284); 
-    for(AuraList::const_iterator i = mAuraListAura284.begin(); i != mAuraListAura284.end(); ++i) 
-    { 
-        // Crypt Fever and Ebon Plague 
-        if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
-        { 
-            if (!spellProto) 
-                continue; 
-            if (spellProto->Dispel ==  DISPEL_DISEASE) 
-                DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
-        } 
-    } 
-    // .. taken (dummy auras)
-    AuraList const& mDummyAuras = pVictim->GetAurasByType(SPELL_AURA_DUMMY);
-    for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
-    {
-        switch((*i)->GetSpellProto()->SpellIconID)
-        {
-            //Cheat Death
-            case 2109:
-                if((*i)->GetModifier()->m_miscvalue & SPELL_SCHOOL_MASK_NORMAL)
-                {
-                    if(pVictim->GetTypeId() != TYPEID_PLAYER)
-                        continue;
-
-                    float mod = ((Player*)pVictim)->GetRatingBonusValue(CR_CRIT_TAKEN_MELEE)*(-8.0f);
-                    if (mod < float((*i)->GetModifier()->m_amount))
-                        mod = float((*i)->GetModifier()->m_amount);
-
-                    DonePercent *= (mod + 100.0f) / 100.0f;
-                }
-                break;
-            case 19:                // Blessing of Sanctuary 
-            case 1804:              // Greater Blessing of Sanctuary 
-                if ((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_PALADIN) 
-                    DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
-                break;
-            // Ebon Plague 
-            case 1933: 
-            { 
-                if((*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DEATHKNIGHT) 
-                { 
-                    if((*i)->GetModifier()->m_miscvalue & schoolMask) 
-                        DonePercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
-                } 
-                break; 
-            }
-        }
-    }
 
     // .. taken (class scripts)
     AuraList const& mclassScritAuras = GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
@@ -11336,6 +11278,14 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
         TakenPercent *= GetTotalAuraMultiplier(SPELL_AURA_MOD_RANGED_DAMAGE_TAKEN_PCT);
     else
         TakenPercent *= GetTotalAuraMultiplier(SPELL_AURA_MOD_MELEE_DAMAGE_TAKEN_PCT);
+
+    // From caster spells 
+    AuraList const& mOwnerTaken = GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER); 
+    for(AuraList::const_iterator i = mOwnerTaken.begin(); i != mOwnerTaken.end(); ++i) 
+    { 
+        if ((*i)->GetCasterGUID() == pCaster->GetGUID() && (*i)->isAffectedOnSpell(spellProto)) 
+            TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
+    }
 
     // ..taken pct (aoe avoidance)
     if(spellProto && IsAreaOfEffectSpell(spellProto))
@@ -14658,8 +14608,8 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry con
     }
     // Aura added by spell can`t trogger from self (prevent drop charges/do triggers)
     // But except periodic triggers (can triggered from self)
-    if(procSpell && procSpell->Id == spellProto->Id && !(spellProto->procFlags & PROC_FLAG_ON_TAKE_PERIODIC))
-        return false;
+    if(procSpell && procSpell->Id == spellProto->Id && !(EventProcFlag & PROC_FLAG_ON_TAKE_PERIODIC)) 
+         return false;
 
     // Check if current equipment allows aura to proc
     if(!isVictim && GetTypeId() == TYPEID_PLAYER)

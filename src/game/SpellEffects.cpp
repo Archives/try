@@ -671,16 +671,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     if (m_caster->HasAura(57627))           // Charge 6 sec post-affect
                         damage *= 2;
                 }
-                // Mongoose Bite
-                else if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x000000002)) && m_spellInfo->SpellVisual[0]==342)
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
-                }
-                // Counterattack
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0008000000000000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.2f);
-                }
                 // Steady Shot
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x100000000))
                 {
@@ -688,11 +678,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         return;
                     int32 base = irand((int32)m_caster->GetWeaponDamageRange(RANGED_ATTACK, MINDAMAGE),(int32)m_caster->GetWeaponDamageRange(RANGED_ATTACK, MAXDAMAGE));
                     damage += int32( 2.8f*( base * 1000/m_caster->GetAttackTime(RANGED_ATTACK) + ((Player*)m_caster)->GetAmmoDPS() ));
-                }
-                // Volley
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x00002000))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(RANGED_ATTACK)*0.0837f);
                 }
                 break;
             }
@@ -3701,10 +3686,29 @@ void Spell::EffectPersistentAA(SpellEffectIndex eff_idx)
 {
     float radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
 
-    if (Player* modOwner = m_caster->GetSpellModOwner())
-        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius);
-
-    int32 duration = GetSpellDuration(m_spellInfo);
+    int32 duration = GetSpellDuration(m_spellInfo); 
+  
+    if (Player* modOwner = m_caster->GetSpellModOwner()) 
+    {
+        bool applyHaste = false;
+        if((m_spellInfo->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2)) // All channeled spells
+            || (m_spellInfo->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE))                  // Some auras from 3.3.3
+            applyHaste = true;        
+        //SPELL_AURA_APPLY_HASTE_TO_AURA implentation
+        Unit::AuraList const& stateAuras = modOwner->GetAurasByType(SPELL_AURA_APPLY_HASTE_TO_AURA);
+        for(Unit::AuraList::const_iterator j = stateAuras.begin();j != stateAuras.end(); ++j)
+        {
+            if((*j)->isAffectedOnSpell(m_spellInfo))
+            {
+                applyHaste = true;
+                break;
+            }
+        }
+        if(applyHaste)
+            duration = ApplyHasteToChannelSpell(duration, m_spellInfo, this);
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius); 
+        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration); 
+    }
     DynamicObject* dynObj = new DynamicObject;
     if (!dynObj->Create(m_caster->GetMap()->GenerateLocalLowGuid(HIGHGUID_DYNAMICOBJECT), m_caster, m_spellInfo->Id, eff_idx, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, duration, radius))
     {
@@ -5231,6 +5235,9 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
         return;
     if(!unitTarget->isAlive())
         return;
+    // some triggered spells need this check (f.e. Whirlwind...)
+    if(!((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true))
+        return;
 
     // multiple weapon dmg effect workaround
     // execute only the last weapon damage
@@ -5463,18 +5470,18 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                          else 
                              ++itr; 
                      }  */
-                    /*Unit::AuraMap& auras = unitTarget->GetAuras();
+                    Unit::AuraMap& auras = unitTarget->GetAuras();
                     for(Unit::AuraMap::iterator itr = auras.begin(); itr != auras.end(); ++itr)
                     {
                         if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
                              itr->second->GetCasterGUID() == m_caster->GetGUID())
                         {
-                            unitTarget->RemoveSpellAuraHolder(itr->second); 
+                            unitTarget->RemoveAura(itr->second);
                             itr = auras.begin();
                         }
                         else
                             ++itr;
-                    }*/
+                    }
                 } 
  
             }
@@ -6520,6 +6527,26 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if(Aura *pAura = unitTarget->GetAura(spellId, EFFECT_INDEX_0))
                         pAura->SetStackAmount(urand(1,8));
                 }
+                case 69961:                                // Glyph of Scourge Strike proc 
+                { 
+                    if (!unitTarget) 
+                        return; 
+ 
+                    Unit::AuraMap const& auras = unitTarget->GetAuras(); 
+                    for(Unit::AuraMap::const_iterator itr = auras.begin(); itr!=auras.end(); ++itr) 
+                    { 
+                        if (itr->second->GetSpellProto()->Dispel == DISPEL_DISEASE && 
+                            itr->second->GetCasterGUID() == m_caster->GetGUID()) 
+                        { 
+                            int32 duration = itr->second->GetAuraDuration(); 
+                            duration += damage * IN_MILLISECONDS; 
+                            if (duration > itr->second->GetAuraMaxDuration() + 3 * damage * IN_MILLISECONDS) 
+                                duration = itr->second->GetAuraMaxDuration() + 3 * damage * IN_MILLISECONDS; 
+                            itr->second->SetAuraDuration(duration); 
+                        } 
+                    } 
+                    break; 
+                 }
             }
             break;
         }
@@ -8293,6 +8320,7 @@ void Spell::EffectActivateRune(SpellEffectIndex eff_idx)
             plr->SetRuneCooldown(j, 0);
         }
     }
+    plr->ResyncRunes(MAX_RUNES);
 }
 
 void Spell::EffectTitanGrip(SpellEffectIndex /*eff_idx*/)

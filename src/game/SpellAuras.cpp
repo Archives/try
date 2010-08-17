@@ -5700,18 +5700,6 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * 3 * GetStackAmount() / 100);
                 break;
             }
-            case SPELLFAMILY_HUNTER:
-            {
-                // Serpent Sting
-                if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000004000))
-                    // $RAP*0.2/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.2 / 5);
-                // Immolation Trap
-                else if ((m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000004)) && m_spellProto->SpellIconID == 678)
-                    // $RAP*0.1/5 bonus per tick
-                    m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(RANGED_ATTACK) * 10 / 500);
-                break;
-            }
             case SPELLFAMILY_PALADIN:
             {
                 // Holy Vengeance / Blood Corruption
@@ -6371,6 +6359,23 @@ void Aura::HandleModSpellCritChance(bool apply, bool Real)
     else
     {
         GetTarget()->m_baseSpellCritChance += apply ? m_modifier.m_amount:(-m_modifier.m_amount);
+    }
+
+    switch(GetId()) 
+    { 
+        // Elemental Oath (dmg increase while Clearcasting) 
+        case 51466: 
+        case 51470: 
+        { 
+            if (GetTarget()->GetTypeId() != TYPEID_PLAYER) 
+                break; 
+            // we have to simulate missing DBC 
+            m_spellmod = new SpellModifier(SPELLMOD_EFFECT2, SPELLMOD_FLAT, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1), GetId(), UI64LIT(0x400000000000)); 
+ 
+            ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply); 
+        } 
+        default: 
+            break; 
     }
 }
 

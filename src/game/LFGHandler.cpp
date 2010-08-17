@@ -125,7 +125,6 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         if(_player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != _player->m_lookingForGroup.queuedDungeons.end())
             continue;
         _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
-        error_log("JOIN TO %u", dungeonInfo->ID);
     } 
     recv_data >> unk; // looks like unk from LFGDungeons.dbc, so 0 = raid or zone, 3 = dungeon, 15 = world event. Possibly count of next data? anyway seems unused
     for (int8 i = 0 ; i < unk; ++i)
