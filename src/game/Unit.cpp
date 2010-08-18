@@ -11283,7 +11283,7 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
     AuraList const& mOwnerTaken = GetAurasByType(SPELL_AURA_MOD_DAMAGE_FROM_CASTER); 
     for(AuraList::const_iterator i = mOwnerTaken.begin(); i != mOwnerTaken.end(); ++i) 
     { 
-        if ((*i)->GetCasterGUID() == pCaster->GetGUID() && (*i)->isAffectedOnSpell(spellProto)) 
+        if ((*i)->GetCasterGUID() == pCaster->GetGUID() && spellProto &&  (*i)->isAffectedOnSpell(spellProto)) 
             TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f; 
     }
 

@@ -95,7 +95,7 @@ bool LfgGroup::AddMember(const uint64 &guid, const char* name)
     return true;
 }
 
-void LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
+uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
 {
     member_witerator slot = _getMemberWSlot(guid);
     if (slot != m_memberSlots.end())
@@ -122,6 +122,7 @@ void LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
     else if(dps->find(guid) != dps->end())
         dps->erase(guid);
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", GUID_LOPART(guid));
+    return 0;
 }
 
 uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
@@ -339,7 +340,7 @@ void LfgGroup::TeleportToDungeon()
     m_dungeonDifficulty = m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL;
     m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
     //Save to DB
-    CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Id);
+    CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u' OR leaderGuid='%u'", m_Id, GUID_LOPART(m_leaderGuid));
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Id);
     CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty,healGuid,LfgId,LfgRandomEntry,LfgInstanceStatus) "
         "VALUES ('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u','%u','%u','%u','%u')",
@@ -387,6 +388,18 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                     sLfgMgr.AddGroupToDelete(itr->second);
             }
         }
+
+        if(Group *group = plr->GetGroup())
+        {
+            if(!group->isLfgGroup())
+            {
+                group->RemoveMember(plr->GetGUID(), 0);
+                if(group->GetMembersCount() == 0)
+                    group->Disband(true);
+            }
+            plr->SetGroup(NULL);
+        }
+
         plr->m_lookingForGroup.groups.clear();
         plr->UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
         plr->ResetInstances(INSTANCE_RESET_GROUP_JOIN,false);
@@ -398,16 +411,6 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                 plr->SetDungeonDifficulty(GetDungeonDifficulty());
             if (plr->GetRaidDifficulty() != GetRaidDifficulty())
                 plr->SetRaidDifficulty(GetRaidDifficulty());
-        }
-        plr->UninviteFromGroup();
-        if(Group *group = plr->GetGroup())
-        {
-            if(!group->isLfgGroup())
-            {
-                group->RemoveMember(plr->GetGUID(), 0);
-                if(group->GetMembersCount() == 0)
-                    group->Disband(true);
-            }
         }
         plr->SetGroup(this, 1);
         plr->SetGroupInvite(NULL);
@@ -498,7 +501,6 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
 
 bool LfgGroup::HasCorrectLevel(uint8 level)
 {
-    bool isCorrect = true;
     //Non random
     if(!m_dungeonInfo->isRandom())
     {
@@ -512,26 +514,25 @@ bool LfgGroup::HasCorrectLevel(uint8 level)
         case LFG_GROUPTYPE_CLASSIC: 
         case LFG_GROUPTYPE_BC_NORMAL:
             if(m_baseLevel > level)
-                isCorrect = (m_baseLevel - level <= 5);
+                return (m_baseLevel - level <= 5);
             else
-                isCorrect = (level - m_baseLevel <= 5);
+                return (level - m_baseLevel <= 5);
         case LFG_GROUPTYPE_BC_HEROIC:
             if(level < 70 || level > 73)
-                isCorrect = false;
+                return false;
             else
-                isCorrect = true;
+                return true;
         case LFG_GROUPTYPE_WTLK_NORMAL:
             if(level > 68)
-                isCorrect = true;
+                return true;
             else
-                isCorrect = false;
+                return false;
         case LFG_GROUPTYPE_WTLK_HEROIC:
             if(level == 80)
-                isCorrect = true;
+                return true;
             else
-                isCorrect = false;
+                return false;
     }
-    return isCorrect;
 }
 void LfgGroup::SendUpdate()
 {
