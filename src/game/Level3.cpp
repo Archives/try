@@ -3832,7 +3832,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/)
     CreatureInfo const* cInfo = target->GetCreatureInfo();
 
     time_t curRespawnDelay = target->GetRespawnTimeEx()-time(NULL);
-    if(curRespawnDelay < 0)
+    if (curRespawnDelay < 0)
         curRespawnDelay = 0;
     std::string curRespawnDelayStr = secsToTimeString(curRespawnDelay,true);
     std::string defRespawnDelayStr = secsToTimeString(target->GetRespawnDelay(),true);
@@ -3840,7 +3840,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_NPCINFO_CHAR,  target->GetDBTableGUIDLow(), faction, npcflags, Entry, displayid, nativeid);
     PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
     PSendSysMessage(LANG_NPCINFO_HEALTH,target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());
-    if(target->GetAIName())
+    if (target->HasAIName())
         PSendSysMessage("ScriptName: %s", target->GetAIName().c_str());
     PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->getFaction());
     PSendSysMessage(LANG_COMMAND_RAWPAWNTIMES, defRespawnDelayStr.c_str(),curRespawnDelayStr.c_str());
