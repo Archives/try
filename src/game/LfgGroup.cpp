@@ -122,6 +122,7 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
     else if(dps->find(guid) != dps->end())
         dps->erase(guid);
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", GUID_LOPART(guid));
+    return 0;
 }
 
 uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
@@ -185,7 +186,7 @@ void LfgGroup::KilledCreature(Creature *creature)
 {
     if(creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
     {
-		if(m_instanceStatus == INSTANCE_NOT_SAVED)
+        if(m_instanceStatus == INSTANCE_NOT_SAVED)
             m_instanceStatus = INSTANCE_SAVED;
         //There are mask values for bosses, this is not correct
         m_killedBosses += !m_killedBosses ? 1 : m_killedBosses*2;

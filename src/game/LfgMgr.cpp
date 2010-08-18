@@ -1122,6 +1122,7 @@ uint32 LfgMgr::GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles)
         case LFG_WAIT_TIME_DPS:
             return (m_waitTimes[slot].find(dugeonId)->second / 1000);  // No check required, if this method is called, some data is already in array
         case LFG_WAIT_TIME_AVG:
+        {
             if(roles & TANK)
             {
                 if(!(roles & HEALER) && !(roles & DAMAGE))
@@ -1135,6 +1136,7 @@ uint32 LfgMgr::GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles)
             else if(roles & DAMAGE)
                 return (m_waitTimes[LFG_WAIT_TIME_DPS].find(dugeonId)->second / 1000);
             return (m_waitTimes[LFG_WAIT_TIME].find(dugeonId)->second / 1000);
+        }
     }
 }
 void LfgMgr::AddGroupToDelete(LfgGroup *group)
