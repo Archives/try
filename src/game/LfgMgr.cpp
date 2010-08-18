@@ -1114,41 +1114,28 @@ void LfgMgr::LoadDungeonsInfo()
 }
 uint32 LfgMgr::GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles)
 {
-    int waittime = 0;
     switch(slot)
     {
         case LFG_WAIT_TIME:
         case LFG_WAIT_TIME_TANK:
         case LFG_WAIT_TIME_HEAL:
         case LFG_WAIT_TIME_DPS:
-            waittime = (m_waitTimes[slot].find(dugeonId)->second / 1000);  // No check required, if this method is called, some data is already in array
-            break;
+            return (m_waitTimes[slot].find(dugeonId)->second / 1000);  // No check required, if this method is called, some data is already in array
         case LFG_WAIT_TIME_AVG:
             if(roles & TANK)
             {
                 if(!(roles & HEALER) && !(roles & DAMAGE))
-                {
-                    waittime = (m_waitTimes[LFG_WAIT_TIME_TANK].find(dugeonId)->second / 1000);
-                    break;
-                }
+                    return (m_waitTimes[LFG_WAIT_TIME_TANK].find(dugeonId)->second / 1000);
             }
             else if(roles & HEALER)
             {
                 if(!(roles & DAMAGE))
-                {
-                    waittime = (m_waitTimes[LFG_WAIT_TIME_HEAL].find(dugeonId)->second / 1000);
-                    break;
-                }
+                    return (m_waitTimes[LFG_WAIT_TIME_HEAL].find(dugeonId)->second / 1000);
             }
             else if(roles & DAMAGE)
-            {
-                waittime = (m_waitTimes[LFG_WAIT_TIME_DPS].find(dugeonId)->second / 1000);
-                break;
-            }
-            waittime =(m_waitTimes[LFG_WAIT_TIME].find(dugeonId)->second / 1000);
-            break;
+                return (m_waitTimes[LFG_WAIT_TIME_DPS].find(dugeonId)->second / 1000);
+            return (m_waitTimes[LFG_WAIT_TIME].find(dugeonId)->second / 1000);
     }
-    return waittime;
 }
 void LfgMgr::AddGroupToDelete(LfgGroup *group)
 {

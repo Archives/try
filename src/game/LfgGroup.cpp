@@ -95,7 +95,7 @@ bool LfgGroup::AddMember(const uint64 &guid, const char* name)
     return true;
 }
 
-void LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
+uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
 {
     member_witerator slot = _getMemberWSlot(guid);
     if (slot != m_memberSlots.end())
@@ -185,7 +185,7 @@ void LfgGroup::KilledCreature(Creature *creature)
 {
     if(creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
     {
-        if(m_instanceStatus == INSTANCE_NOT_SAVED)
+		if(m_instanceStatus == INSTANCE_NOT_SAVED)
             m_instanceStatus = INSTANCE_SAVED;
         //There are mask values for bosses, this is not correct
         m_killedBosses += !m_killedBosses ? 1 : m_killedBosses*2;
@@ -500,7 +500,6 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
 
 bool LfgGroup::HasCorrectLevel(uint8 level)
 {
-    bool isCorrect = true;
     //Non random
     if(!m_dungeonInfo->isRandom())
     {
@@ -514,26 +513,25 @@ bool LfgGroup::HasCorrectLevel(uint8 level)
         case LFG_GROUPTYPE_CLASSIC: 
         case LFG_GROUPTYPE_BC_NORMAL:
             if(m_baseLevel > level)
-                isCorrect = (m_baseLevel - level <= 5);
+                return (m_baseLevel - level <= 5);
             else
-                isCorrect = (level - m_baseLevel <= 5);
+                return (level - m_baseLevel <= 5);
         case LFG_GROUPTYPE_BC_HEROIC:
             if(level < 70 || level > 73)
-                isCorrect = false;
+                return false;
             else
-                isCorrect = true;
+                return true;
         case LFG_GROUPTYPE_WTLK_NORMAL:
             if(level > 68)
-                isCorrect = true;
+                return true;
             else
-                isCorrect = false;
+                return false;
         case LFG_GROUPTYPE_WTLK_HEROIC:
             if(level == 80)
-                isCorrect = true;
+                return true;
             else
-                isCorrect = false;
+                return false;
     }
-    return isCorrect;
 }
 void LfgGroup::SendUpdate()
 {
