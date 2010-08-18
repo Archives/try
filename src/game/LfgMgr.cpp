@@ -709,7 +709,7 @@ void LfgMgr::UpdateFormedGroups()
                     for(Group::member_citerator citr = (*grpitr)->GetMemberSlots().begin(); citr != (*grpitr)->GetMemberSlots().end(); ++citr)
                     {
                         Player *member = sObjectMgr.GetPlayer(citr->guid);
-                        if(!member || !member->GetSession() || member->GetGUID() == (*grpitr)->GetLeaderGUID())
+                        if(!member || !member->GetSession())
                             continue;
                         SendLfgUpdatePlayer(member, LFG_UPDATETYPE_GROUP_FOUND);
                         SendLfgUpdatePlayer(member, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
@@ -1157,7 +1157,7 @@ void LfgMgr::RemovePlayer(Player *player)
     {
         for(GroupsList::iterator itr = formedGroups[i].begin(); itr != formedGroups[i].end(); ++itr)
         {
-            if((*itr)->IsMember(player->GetGUID()))
+            if((*itr)->IsMember(player->GetGUID()) && (*itr)->GetGroupType() & GROUPTYPE_LFD_1)
                 (*itr)->RemoveMember(player->GetGUID(), 0);
 
             if((*itr)->GetMembersCount() == 0)

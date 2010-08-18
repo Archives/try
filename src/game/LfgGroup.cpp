@@ -339,7 +339,7 @@ void LfgGroup::TeleportToDungeon()
     m_dungeonDifficulty = m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL;
     m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
     //Save to DB
-    CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u'", m_Id);
+    CharacterDatabase.PExecute("DELETE FROM groups WHERE groupId ='%u' OR leaderGuid='%u'", m_Id, GUID_LOPART(m_leaderGuid));
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE groupId ='%u'", m_Id);
     CharacterDatabase.PExecute("INSERT INTO groups (groupId,leaderGuid,mainTank,mainAssistant,lootMethod,looterGuid,lootThreshold,icon1,icon2,icon3,icon4,icon5,icon6,icon7,icon8,groupType,difficulty,raiddifficulty,healGuid,LfgId,LfgRandomEntry,LfgInstanceStatus) "
         "VALUES ('%u','%u','%u','%u','%u','%u','%u','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','" UI64FMTD "','%u','%u','%u','%u','%u','%u','%u')",
@@ -387,6 +387,18 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                     sLfgMgr.AddGroupToDelete(itr->second);
             }
         }
+
+        if(Group *group = plr->GetGroup())
+        {
+            if(!group->isLfgGroup())
+            {
+                group->RemoveMember(plr->GetGUID(), 0);
+                if(group->GetMembersCount() == 0)
+                    group->Disband(true);
+            }
+            plr->SetGroup(NULL);
+        }
+
         plr->m_lookingForGroup.groups.clear();
         plr->UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
         plr->ResetInstances(INSTANCE_RESET_GROUP_JOIN,false);
@@ -398,16 +410,6 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                 plr->SetDungeonDifficulty(GetDungeonDifficulty());
             if (plr->GetRaidDifficulty() != GetRaidDifficulty())
                 plr->SetRaidDifficulty(GetRaidDifficulty());
-        }
-        plr->UninviteFromGroup();
-        if(Group *group = plr->GetGroup())
-        {
-            if(!group->isLfgGroup())
-            {
-                group->RemoveMember(plr->GetGUID(), 0);
-                if(group->GetMembersCount() == 0)
-                    group->Disband(true);
-            }
         }
         plr->SetGroup(this, 1);
         plr->SetGroupInvite(NULL);
