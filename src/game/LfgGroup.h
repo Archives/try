@@ -94,7 +94,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
         
         //Override these methods
         bool AddMember(const uint64 &guid, const char* name);
-        uint32 RemoveMember(const uint64 &guid, const uint8 &method);
+        void RemoveMember(const uint64 &guid, const uint8 &method);
         void SendUpdate();
 
         uint64 GetTank() const { return m_tank; };
