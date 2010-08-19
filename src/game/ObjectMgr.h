@@ -250,6 +250,13 @@ struct ReputationOnKillEntry
     bool team_dependent;
 };
 
+struct RepSpilloverTemplate
+{
+    uint32 faction[MAX_SPILLOVER_FACTIONS];
+    float faction_rate[MAX_SPILLOVER_FACTIONS];
+    uint32 faction_rank[MAX_SPILLOVER_FACTIONS];
+};
+
 struct PointOfInterest
 {
     uint32 entry;
@@ -473,6 +480,8 @@ class ObjectMgr
         typedef UNORDERED_MAP<uint32, uint32> AreaTriggerScriptMap;
 
         typedef UNORDERED_MAP<uint32, ReputationOnKillEntry> RepOnKillMap;
+        typedef UNORDERED_MAP<uint32, RepSpilloverTemplate> RepSpilloverTemplateMap;
+
         typedef UNORDERED_MAP<uint32, PointOfInterest> PointOfInterestMap;
 
         typedef UNORDERED_MAP<uint32, WeatherZoneChances> WeatherZoneMap;
@@ -610,6 +619,15 @@ class ObjectMgr
             return NULL;
         }
 
+        RepSpilloverTemplate const* GetRepSpilloverTemplate(uint32 factionId) const
+        {
+            RepSpilloverTemplateMap::const_iterator itr = m_RepSpilloverTemplateMap.find(factionId);
+            if (itr != m_RepSpilloverTemplateMap.end())
+                return &itr->second;
+
+            return NULL;
+        }
+
         PointOfInterest const* GetPointOfInterest(uint32 id) const
         {
             PointOfInterestMap::const_iterator itr = mPointsOfInterest.find(id);
@@ -699,6 +717,8 @@ class ObjectMgr
         void LoadFishingBaseSkillLevel();
 
         void LoadReputationOnKill();
+        void LoadReputationSpilloverTemplate();
+
         void LoadPointsOfInterest();
         void LoadQuestPOI();
 
@@ -1042,6 +1062,7 @@ class ObjectMgr
         AreaTriggerScriptMap  mAreaTriggerScripts;
 
         RepOnKillMap        mRepOnKill;
+        RepSpilloverTemplateMap m_RepSpilloverTemplateMap;
 
         GossipMenusMap      m_mGossipMenusMap;
         GossipMenuItemsMap  m_mGossipMenuItemsMap;

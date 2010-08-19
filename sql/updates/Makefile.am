@@ -100,6 +100,7 @@ pkgdata_DATA = \
 	10131_01_mangos_spell_bonus_data.sql \
 	10148_01_mangos_mangos_string.sql \
 	10171_01_mangos_mangos_string.sql \
+	10270_01_mangos_reputation_spillover_template.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -180,4 +181,5 @@ EXTRA_DIST = \
 	10131_01_mangos_spell_bonus_data.sql \
 	10148_01_mangos_mangos_string.sql \
 	10171_01_mangos_mangos_string.sql \
+	10270_01_mangos_reputation_spillover_template.sql \
 	README

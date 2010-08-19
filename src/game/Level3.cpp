@@ -534,6 +534,22 @@ bool ChatHandler::HandleReloadReservedNameCommand(const char*)
     return true;
 }
 
+bool ChatHandler::HandleReloadReputationRewardRateCommand(const char*)
+{
+    sLog.outString( "Re-Loading `reputation_reward_rate` Table!" );
+    sObjectMgr.LoadReputationRewardRate();
+    SendGlobalSysMessage("DB table `reputation_reward_rate` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadReputationSpilloverTemplateCommand(const char*)
+{
+    sLog.outString( "Re-Loading `reputation_spillover_template` Table!" );
+    sObjectMgr.LoadReputationSpilloverTemplate();
+    SendGlobalSysMessage("DB table `reputation_spillover_template` reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadSkillDiscoveryTemplateCommand(const char* /*args*/)
 {
     sLog.outString( "Re-Loading Skill Discovery Table..." );
