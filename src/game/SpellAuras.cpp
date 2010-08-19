@@ -6369,8 +6369,9 @@ void Aura::HandleModSpellCritChance(bool apply, bool Real)
         { 
             if (GetTarget()->GetTypeId() != TYPEID_PLAYER) 
                 break; 
-            // we have to simulate missing DBC 
-            m_spellmod = new SpellModifier(SPELLMOD_EFFECT2, SPELLMOD_FLAT, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1), GetId(), UI64LIT(0x400000000000)); 
+            // we have to simulate missing DBC
+            if(apply)
+                m_spellmod = new SpellModifier(SPELLMOD_EFFECT2, SPELLMOD_FLAT, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1), GetId(), UI64LIT(0x400000000000)); 
  
             ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply); 
         } 
