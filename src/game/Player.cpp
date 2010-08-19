@@ -6226,13 +6226,7 @@ bool Player::SetPosition(float x, float y, float z, float orientation, bool tele
 
     // code block for underwater state update
     UpdateUnderwaterState(m, x, y, z);
-<<<<<<< HEAD
-    CheckExploreSystem();
-=======
-
     CheckAreaExploreAndOutdoor();
->>>>>>> 76676ba... [10165] New collission system (vmap) implementation
-
     return true;
 }
 
