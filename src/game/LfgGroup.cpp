@@ -1041,6 +1041,24 @@ bool LfgGroup::UpdateVoteToKick(uint32 diff)
                 victim->TeleportTo(teleLoc);
             }
         }
+        //Change leader
+        if(m_voteToKick.victim == m_leaderGuid)
+        {
+            for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+            {
+                Player *plr = sObjectMgr.GetPlayer(citr->guid);
+                if(!plr || !plr->GetSession())
+                    continue;
+                if(plr->m_lookingForGroup.roles & LEADER)
+                {
+                    ChangeLeader(plr->GetGUID());
+                    break;
+                }
+            }
+            if(m_leaderGuid == 0)
+                ChangeLeader(GetFirstMember()->getSource()->GetGUID());            
+        }
+
         m_voteToKick.Reset();
         SendUpdate();
         return true;
