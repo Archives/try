@@ -72,6 +72,8 @@ bool LfgGroup::LoadGroupFromDB(Field *fields)
     m_heal = fields[1].GetUInt64();
     m_dungeonInfo = sLFGDungeonStore.LookupEntry(fields[19].GetUInt32());
     randomDungeonEntry = fields[20].GetUInt32();
+    if(randomDungeonEntry)
+        m_isRandom = true;
     m_instanceStatus = fields[21].GetUInt8();
     m_inDungeon = true; 
     return true;
@@ -161,18 +163,16 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
         sLfgMgr.AddGroupToDelete(this);
         return true;
     }
-    member_citerator citr, next;
-    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); citr = next)
+    PlayerList toRemove;
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
-        next = citr;
-        ++next; 
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
         if((!plr || (!plr->GetSession() && !plr->IsBeingTeleported())) && premadePlayers.find(citr->guid) == premadePlayers.end())
-        {
-            uint64 guid = citr->guid;
-            RemoveMember(guid, 0);
-        }
+            toRemove.insert(citr->guid);
     }
+    for(PlayerList::iterator itr = toRemove.begin(); itr != toRemove.end(); ++itr)
+        RemoveMember(*itr, 0);
+    toRemove.clear();
     //flush empty group
     if(GetMembersCount() == 0)
     {

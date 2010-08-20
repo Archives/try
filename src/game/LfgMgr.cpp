@@ -48,7 +48,10 @@ LfgMgr::~LfgMgr()
         for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end();++itr)
         {
             for(GroupsList::iterator grpitr = itr->second->groups.begin(); grpitr != itr->second->groups.end();++grpitr)
-                 delete *grpitr;
+            {
+                (*grpitr)->Disband(true);
+                delete *grpitr;
+            }
             delete itr->second;
         }
     }
@@ -89,6 +92,7 @@ void LfgMgr::Update(uint32 diff)
     {
         for(GroupsList::iterator itr = groupsForDelete.begin(); itr != groupsForDelete.end(); ++itr)
         {
+            (*itr)->Disband(true);
             delete *itr;
             groupsForDelete.erase(itr);
         }
@@ -123,7 +127,6 @@ void LfgMgr::AddToQueue(Player *player, bool updateQueue)
                 SendLfgUpdateParty(plr , LFG_UPDATETYPE_JOIN_PROPOSAL);
                 lfgGroup->AddMember(plr->GetGUID(), plr->GetName());
                 lfgGroup->GetPremadePlayers()->insert(plr->GetGUID());
-                plr->m_lookingForGroup.groups.insert(std::pair<uint32, LfgGroup*>((*itr)->ID, lfgGroup));
             }
             lfgGroup->SetLeader(group->GetLeaderGUID());
 
