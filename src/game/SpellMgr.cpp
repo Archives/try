@@ -1920,6 +1920,17 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Dragonmaw Illusion (multi-family check)
                     if (spellId_1 == 40216 && spellId_2 == 42016 )
                         return false;
+<<<<<<< HEAD
+=======
+
+                    // Rejuvenation and Forethought Talisman (item 40258)
+                    if(spellInfo_1->Id == 60530 && spellInfo_2->SpellIconID == 64)
+                        return false;
+
+                   // Frenzied Regeneration and Darkmoon Card Berserker
+                    if(spellInfo_2->Id == 22842 && spellInfo_1->Id == 60196 )
+                        return false;
+>>>>>>> 01f76cfad41b9970ea7bc820e557b1126eb5addd
                     break;
                 }
                 case SPELLFAMILY_ROGUE:
@@ -2216,6 +2227,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Rejuvenation and Forethought Talisman (item 40258) (60530 has spellfamily druid)
             if((spellInfo_2->Id == 60530 && spellInfo_1->SpellIconID == 64) ||
                 spellInfo_1->Id == 60530 && spellInfo_2->SpellIconID == 64))
+                return false;
+
+            // Frenzied Regeneration and Darkmoon Card Berserker
+            if(spellInfo_1->Id == 22842 && spellInfo_2->Id == 60196 )
                 return false;
 
             break;
