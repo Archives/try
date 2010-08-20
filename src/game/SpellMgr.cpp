@@ -1924,6 +1924,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     // Rejuvenation and Forethought Talisman (item 40258)
                     if(spellInfo_1->Id == 60530 && spellInfo_2->SpellIconID == 64)
                         return false;
+
+                   // Frenzied Regeneration and Darkmoon Card Berserker
+                    if(spellInfo_2->Id == 22842 && spellInfo_1->Id == 60196 )
+                        return false;
                     break;
                 }
                 case SPELLFAMILY_ROGUE:
@@ -2219,6 +2223,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
             // Rejuvenation and Forethought Talisman (item 40258)
             if(spellInfo_2->Id == 60530 && spellInfo_1->SpellIconID == 64)
+                return false;
+
+            // Frenzied Regeneration and Darkmoon Card Berserker
+            if(spellInfo_1->Id == 22842 && spellInfo_2->Id == 60196 )
                 return false;
 
             break;
