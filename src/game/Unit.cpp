@@ -4735,6 +4735,17 @@ void Unit::RemoveAurasDueToSpellByCancel(uint32 spellId)
     }	
 }
 
+void Unit::RemoveAurasWithAttribute(uint32 attribute)
+{
+    for (AuraMap::iterator iter = m_Auras.begin(); iter != m_Auras.end(); )
+    {
+        if (iter->second->GetSpellProto()->Attributes & attribute)
+            RemoveAura(iter);
+        else
+            ++iter;
+    }	
+}
+
 void Unit::RemoveAurasWithDispelType( DispelType type )
 {
     // Create dispel mask by dispel type
