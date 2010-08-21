@@ -2484,7 +2484,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 pTarget->GetClosePoint(_target_x, _target_y, _target_z, pTarget->GetObjectBoundingRadius(), dist, angle);
                 if(pTarget->IsWithinLOS(_target_x, _target_y, _target_z))
                 {
-                    targetUnitMap.push_back(m_caster);
+                    targetUnitMap.push_back(pTarget);
                     m_targets.setDestination(_target_x, _target_y, _target_z);
                 }
             }
