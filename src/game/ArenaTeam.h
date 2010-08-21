@@ -140,6 +140,9 @@ class ArenaTeam
         void SetStats(uint32 stat_type, uint32 value);
         uint32 GetRating() const          { return m_stats.rating; }
         void SetRank (uint32 rank)        { m_stats.rank = rank; }
+        
+        void UpdateAllRanks();
+        void UpdateTeamRank(bool update_packet = true, bool save_to_db = false);
 
         uint32 GetEmblemStyle() const     { return m_EmblemStyle; }
         uint32 GetEmblemColor() const     { return m_EmblemColor; }

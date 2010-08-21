@@ -17536,6 +17536,13 @@ void Player::SaveToDB()
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
         pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+    
+    // update team rank
+    for(int i = 0; i < MAX_ARENA_SLOT; ++i)
+    {
+        if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
+            at->UpdateTeamRank(false, true);
+    }
 }
 
 // fast save function for item/money cheating preventing - save only inventory and money state

@@ -822,8 +822,6 @@ void BattleGround::EndBattleGround(uint32 winner)
                 loser_change = loser_arena_team->DrawAgainst(winner_rating);
             }
 
-            UpdateArenaTeamRanks();
-
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Losser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner ? winner : ALLIANCE, winner_change);
             SetArenaTeamRatingChangeForTeam(winner ? GetOtherTeam(winner) : HORDE, loser_change);
@@ -981,8 +979,7 @@ void BattleGround::EndBattleGround(uint32 winner)
         loser_arena_team->SaveToDB();
         // send updated arena team stats to players
         // this way all arena team members will get notified, not only the ones who participated in this match
-        winner_arena_team->NotifyStatsChanged();
-        loser_arena_team->NotifyStatsChanged();
+        winner_arena_team->UpdateAllRanks();
         winner_string << ")";
         loser_string << ")";
         sLog.outArenaLog("%s %s %s", basic.str().c_str(), winner_string.str().c_str(), loser_string.str().c_str());
@@ -2112,18 +2109,4 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
 {
     m_BracketId  = bracketEntry->GetBracketId();
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
-}
-
-void BattleGround::UpdateArenaTeamRanks()
-{
-    for (ObjectMgr::ArenaTeamMap::const_iterator itr = sObjectMgr.GetArenaTeamMapBegin(); itr != sObjectMgr.GetArenaTeamMapEnd(); ++itr)
-    {
-        uint32 rank = 1;
-        for (ObjectMgr::ArenaTeamMap::const_iterator i = sObjectMgr.GetArenaTeamMapBegin(); i != sObjectMgr.GetArenaTeamMapEnd(); ++i)
-        {
-            if (i->second->GetType() == itr->second->GetType() && i->second->GetStats().rating > itr->second->GetRating())
-                ++rank;
-        }
-        itr->second->SetRank(rank);
-    }
 }
