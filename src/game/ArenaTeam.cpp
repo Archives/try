@@ -806,7 +806,7 @@ void ArenaTeam::UpdateTeamRank(bool update_packet, bool save_to_db)
     uint32 rank = 1;
     for (ObjectMgr::ArenaTeamMap::const_iterator i = sObjectMgr.GetArenaTeamMapBegin(); i != sObjectMgr.GetArenaTeamMapEnd(); ++i)
     {
-        if (i->second->GetType() == itr->second->GetType() && i->second->GetStats().rating > itr->second->GetRating())
+        if (GetType() == i->second->GetType() && GetStats().rating > i->second->GetRating())
                 ++rank;
     }
     SetRank(rank);
