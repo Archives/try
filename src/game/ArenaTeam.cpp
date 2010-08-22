@@ -818,15 +818,15 @@ void ArenaTeam::UpdateTeamRank(bool update_packet, bool save_to_db)
 
 void ArenaTeam::UpdateAllRanks()
 {
-    for (ObjectMgr::ArenaTeamMap::const_iterator itr = sObjectMgr.GetArenaTeamMapBegin(); itr != sObjectMgr.GetArenaTeamMapEnd(); ++itr)
+    for (ObjectMgr::ArenaTeamMap::const_iterator team = sObjectMgr.GetArenaTeamMapBegin(); team != sObjectMgr.GetArenaTeamMapEnd(); ++team)
     {
         uint32 rank = 1;
-        for (ObjectMgr::ArenaTeamMap::const_iterator i = sObjectMgr.GetArenaTeamMapBegin(); i != sObjectMgr.GetArenaTeamMapEnd(); ++i)
+        for (ObjectMgr::ArenaTeamMap::const_iterator compare = sObjectMgr.GetArenaTeamMapBegin(); compare != sObjectMgr.GetArenaTeamMapEnd(); ++compare)
         {
-            if (i->second->GetType() == itr->second->GetType() && i->second->GetStats().rating > itr->second->GetRating())
+            if (team->second->GetType() == compare->second->GetType() && team->second->GetStats().rating > compare->second->GetRating())
                 ++rank;
         }
-        itr->second->SetRank(rank);
-        itr->second->NotifyStatsChanged();
+        team->second->SetRank(rank);
+        team->second->NotifyStatsChanged();
     }
 }
