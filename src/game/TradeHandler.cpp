@@ -402,7 +402,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
         clearAcceptTradeMode(myItems, hisItems);
 
         // in case of missing space report error
-        if(!myCanCompleteTrade)
+        if (!myCanCompleteTrade)
         {
             clearAcceptTradeMode(my_trade, his_trade);
 

@@ -157,7 +157,7 @@ class SpellCastTargets
         void setTradeItemTarget(Player* caster);
         void updateTradeSlotItem()
         {
-            if(m_itemTarget && (m_targetMask & TARGET_FLAG_TRADE_ITEM))
+            if (m_itemTarget && (m_targetMask & TARGET_FLAG_TRADE_ITEM))
             {
                 m_itemTargetGUID = m_itemTarget->GetGUID();
                 m_itemTargetEntry = m_itemTarget->GetEntry();
@@ -527,7 +527,7 @@ class Spell
         uint8 m_delayAtDamageCount;
         bool isDelayableNoMore()
         {
-            if(m_delayAtDamageCount >= 2)
+            if (m_delayAtDamageCount >= 2)
                 return true;
 
             m_delayAtDamageCount++;
@@ -674,19 +674,19 @@ namespace MaNGOS
 
         void Visit(PlayerMapType &m)
         {
-            if(!i_originalCaster)
+            if (!i_originalCaster)
                 return;
 
             for(PlayerMapType::iterator itr=m.begin(); itr != m.end(); ++itr)
             {
                 Player * pPlayer = itr->getSource();
-                if( !pPlayer->isAlive() || pPlayer->isInFlight())
+                if ( !pPlayer->isAlive() || pPlayer->isInFlight())
                     continue;
 
-                if( i_originalCaster->IsFriendlyTo(pPlayer) )
+                if ( i_originalCaster->IsFriendlyTo(pPlayer) )
                     continue;
 
-                if( pPlayer->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
+                if ( pPlayer->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
                     i_data.push_back(pPlayer);
             }
         }
@@ -717,7 +717,7 @@ namespace MaNGOS
         {
             ASSERT(i_data);
 
-            if(!i_originalCaster)
+            if (!i_originalCaster)
                 return;
 
             for(typename GridRefManager<T>::iterator itr = m.begin(); itr != m.end(); ++itr)
@@ -749,7 +749,7 @@ namespace MaNGOS
                         break;
                     case SPELL_TARGETS_AOE_DAMAGE:
                     {
-                        if(itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->isTotem())
+                        if (itr->getSource()->GetTypeId()==TYPEID_UNIT && ((Creature*)itr->getSource())->isTotem())
                             continue;
 
                         if (i_playerControled)
@@ -773,44 +773,44 @@ namespace MaNGOS
                 switch(i_push_type)
                 {
                     case PUSH_IN_FRONT:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
+                        if (i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_90:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/2 ))
+                        if (i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/2 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_30:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/6 ))
+                        if (i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/6 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_FRONT_15:
-                        if(i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/12 ))
+                        if (i_spell.GetCaster()->isInFront((Unit*)(itr->getSource()), i_radius, M_PI_F/12 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_IN_BACK:
-                        if(i_spell.GetCaster()->isInBack((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
+                        if (i_spell.GetCaster()->isInBack((Unit*)(itr->getSource()), i_radius, 2*M_PI_F/3 ))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_SELF_CENTER:
-                        if(i_spell.GetCaster()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
+                        if (i_spell.GetCaster()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_DEST_CENTER:
-                        if(itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
+                        if (itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_TARGET_CENTER:
-                        if(i_spell.m_targets.getUnitTarget()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
+                        if (i_spell.m_targets.getUnitTarget()->IsWithinDist((Unit*)(itr->getSource()), i_radius))
                             i_data->push_back(itr->getSource());
                         break;
                     case PUSH_LINE:
-                        if(i_spell.GetCaster()->HasInArc(M_PI_F, itr->getSource(), i_spell.m_targets.m_srcO) &&
+                        if (i_spell.GetCaster()->HasInArc(M_PI_F, itr->getSource(), i_spell.m_targets.m_srcO) &&
                             itr->getSource()->IsWithinDist3d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY, i_spell.m_targets.m_destZ,i_radius))
                         {
                             float width = itr->getSource()->GetObjectBoundingRadius();
                             float relativeAngle = itr->getSource()->GetAngle(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY) - itr->getSource()->GetOrientation();
-                            if(abs(sin(relativeAngle)) * itr->getSource()->GetDistance2d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY) < width)
+                            if (abs(sin(relativeAngle)) * itr->getSource()->GetDistance2d(i_spell.m_targets.m_destX, i_spell.m_targets.m_destY) < width)
                                 i_data->push_back(itr->getSource());
                         }
                         break;

@@ -95,14 +95,14 @@ void BattleGroundWS::Update(uint32 diff)
                 for(uint8 i = 0; i < BG_TEAMS_COUNT; i++)
                 {
                     Player* carrier = sObjectMgr.GetPlayer(m_FlagKeepers[i]);
-                    if(!carrier)
+                    if (!carrier)
                         continue;
 
-                    if((!carrier->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT) && !carrier->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT)) || 
+                    if ((!carrier->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT) && !carrier->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT)) || 
                         (m_FocusedAssaultExtra && m_FocusedAssault < diff))
                         carrier->CastSpell(carrier, (m_FocusedAssault < diff) ? BG_WS_SPELL_BRUTAL_ASSAULT : BG_WS_SPELL_FOCUSED_ASSAULT, true);
                 }
-                if(m_FocusedAssault < BG_WS_FIVE_MINUTES && m_FocusedAssaultExtra)
+                if (m_FocusedAssault < BG_WS_FIVE_MINUTES && m_FocusedAssaultExtra)
                     m_FocusedAssaultExtra = false;
 
             }else m_FocusedAssault -= diff;
@@ -222,9 +222,9 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
     uint32 winner = 0;
 
     Source->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
-    if(Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
+    if (Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
         Source->RemoveAurasDueToSpell(BG_WS_SPELL_FOCUSED_ASSAULT);
-    if(Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
+    if (Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
         Source->RemoveAurasDueToSpell(BG_WS_SPELL_BRUTAL_ASSAULT);
     if (Source->GetTeam() == ALLIANCE)
     {
@@ -358,9 +358,9 @@ void BattleGroundWS::EventPlayerDroppedFlag(Player *Source)
     if (set)
     {
         Source->CastSpell(Source, SPELL_RECENTLY_DROPPED_FLAG, true);
-        if(Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
+        if (Source->HasAura(BG_WS_SPELL_FOCUSED_ASSAULT))
             Source->RemoveAurasDueToSpell(BG_WS_SPELL_FOCUSED_ASSAULT);
-        if(Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
+        if (Source->HasAura(BG_WS_SPELL_BRUTAL_ASSAULT))
             Source->RemoveAurasDueToSpell(BG_WS_SPELL_BRUTAL_ASSAULT);
         UpdateFlagState(Source->GetTeam(), 1);
 
@@ -390,7 +390,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
     uint8 event = (sBattleGroundMgr.GetGameObjectEventIndex(target_obj->GetDBTableGUIDLow())).event1;
 
     //alliance flag picked up from base
-    if(Source->GetTeam() == HORDE && GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE
+    if (Source->GetTeam() == HORDE && GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE
         && event == WS_EVENT_FLAG_A)
     {
         message_id = LANG_BG_WS_PICKEDUP_AF;
@@ -634,7 +634,7 @@ void BattleGroundWS::UpdatePlayerScore(Player *Source, uint32 type, uint32 value
 {
 
     BattleGroundScoreMap::iterator itr = m_PlayerScores.find(Source->GetGUID());
-    if(itr == m_PlayerScores.end())                         // player not found
+    if (itr == m_PlayerScores.end())                         // player not found
         return;
 
     switch(type)

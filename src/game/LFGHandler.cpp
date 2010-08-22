@@ -30,7 +30,7 @@
 void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
 {
     DEBUG_LOG("WORLD: Received CMSG_LFG_JOIN");
-    if(!sWorld.getConfig(CONFIG_BOOL_ALLOW_JOIN_LFG))
+    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_JOIN_LFG))
     {
         WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
         data << uint32(LFG_JOIN_INTERNAL_ERROR);                // Check Result
@@ -50,17 +50,17 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
     recv_data >> count;
     
     //Some first checks
-    if(_player->InBattleGround() || _player->InBattleGroundQueue() || _player->InArena())
+    if (_player->InBattleGround() || _player->InBattleGroundQueue() || _player->InArena())
         error = LFG_JOIN_USING_BG_SYSTEM;
-    else if(_player->HasAura(LFG_DESERTER))
+    else if (_player->HasAura(LFG_DESERTER))
         error = LFG_JOIN_PARTY_DESERTER;
-    else if(_player->GetGroup() && _player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
+    else if (_player->GetGroup() && _player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
             error = LFG_JOIN_NOT_MEET_REQS;
     //TODO: Implement this
-    else if(count > 1 && _player->GetGroup())
+    else if (count > 1 && _player->GetGroup())
         error = LFG_JOIN_DUNGEON_INVALID;
 
-    if(error != LFG_JOIN_OK)
+    if (error != LFG_JOIN_OK)
     {
         WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
         data << uint32(error);                                  // Check Result
@@ -74,22 +74,22 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         uint32 dungeonEntry;
         recv_data >> dungeonEntry;
         LFGDungeonEntry const *dungeonInfo = sLFGDungeonStore.LookupEntry((dungeonEntry & 0x00FFFFFF));
-        if(!dungeonInfo)
+        if (!dungeonInfo)
         {
             sLog.outError("WORLD: Player %u has attempted to join for non-exist dungeon from LFG", _player->GetGUID());
             error = LFG_JOIN_DUNGEON_INVALID;
         }
         //Raids are not implemented yet, and they are not so popular on offi, so get rid of them for now
-        else if(dungeonInfo->type == LFG_TYPE_RAID)
+        else if (dungeonInfo->type == LFG_TYPE_RAID)
             error = LFG_JOIN_INTERNAL_ERROR;
-        else if(dungeonInfo->type == LFG_TYPE_RANDOM && _player->HasAura(LFG_RANDOM_COOLDOWN))
+        else if (dungeonInfo->type == LFG_TYPE_RANDOM && _player->HasAura(LFG_RANDOM_COOLDOWN))
             error = LFG_JOIN_RANDOM_COOLDOWN;
         //Now the group
-        else if(Group *group = _player->GetGroup())
+        else if (Group *group = _player->GetGroup())
         {
-            if(group->isRaidGroup())
+            if (group->isRaidGroup())
                 error = LFG_JOIN_MIXED_RAID_DUNGEON;
-            else if(group->GetMembersCount() == 5)
+            else if (group->GetMembersCount() == 5)
                 error = LFG_JOIN_GROUPFULL;
             else
             {
@@ -100,7 +100,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
                     ++citr_next;
                     
                     Player *plr = sObjectMgr.GetPlayer(citr->guid);
-                    if(!plr || !plr->GetSession())
+                    if (!plr || !plr->GetSession())
                     {
                         error = LFG_JOIN_DISCONNECTED;
                         break;
@@ -108,12 +108,12 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
                     
                     if (plr->HasAura(LFG_DESERTER))
                         error = LFG_JOIN_PARTY_DESERTER;
-                    else if(dungeonInfo->type == LFG_TYPE_RANDOM && plr->HasAura(LFG_RANDOM_COOLDOWN))
+                    else if (dungeonInfo->type == LFG_TYPE_RANDOM && plr->HasAura(LFG_RANDOM_COOLDOWN))
                         error = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
                 }
             }
         }
-        if(error != LFG_JOIN_OK)
+        if (error != LFG_JOIN_OK)
         {
             WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
             data << uint32(error);                                  // Check Result
@@ -122,7 +122,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
             return;
         }
         //Already queued for this dungeon, dunno how this can happen, but it happens
-        if(_player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != _player->m_lookingForGroup.queuedDungeons.end())
+        if (_player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != _player->m_lookingForGroup.queuedDungeons.end())
             continue;
         _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
     } 
@@ -143,8 +143,8 @@ void WorldSession::HandleLfgLeaveOpcode(WorldPacket & /*recv_data*/)
 {
     DEBUG_LOG("WORLD: Received CMSG_LFG_LEAVE");
 
-    if(Group *group = _player->GetGroup())
-        if(group->GetLeaderGUID() != _player->GetGUID())    // Only leader can leave
+    if (Group *group = _player->GetGroup())
+        if (group->GetLeaderGUID() != _player->GetGUID())    // Only leader can leave
             return;
 
     sLfgMgr.RemoveFromQueue(_player);
@@ -161,7 +161,7 @@ void WorldSession::HandleLfgPartyLockInfoRequestOpcode(WorldPacket &/*recv_data*
 {
     // TODO: Find out why its sometimes send even when player is not in group...
     DEBUG_LOG("WORLD: Received CMSG_LFD_PARTY_LOCK_INFO_REQUEST");
-    if(!_player->GetGroup())
+    if (!_player->GetGroup())
     {
         DEBUG_LOG("Recieved CMSG_LFD_PARTY_LOCK_INFO_REQUEST but player %u is not in Group!", _player->GetGUID()); 
         return;
@@ -178,7 +178,7 @@ void WorldSession::HandleLfgProposalResult(WorldPacket& recv_data)
     recv_data >> groupid;
     recv_data >> accept; 
     
-    if(LfgGroup *group = (LfgGroup*)sObjectMgr.GetGroupById(groupid))
+    if (LfgGroup *group = (LfgGroup*)sObjectMgr.GetGroupById(groupid))
     {
         group->GetProposalAnswers()->insert(std::pair<uint64, uint8>(_player->GetGUID(), accept));       
         group->SendProposalUpdate(LFG_PROPOSAL_WAITING);
@@ -198,11 +198,11 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
         _player->SpawnCorpseBones();
     }
     //Teleport in
-    if(teleportOut == 0)
+    if (teleportOut == 0)
     {
-        if(Group *group = _player->GetGroup())
+        if (Group *group = _player->GetGroup())
         {
-            if(!group->isLfgGroup() || !((LfgGroup*)group)->GetDungeonInfo())
+            if (!group->isLfgGroup() || !((LfgGroup*)group)->GetDungeonInfo())
                 return;
             ((LfgGroup*)group)->TeleportPlayer(_player, sLfgMgr.GetDungeonInfo(((LfgGroup*)group)->GetDungeonInfo()->ID));
         }
@@ -210,15 +210,15 @@ void WorldSession::HandleLfgTeleport(WorldPacket& recv_data)
     }
     //..and out
     WorldLocation teleLoc = _player->m_lookingForGroup.joinLoc;
-    if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
+    if (teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
     {
         _player->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
         _player->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
         _player->RemoveAurasDueToSpell(LFG_BOOST);
         _player->TeleportTo(teleLoc);
-        if(Group *group = _player->GetGroup())
+        if (Group *group = _player->GetGroup())
         {
-            if(group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
+            if (group->isLfgGroup() && ((LfgGroup*)group)->GetInstanceStatus() == INSTANCE_COMPLETED)
                 group->RemoveMember(_player->GetGUID(), 0);          
         }
     }
@@ -239,10 +239,10 @@ void WorldSession::HandleLfgSetRoles(WorldPacket& recv_data)
     recv_data >> roles;
     _player->m_lookingForGroup.roles = roles;
 
-    if(Group *group = _player->GetGroup())
+    if (Group *group = _player->GetGroup())
     {
         LfgGroup *lfgGroup;
-        if(group->isLfgGroup())
+        if (group->isLfgGroup())
             lfgGroup = (LfgGroup*)group;
         else
         {
@@ -262,7 +262,7 @@ void WorldSession::HandleLfgSetBootVote(WorldPacket& recv_data)
     recv_data >> agree;
 
     Group *group = _player->GetGroup();
-    if(!group || !group->isLfgGroup())
+    if (!group || !group->isLfgGroup())
         return;
 
     ((LfgGroup*)group)->GetVoteToKick()->votes.insert(std::make_pair<uint64, uint8>(_player->GetGUID(), agree));

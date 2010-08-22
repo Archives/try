@@ -72,9 +72,9 @@ inline uint32 Traveller<T>::GetTotalTrevelTimeTo(float x, float y, float z)
 template<>
 inline float Traveller<Creature>::Speed()
 {
-    if(i_traveller.HasSplineFlag(SPLINEFLAG_WALKMODE))
+    if (i_traveller.HasSplineFlag(SPLINEFLAG_WALKMODE))
         return i_traveller.GetSpeed(MOVE_WALK);
-    else if(i_traveller.HasSplineFlag(SPLINEFLAG_UNKNOWN7))
+    else if (i_traveller.HasSplineFlag(SPLINEFLAG_UNKNOWN7))
         return i_traveller.GetSpeed(MOVE_FLIGHT);
     else
         return i_traveller.GetSpeed(MOVE_RUN);
@@ -93,7 +93,7 @@ inline float Traveller<Creature>::GetMoveDestinationTo(float x, float y, float z
     float dy = y - GetPositionY();
     float dz = z - GetPositionZ();
 
-    if(i_traveller.hasUnitState(UNIT_STAT_IN_FLIGHT))
+    if (i_traveller.hasUnitState(UNIT_STAT_IN_FLIGHT))
         return sqrt((dx*dx) + (dy*dy) + (dz*dz));
     else                                                    //Walking on the ground
         return sqrt((dx*dx) + (dy*dy));

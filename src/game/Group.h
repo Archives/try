@@ -226,7 +226,7 @@ class MANGOS_DLL_SPEC Group
         {
             for(member_citerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
             {
-                if(itr->name == name)
+                if (itr->name == name)
                 {
                     return itr->guid;
                 }
@@ -236,7 +236,7 @@ class MANGOS_DLL_SPEC Group
         bool IsAssistant(uint64 guid) const
         {
             member_citerator mslot = _getMemberCSlot(guid);
-            if(mslot==m_memberSlots.end())
+            if (mslot==m_memberSlots.end())
                 return false;
 
             return mslot->assistant;
@@ -247,7 +247,7 @@ class MANGOS_DLL_SPEC Group
         bool SameSubGroup(uint64 guid1,const uint64& guid2) const
         {
             member_citerator mslot2 = _getMemberCSlot(guid2);
-            if(mslot2==m_memberSlots.end())
+            if (mslot2==m_memberSlots.end())
                 return false;
 
             return SameSubGroup(guid1,&*mslot2);
@@ -256,7 +256,7 @@ class MANGOS_DLL_SPEC Group
         bool SameSubGroup(uint64 guid1, MemberSlot const* slot2) const
         {
             member_citerator mslot1 = _getMemberCSlot(guid1);
-            if(mslot1==m_memberSlots.end() || !slot2)
+            if (mslot1==m_memberSlots.end() || !slot2)
                 return false;
 
             return (mslot1->group==slot2->group);
@@ -276,7 +276,7 @@ class MANGOS_DLL_SPEC Group
         uint8  GetMemberGroup(uint64 guid) const
         {
             member_citerator mslot = _getMemberCSlot(guid);
-            if(mslot==m_memberSlots.end())
+            if (mslot==m_memberSlots.end())
                 return MAX_RAID_SUBGROUPS + 1;
 
             return mslot->group;
@@ -296,25 +296,25 @@ class MANGOS_DLL_SPEC Group
 
         void SetAssistant(uint64 guid, bool state)
         {
-            if(!isRaidGroup())
+            if (!isRaidGroup())
                 return;
-            if(_setAssistantFlag(guid, state))
+            if (_setAssistantFlag(guid, state))
                 SendUpdate();
         }
         void SetMainTank(uint64 guid)
         {
-            if(!isRaidGroup())
+            if (!isRaidGroup())
                 return;
 
-            if(_setMainTank(guid))
+            if (_setMainTank(guid))
                 SendUpdate();
         }
         void SetMainAssistant(uint64 guid)
         {
-            if(!isRaidGroup())
+            if (!isRaidGroup())
                 return;
 
-            if(_setMainAssistant(guid))
+            if (_setMainAssistant(guid))
                 SendUpdate();
         }
 

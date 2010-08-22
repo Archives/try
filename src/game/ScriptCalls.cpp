@@ -28,7 +28,7 @@ ScriptsSet Script=NULL;
 
 void UnloadScriptingModule()
 {
-    if(Script)
+    if (Script)
     {
         //todo: some check if some func from script library is called right now
         Script->ScriptsFree();
@@ -47,14 +47,14 @@ bool LoadScriptingModule(char const* libName)
 
     testScript->hScriptsLib=MANGOS_LOAD_LIBRARY(name.c_str());
 
-    if(!testScript->hScriptsLib )
+    if (!testScript->hScriptsLib )
     {
         printf("Error loading Scripts Library %s !\n",name.c_str());
         delete testScript;
         return false;
     }
 
-    if(   !(testScript->ScriptsInit         =(scriptCallScriptsInit         )MANGOS_GET_PROC_ADDR(testScript->hScriptsLib,"ScriptsInit"         ))
+    if (   !(testScript->ScriptsInit         =(scriptCallScriptsInit         )MANGOS_GET_PROC_ADDR(testScript->hScriptsLib,"ScriptsInit"         ))
         ||!(testScript->ScriptsFree         =(scriptCallScriptsFree         )MANGOS_GET_PROC_ADDR(testScript->hScriptsLib,"ScriptsFree"         ))
         ||!(testScript->ScriptsVersion      =(scriptCallScriptsVersion      )MANGOS_GET_PROC_ADDR(testScript->hScriptsLib,"ScriptsVersion"      ))
         ||!(testScript->GossipHello         =(scriptCallGossipHello         )MANGOS_GET_PROC_ADDR(testScript->hScriptsLib,"GossipHello"         ))

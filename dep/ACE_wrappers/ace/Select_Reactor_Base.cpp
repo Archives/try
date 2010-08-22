@@ -810,7 +810,7 @@ ACE_Select_Reactor_Notify::dispatch_notify (ACE_Notification_Buffer &buffer)
       return -1;
     }
 
-  if(more_messages_queued)
+  if (more_messages_queued)
     {
       (void) ACE::send(this->notification_pipe_.write_handle(),
             (char *)&next, sizeof(ACE_Notification_Buffer));

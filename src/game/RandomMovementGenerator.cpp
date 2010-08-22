@@ -69,7 +69,7 @@ RandomMovementGenerator<Creature>::_setRandomLocation(Creature &creature)
     else                                                    // 2D only
     {
         nz = Z;
-        if(!map->IsNextZcoordOK(nx, ny, nz, dist))
+        if (!map->IsNextZcoordOK(nx, ny, nz, dist))
             return;                                         // let's forget this bad coords where a z cannot be find and retry at next tick
         creature.UpdateGroundPositionZ(nx, ny, nz, dist);
     }
@@ -155,7 +155,7 @@ bool RandomMovementGenerator<Creature>::Update(Creature &creature, const uint32 
         if (i_nextMoveTime.Passed())
         {
             float x,y,z;
-            if(i_destinationHolder.HasDestination())
+            if (i_destinationHolder.HasDestination())
                 i_destinationHolder.GetLocationNowNoMicroMovement(x,y,z);
             else
                 creature.GetPosition(x,y,z);
@@ -212,7 +212,7 @@ RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
 
     float m_fAngle = (M_PI_F - ((2*M_PI_F) / m_fLenght)) / 2;
 
-    if(m_bClockWise)
+    if (m_bClockWise)
         m_fAngle += ((2*M_PI_F) / m_fLenght) + creature.GetAngle(spawnX, spawnY);
     else
         m_fAngle = creature.GetAngle(spawnX, spawnY) - m_fAngle - ((2*M_PI_F) / m_fLenght);
@@ -227,19 +227,19 @@ RandomCircleMovementGenerator<Creature>::fillSplineWayPoints(Creature &creature)
     {
         bool canIncerase = true;
         bool canDecerase = true;
-        if(m_fDistance > spawnDist)
+        if (m_fDistance > spawnDist)
             canIncerase = false;
-        if(m_fDistance < 1)
+        if (m_fDistance < 1)
             canDecerase = false;
         uint8 tmp = urand(0,2); // 0 nothing, 1 incerase, 2 decerase
-        if(tmp == 1 && canIncerase)
+        if (tmp == 1 && canIncerase)
             m_fDistance += 0.5f;
-        else if(tmp == 2 && canDecerase)
+        else if (tmp == 2 && canDecerase)
             m_fDistance -= 0.5f;
 
         m_fLenght = 2*M_PI_F*m_fDistance;
         float m_fRotateAngle = ((2*M_PI_F) / m_fLenght); // Moving by half of speed every 500ms
-        if(m_bClockWise)
+        if (m_bClockWise)
             m_fAngle -= m_fRotateAngle;
         else
             m_fAngle += m_fRotateAngle;
@@ -328,7 +328,7 @@ bool RandomCircleMovementGenerator<Creature>::Update(Creature &creature, const u
         return true;
     }
 
-    if(m_splineMap.empty())
+    if (m_splineMap.empty())
     {
         Reset(creature);
         return true;
@@ -336,7 +336,7 @@ bool RandomCircleMovementGenerator<Creature>::Update(Creature &creature, const u
 
     if (i_nextMoveTime.Passed())
     {
-        if(m_splineMap.find(i_wpId) == m_splineMap.end())
+        if (m_splineMap.find(i_wpId) == m_splineMap.end())
         {
             Reset(creature);
             return true;
@@ -344,7 +344,7 @@ bool RandomCircleMovementGenerator<Creature>::Update(Creature &creature, const u
         SplineWayPointMap::iterator wp = m_splineMap.find(i_wpId);
         //rellocate but not send
         creature.Relocate(wp->second->x, wp->second->y, wp->second->z, wp->second->o); 
-        if(i_wpId == 29) // not last wp
+        if (i_wpId == 29) // not last wp
         {
             Initialize(creature);
             return true;

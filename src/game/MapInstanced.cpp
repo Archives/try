@@ -34,7 +34,7 @@ MapInstanced::MapInstanced(uint32 id, time_t expiry) : Map(id, expiry, 0, DUNGEO
 
 void MapInstanced::InitVisibilityDistance()
 {
-    if(m_InstancedMaps.empty())
+    if (m_InstancedMaps.empty())
         return;
     //initialize visibility distances for all instance copies
     for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
@@ -53,7 +53,7 @@ void MapInstanced::Update(const uint32& t)
 
     while (i != m_InstancedMaps.end())
     {
-        if(i->second->CanUnload(t))
+        if (i->second->CanUnload(t))
         {
             DestroyInstance(i);                             // iterator incremented
         }
@@ -99,7 +99,7 @@ Map* MapInstanced::CreateInstance(Player * player)
     Map* map;
     uint32 NewInstanceId;                                   // instanceId of the resulting map
 
-    if(IsBattleGroundOrArena())
+    if (IsBattleGroundOrArena())
     {
         // find existing bg map for player
         NewInstanceId = player->GetBattleGroundId();
@@ -185,7 +185,7 @@ BattleGroundMap* MapInstanced::CreateBattleGroundMap(uint32 InstanceId, BattleGr
 void MapInstanced::DestroyInstance(uint32 InstanceId)
 {
     InstancedMaps::iterator itr = m_InstancedMaps.find(InstanceId);
-    if(itr != m_InstancedMaps.end())
+    if (itr != m_InstancedMaps.end())
         DestroyInstance(itr);
 }
 
@@ -194,7 +194,7 @@ void MapInstanced::DestroyInstance(InstancedMaps::iterator &itr)
 {
     itr->second->UnloadAll(true);
     // should only unload VMaps if this is the last instance and grid unloading is enabled
-    if(m_InstancedMaps.size() <= 1 && sWorld.getConfig(CONFIG_BOOL_GRID_UNLOAD))
+    if (m_InstancedMaps.size() <= 1 && sWorld.getConfig(CONFIG_BOOL_GRID_UNLOAD))
     {
         VMAP::VMapFactory::createOrGetVMapManager()->unloadMap(itr->second->GetId());
         // in that case, unload grids of the base map, too

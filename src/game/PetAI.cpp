@@ -30,7 +30,7 @@
 
 int PetAI::Permissible(const Creature *creature)
 {
-    if( creature->isPet())
+    if ( creature->isPet())
         return PERMIT_BASE_SPECIAL;
 
     return PERMIT_BASE_NO;
@@ -57,9 +57,9 @@ void PetAI::MoveInLineOfSight(Unit *u)
         u->isInAccessablePlaceFor(m_creature))
     {
         float attackRadius = m_creature->GetAttackDistance(u);
-        if(m_creature->IsWithinDistInMap(u, attackRadius) && m_creature->GetDistanceZ(u) <= CREATURE_Z_ATTACK_RANGE)
+        if (m_creature->IsWithinDistInMap(u, attackRadius) && m_creature->GetDistanceZ(u) <= CREATURE_Z_ATTACK_RANGE)
         {
-            if(m_creature->IsWithinLOSInMap(u))
+            if (m_creature->IsWithinLOSInMap(u))
             {
                 AttackStart(u);
                 u->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
@@ -70,10 +70,10 @@ void PetAI::MoveInLineOfSight(Unit *u)
 
 void PetAI::AttackStart(Unit *u)
 {
-    if(!u || (m_creature->isPet() && ((Pet*)m_creature)->getPetType() == MINI_PET))
+    if (!u || (m_creature->isPet() && ((Pet*)m_creature)->getPetType() == MINI_PET))
         return;
 
-    if(m_creature->Attack(u,true))
+    if (m_creature->Attack(u,true))
     {
         // TMGs call CreatureRelocation which via MoveInLineOfSight can call this function
         // thus with the following clear the original TMG gets invalidated and crash, doh
@@ -96,7 +96,7 @@ bool PetAI::IsVisible(Unit *pl) const
 bool PetAI::_needToStop() const
 {
     // This is needed for charmed creatures, as once their target was reset other effects can trigger threat
-    if(m_creature->isCharmed() && m_creature->getVictim() == m_creature->GetCharmer())
+    if (m_creature->isCharmed() && m_creature->getVictim() == m_creature->GetCharmer())
         return true;
 
     return !m_creature->getVictim()->isTargetableForAttack();
@@ -105,7 +105,7 @@ bool PetAI::_needToStop() const
 void PetAI::_stopAttack()
 {
     inCombat = false;
-    if( !m_creature->isAlive() )
+    if ( !m_creature->isAlive() )
     {
         DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "PetAI (guid = %u) stopped attack, he is dead.", m_creature->GetGUIDLow());
         m_creature->StopMoving();
@@ -119,7 +119,7 @@ void PetAI::_stopAttack()
 
     Unit* owner = m_creature->GetCharmerOrOwner();
 
-    if(owner && m_creature->GetCharmInfo() && m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
+    if (owner && m_creature->GetCharmInfo() && m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
     {
         m_creature->GetMotionMaster()->MoveFollow(owner,PET_FOLLOW_DIST,PET_FOLLOW_ANGLE);
     }
@@ -138,7 +138,7 @@ void PetAI::UpdateAI(const uint32 diff)
 
     Unit* owner = m_creature->GetCharmerOrOwner();
 
-    if(m_updateAlliesTimer <= diff)
+    if (m_updateAlliesTimer <= diff)
         // UpdateAllies self set update timer
         UpdateAllies();
     else
@@ -179,7 +179,7 @@ void PetAI::UpdateAI(const uint32 diff)
                 //if pet misses its target, it will also be the first in threat list
                 m_creature->getVictim()->AddThreat(m_creature);
 
-                if( _needToStop() )
+                if ( _needToStop() )
                     _stopAttack();
             }
         }
@@ -190,7 +190,7 @@ void PetAI::UpdateAI(const uint32 diff)
         {
             AttackStart(owner->getAttackerForHelper());
         }
-        else if(m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
+        else if (m_creature->GetCharmInfo()->HasCommandState(COMMAND_FOLLOW))
         {
             if (!m_creature->hasUnitState(UNIT_STAT_FOLLOW) )
             {
@@ -260,10 +260,10 @@ void PetAI::UpdateAI(const uint32 diff)
                     Unit* Target = ObjectAccessor::GetUnit(*m_creature,*tar);
 
                     //only buff targets that are in combat, unless the spell can only be cast while out of combat
-                    if(!Target)
+                    if (!Target)
                         continue;
 
-                    if(spell->CanAutoCast(Target))
+                    if (spell->CanAutoCast(Target))
                     {
                         targetSpellStore.push_back(std::make_pair<Unit*, Spell*>(Target, spell));
                         spellUsed = true;
@@ -322,29 +322,29 @@ void PetAI::UpdateAllies()
 
     m_updateAlliesTimer = 10*IN_MILLISECONDS;                //update friendly targets every 10 seconds, lesser checks increase performance
 
-    if(!owner)
+    if (!owner)
         return;
-    else if(owner->GetTypeId() == TYPEID_PLAYER)
+    else if (owner->GetTypeId() == TYPEID_PLAYER)
         pGroup = ((Player*)owner)->GetGroup();
 
     //only pet and owner/not in group->ok
-    if(m_AllySet.size() == 2 && !pGroup)
+    if (m_AllySet.size() == 2 && !pGroup)
         return;
     //owner is in group; group members filled in already (no raid -> subgroupcount = whole count)
-    if(pGroup && !pGroup->isRaidGroup() && m_AllySet.size() == (pGroup->GetMembersCount() + 2))
+    if (pGroup && !pGroup->isRaidGroup() && m_AllySet.size() == (pGroup->GetMembersCount() + 2))
         return;
 
     m_AllySet.clear();
     m_AllySet.insert(m_creature->GetGUID());
-    if(pGroup)                                              //add group
+    if (pGroup)                                              //add group
     {
         for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player* Target = itr->getSource();
-            if(!Target || !pGroup->SameSubGroup((Player*)owner, Target))
+            if (!Target || !pGroup->SameSubGroup((Player*)owner, Target))
                 continue;
 
-            if(Target->GetGUID() == owner->GetGUID())
+            if (Target->GetGUID() == owner->GetGUID())
                 continue;
 
             m_AllySet.insert(Target->GetGUID());
@@ -357,7 +357,7 @@ void PetAI::UpdateAllies()
 void PetAI::AttackedBy(Unit *attacker)
 {
     //when attacked, fight back in case 1)no victim already AND 2)not set to passive AND 3)not set to stay, unless can it can reach attacker with melee attack anyway
-    if(!m_creature->getVictim() && m_creature->GetCharmInfo() && !m_creature->GetCharmInfo()->HasReactState(REACT_PASSIVE) &&
+    if (!m_creature->getVictim() && m_creature->GetCharmInfo() && !m_creature->GetCharmInfo()->HasReactState(REACT_PASSIVE) &&
         (!m_creature->GetCharmInfo()->HasCommandState(COMMAND_STAY) || m_creature->canReachWithAttack(attacker)))
         AttackStart(attacker);
 }

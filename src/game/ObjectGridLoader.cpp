@@ -66,7 +66,7 @@ ObjectGridRespawnMover::Visit(CreatureMapType &m)
         CellPair resp_val = MaNGOS::ComputeCellPair(resp_x, resp_y);
         Cell resp_cell(resp_val);
 
-        if(cur_cell.DiffGrid(resp_cell))
+        if (cur_cell.DiffGrid(resp_cell))
         {
             c->GetMap()->CreatureRespawnRelocation(c);
             // false result ignored: will be unload with other creatures at grid
@@ -116,7 +116,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
 
         T* obj = new T;
         //sLog.outString("DEBUG: LoadHelper from table: %s for (guid: %u) Loading",table,guid);
-        if(!obj->LoadFromDB(guid, map))
+        if (!obj->LoadFromDB(guid, map))
         {
             delete obj;
             continue;
@@ -127,7 +127,7 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
         addUnitState(obj,cell);
         obj->SetMap(map);
         obj->AddToWorld();
-        if(obj->isActiveObject())
+        if (obj->isActiveObject())
             map->AddToActive(obj);
 
         obj->GetViewPoint().Event_AddedToWorld(&grid);
@@ -141,18 +141,18 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair &cell, GridRefManager<T> &
 
 void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cell, CorpseMapType &m, uint32 &count, Map* map, GridType& grid)
 {
-    if(cell_corpses.empty())
+    if (cell_corpses.empty())
         return;
 
     for(CellCorpseSet::const_iterator itr = cell_corpses.begin(); itr != cell_corpses.end(); ++itr)
     {
-        if(itr->second != map->GetInstanceId())
+        if (itr->second != map->GetInstanceId())
             continue;
 
         uint32 player_guid = itr->first;
 
         Corpse *obj = sObjectAccessor.GetCorpseForPlayerGUID(player_guid);
-        if(!obj)
+        if (!obj)
             continue;
 
         grid.AddWorldObject(obj);
@@ -160,7 +160,7 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellPair &cell, CorpseMapType
         addUnitState(obj,cell);
         obj->SetMap(map);
         obj->AddToWorld();
-        if(obj->isActiveObject())
+        if (obj->isActiveObject())
             map->AddToActive(obj);
 
         ++count;
@@ -273,7 +273,7 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
     {
         T *obj = m.getFirst()->getSource();
         // if option set then object already saved at this moment
-        if(!sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
+        if (!sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
             obj->SaveRespawnTime();
         ///- object must be out of world before delete
         obj->RemoveFromWorld();

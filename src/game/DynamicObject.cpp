@@ -40,7 +40,7 @@ DynamicObject::DynamicObject() : WorldObject()
 void DynamicObject::AddToWorld()
 {
     ///- Register the dynamicObject for guid lookup
-    if(!IsInWorld())
+    if (!IsInWorld())
         GetMap()->GetObjectsStore().insert<DynamicObject>(GetGUID(), (DynamicObject*)this);
 
     Object::AddToWorld();
@@ -49,7 +49,7 @@ void DynamicObject::AddToWorld()
 void DynamicObject::RemoveFromWorld()
 {
     ///- Remove the dynamicObject from the accessor
-    if(IsInWorld())
+    if (IsInWorld())
     {
         GetMap()->GetObjectsStore().erase<DynamicObject>(GetGUID(), (DynamicObject*)NULL);
         GetViewPoint().Event_RemovedFromWorld();
@@ -64,7 +64,7 @@ bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, SpellE
     SetMap(caster->GetMap());
     Relocate(x, y, z, 0);
 
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("DynamicObject (spell %u eff %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)",spellId,effIndex,GetPositionX(),GetPositionY());
         return false;
@@ -110,7 +110,7 @@ void DynamicObject::Update(uint32 p_time)
 {
     // caster can be not in world at time dynamic object update, but dynamic object not yet deleted in Unit destructor
     Unit* caster = GetCaster();
-    if(!caster)
+    if (!caster)
     {
         Delete();
         return;
@@ -118,20 +118,20 @@ void DynamicObject::Update(uint32 p_time)
 
     bool deleteThis = false;
 
-    if(m_aliveDuration > int32(p_time))
+    if (m_aliveDuration > int32(p_time))
         m_aliveDuration -= p_time;
     else
         deleteThis = true;
 
     // have radius and work as persistent effect
-    if(m_radius)
+    if (m_radius)
     {
         // TODO: make a timer and update this in larger intervals
         MaNGOS::DynamicObjectUpdater notifier(*this, caster);
         Cell::VisitAllObjects(this, notifier, m_radius);
     }
 
-    if(deleteThis)
+    if (deleteThis)
     {
         caster->RemoveDynObjectWithGUID(GetGUID());
         Delete();
@@ -154,11 +154,11 @@ void DynamicObject::Delay(int32 delaytime)
 
 bool DynamicObject::isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const
 {
-    if(!IsInWorld() || !u->IsInWorld())
+    if (!IsInWorld() || !u->IsInWorld())
         return false;
 
     // always seen by owner
-    if(GetCasterGUID()==u->GetGUID())
+    if (GetCasterGUID()==u->GetGUID())
         return true;
 
     // normal case

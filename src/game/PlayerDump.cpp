@@ -71,7 +71,7 @@ static bool findtoknth(std::string &str, int n, std::string::size_type &s, std::
 {
     int i; s = e = 0;
     std::string::size_type size = str.size();
-    for(i = 1; s < size && i < n; s++) if(str[s] == ' ') ++i;
+    for(i = 1; s < size && i < n; s++) if (str[s] == ' ') ++i;
     if (i < n)
         return false;
 
@@ -470,7 +470,7 @@ DumpReturn PlayerDumpReader::LoadDump(const std::string& file, uint32 account, s
     {
         if (!fgets(buf, 32000, fin))
         {
-            if(feof(fin)) break;
+            if (feof(fin)) break;
             ROLLBACK(DUMP_FILE_BROKEN);
         }
 
@@ -696,7 +696,7 @@ DumpReturn PlayerDumpReader::LoadDump(const std::string& file, uint32 account, s
                 if (!changeGuid(line, 2, eqsets, sObjectMgr.m_EquipmentSetIds.GetNextAfterMaxUsed()))
                     ROLLBACK(DUMP_FILE_BROKEN);             // character_equipmentsets.setguid
                 for(int i = 0; i < 19; ++i)                 // character_equipmentsets.item0..item18
-                    if(!changeGuid(line, 6+i, items, sObjectMgr.m_ItemGuids.GetNextAfterMaxUsed()))
+                    if (!changeGuid(line, 6+i, items, sObjectMgr.m_ItemGuids.GetNextAfterMaxUsed()))
                         ROLLBACK(DUMP_FILE_BROKEN);
                 break;
 

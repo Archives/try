@@ -48,20 +48,20 @@ struct VoteToKick
     uint8 GetVote(uint64 guid) 
     {
         ProposalAnswersMap::iterator itr = votes.find(guid);
-        if(itr != votes.end())
+        if (itr != votes.end())
             return itr->second;
         else
             return 0;
     }
     uint32 GetVotesNum(bool agreeOnly)
     {
-        if(!agreeOnly)
+        if (!agreeOnly)
             return votes.size();
         else
         {
             uint32 votesCount = 0;
             for(ProposalAnswersMap::iterator itr = votes.begin(); itr != votes.end(); ++itr)
-                if(itr->second)
+                if (itr->second)
                     ++votesCount;
             return votesCount;
         }

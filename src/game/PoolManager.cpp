@@ -295,7 +295,7 @@ void PoolGroup<Pool>::RemoveOneRelation(uint16 child_pool_id)
 {
     for (PoolObjectList::iterator itr = ExplicitlyChanced.begin(); itr != ExplicitlyChanced.end(); ++itr)
     {
-        if(itr->guid == child_pool_id)
+        if (itr->guid == child_pool_id)
         {
             ExplicitlyChanced.erase(itr);
             break;
@@ -303,7 +303,7 @@ void PoolGroup<Pool>::RemoveOneRelation(uint16 child_pool_id)
     }
     for (PoolObjectList::iterator itr = EqualChanced.begin(); itr != EqualChanced.end(); ++itr)
     {
-        if(itr->guid == child_pool_id)
+        if (itr->guid == child_pool_id)
         {
             EqualChanced.erase(itr);
             break;
@@ -382,7 +382,7 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj, bool instantly)
             else
             {
                 // if new spawn replaces a just despawned creature, not instantly spawn but set respawn timer
-                if(!instantly)
+                if (!instantly)
                 {
                     pCreature->SetRespawnTime( pCreature->GetRespawnDelay() );
                     if (sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY) || pCreature->isWorldBoss())
@@ -392,7 +392,7 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj, bool instantly)
             }
         }
         // for not loaded grid just update respawn time (avoid work for instances until implemented support)
-        else if(!map->Instanceable() && !instantly)
+        else if (!map->Instanceable() && !instantly)
         {
             sObjectMgr.SaveCreatureRespawnTime(obj->guid,map->GetInstanceId(),time(NULL) + data->spawntimesecs);
         }
@@ -425,7 +425,7 @@ void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj, bool instantly)
                 if (pGameobject->isSpawnedByDefault())
                 {
                     // if new spawn replaces a just despawned object, not instantly spawn but set respawn timer
-                    if(!instantly)
+                    if (!instantly)
                     {
                         pGameobject->SetRespawnTime( pGameobject->GetRespawnDelay() );
                         if (sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
@@ -436,7 +436,7 @@ void PoolGroup<GameObject>::Spawn1Object(PoolObject* obj, bool instantly)
             }
         }
         // for not loaded grid just update respawn time (avoid work for instances until implemented support)
-        else if(!map->Instanceable() && !instantly)
+        else if (!map->Instanceable() && !instantly)
         {
             // for spawned by default object only
             if (data->spawntimesecs >= 0)
@@ -672,7 +672,7 @@ void PoolManager::LoadFromDB()
     result = WorldDatabase.Query("SELECT pool_id, mother_pool, chance FROM pool_pool");
 
     count = 0;
-    if( !result )
+    if ( !result )
     {
         barGoLink bar2(1);
         bar2.step();
@@ -737,7 +737,7 @@ void PoolManager::LoadFromDB()
             for(SearchMap::iterator poolItr = mPoolSearchMap.find(i); poolItr != mPoolSearchMap.end(); poolItr = mPoolSearchMap.find(poolItr->second))
             {
                 checkedPools.insert(poolItr->first);
-                if(checkedPools.find(poolItr->second) != checkedPools.end())
+                if (checkedPools.find(poolItr->second) != checkedPools.end())
                 {
                     std::ostringstream ss;
                     ss<< "The pool(s) ";

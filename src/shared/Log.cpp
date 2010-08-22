@@ -83,10 +83,10 @@ void Log::InitColors(const std::string& str)
     {
         ss >> color[i];
 
-        if(!ss)
+        if (!ss)
             return;
 
-        if(color[i] < 0 || color[i] >= Color_count)
+        if (color[i] < 0 || color[i] >= Color_count)
             return;
     }
 
@@ -825,7 +825,7 @@ void Log::outRALog(    const char * str, ... )
 
 void Log::outArenaLog(const char * str, ...)
 {
-    if(!str)
+    if (!str)
         return;
 
     if (arenaLogfile)

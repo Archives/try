@@ -221,7 +221,7 @@ static inline ThreadId  getThreadId(void)
 {
     ThreadId result;
     result = reinterpret_cast<ThreadId>(TlsGetValue_func(Tid_key));
-    if( !result ) {
+    if ( !result ) {
         RecursiveMallocCallProtector scoped;
         // Thread-local value is zero -> first call from this thread,
         // need to initialize with next ID value (IDs start from 1)
@@ -599,17 +599,17 @@ static unsigned int getIndexOrObjectSize (unsigned int size)
         }
     }
     else {
-        if( size <= fittingSize3 ) {
-            if( size <= fittingSize2 ) {
-                if( size <= fittingSize1 )
+        if ( size <= fittingSize3 ) {
+            if ( size <= fittingSize2 ) {
+                if ( size <= fittingSize1 )
                     return indexRequest ? minFittingIndex : fittingSize1; 
                 else
                     return indexRequest ? minFittingIndex+1 : fittingSize2;
             } else
                 return indexRequest ? minFittingIndex+2 : fittingSize3;
         } else {
-            if( size <= fittingSize5 ) {
-                if( size <= fittingSize4 )
+            if ( size <= fittingSize5 ) {
+                if ( size <= fittingSize4 )
                     return indexRequest ? minFittingIndex+3 : fittingSize4;
                 else
                     return indexRequest ? minFittingIndex+4 : fittingSize5;
@@ -682,7 +682,7 @@ static int mallocBigBlock()
 
     while ( ((uintptr_t)splitBlock + blockSize) <= (uintptr_t)bigBlockCeiling ) {
         splitEdge = (void*)((uintptr_t)splitBlock + bigBlockSplitSize);
-        if( splitEdge > bigBlockCeiling) {
+        if ( splitEdge > bigBlockCeiling) {
             splitEdge = alignDown(bigBlockCeiling, blockSize);
         }
         splitBlock->bumpPtr = (FreeObject*)splitEdge;
@@ -721,7 +721,7 @@ static void *bootStrapMalloc(size_t size)
     { // Lock with acquire
         MallocMutex::scoped_lock scoped_cs(bootStrapLock);
 
-        if( bootStrapObjectList) {
+        if ( bootStrapObjectList) {
             result = bootStrapObjectList;
             bootStrapObjectList = bootStrapObjectList->next;
         } else {
@@ -821,10 +821,10 @@ static void pushTLSBin (Bin* bin, Block* block)
     activeBlk = bin->activeBlk;
 
     block->next = activeBlk;
-    if( activeBlk ) {
+    if ( activeBlk ) {
         block->previous = activeBlk->previous;
         activeBlk->previous = block;
-        if( block->previous )
+        if ( block->previous )
             block->previous->next = block;
     } else {
         bin->activeBlk = block;
@@ -870,7 +870,7 @@ static void outofTLSBin (Bin* bin, Block* block)
 static Bin* getAllocationBin(size_t size)
 {
     Bin* tls = (Bin*)getThreadMallocTLS();
-    if( !tls ) {
+    if ( !tls ) {
         MALLOC_ASSERT( tlsSize >= sizeof(Bin) * numBlockBins, ASSERT_TEXT );
         tls = (Bin*) bootStrapMalloc(tlsSize);
         if ( !tls ) return NULL;
@@ -961,7 +961,7 @@ static void freePublicObject (Block *block, FreeObject *objectToFree)
     }
 #endif
 
-    if( publicFreeList==NULL ) {
+    if ( publicFreeList==NULL ) {
         // if the block is abandoned, its nextPrivatizable pointer should be UNUSABLE
         // otherwise, it should point to the bin the block belongs to.
         // reading nextPrivatizable is thread-safe below, because:
@@ -969,7 +969,7 @@ static void freePublicObject (Block *block, FreeObject *objectToFree)
         // 2) only owning thread can change it back to NULL,
         // 3) but it can not be done until the block is put to the mailbox
         // So the executing thread is now the only one that can change nextPrivatizable
-        if( !isNotForUse(block->nextPrivatizable) ) {
+        if ( !isNotForUse(block->nextPrivatizable) ) {
             MALLOC_ASSERT( block->nextPrivatizable!=NULL, ASSERT_TEXT );
             MALLOC_ASSERT( block->owner!=0, ASSERT_TEXT );
             theBin = (Bin*) block->nextPrivatizable;
@@ -1010,7 +1010,7 @@ static void privatizePublicFreeList (Block *mallocBlock)
 #endif
 
     MALLOC_ASSERT( publicFreeList && publicFreeList==temp, ASSERT_TEXT ); // there should be something in publicFreeList!
-    if( !isNotForUse(temp) ) { // return/getPartialBlock could set it to UNUSABLE
+    if ( !isNotForUse(temp) ) { // return/getPartialBlock could set it to UNUSABLE
         MALLOC_ASSERT( mallocBlock->allocatedCount <= (blockSize-sizeof(Block))/mallocBlock->objectSize, ASSERT_TEXT );
         /* other threads did not change the counter freeing our blocks */
         mallocBlock->allocatedCount--;
@@ -1034,14 +1034,14 @@ static Block* getPublicFreeListBlock (Bin* bin)
     {
         MallocMutex::scoped_lock scoped_cs(bin->mailLock);
         block = bin->mailbox;
-        if( block ) {
+        if ( block ) {
             MALLOC_ASSERT( block->owner == getThreadId(), ASSERT_TEXT );
             MALLOC_ASSERT( !isNotForUse(block->nextPrivatizable), ASSERT_TEXT );
             bin->mailbox = block->nextPrivatizable;
             block->nextPrivatizable = (Block*) bin;
         }
     }
-    if( block ) {
+    if ( block ) {
         MALLOC_ASSERT( isSolidPtr(block->publicFreeList), ASSERT_TEXT );
         privatizePublicFreeList(block);
     }
@@ -1067,7 +1067,7 @@ static Block *getPartialBlock(Bin* bin, unsigned int size)
         result->nextPrivatizable = (Block*)bin;
         // the next call is required to change publicFreeList to 0
         privatizePublicFreeList(result);
-        if( result->allocatedCount ) {
+        if ( result->allocatedCount ) {
             // check its fullness and set result->isFull
             emptyEnoughToUse(result);
         } else {
@@ -1249,7 +1249,7 @@ inline static Block* setPreviousBlockActive( Bin* bin )
 {
     MALLOC_ASSERT( bin && bin->activeBlk, ASSERT_TEXT );
     Block* temp = bin->activeBlk->previous;
-    if( temp ) {
+    if ( temp ) {
         MALLOC_ASSERT( temp->isFull == 0, ASSERT_TEXT );
         bin->activeBlk = temp;
     }
@@ -1993,7 +1993,7 @@ extern "C" void * scalable_malloc(size_t size)
 
     if (mallocBlock) {
         do {
-            if( (result = allocateFromBlock(mallocBlock)) ) {
+            if ( (result = allocateFromBlock(mallocBlock)) ) {
                 return result;
             }
             // the previous block, if any, should be empty enough
@@ -2028,7 +2028,7 @@ extern "C" void * scalable_malloc(size_t size)
         pushTLSBin(bin, mallocBlock);
 // guaranteed by pushTLSBin: MALLOC_ASSERT( *bin==mallocBlock || (*bin)->previous==mallocBlock, ASSERT_TEXT );
         setActiveBlock(bin, mallocBlock);
-        if( (result = allocateFromBlock(mallocBlock)) ) {
+        if ( (result = allocateFromBlock(mallocBlock)) ) {
             return result;
         }
         mallocBlock = getPartialBlock(bin, size);
@@ -2042,7 +2042,7 @@ extern "C" void * scalable_malloc(size_t size)
         pushTLSBin(bin, mallocBlock);
 // guaranteed by pushTLSBin: MALLOC_ASSERT( *bin==mallocBlock || (*bin)->previous==mallocBlock, ASSERT_TEXT );
         setActiveBlock(bin, mallocBlock);
-        if( (result = allocateFromBlock(mallocBlock)) ) {
+        if ( (result = allocateFromBlock(mallocBlock)) ) {
             return result;
         }
         /* Else something strange happened, need to retry from the beginning; */

@@ -211,7 +211,7 @@ void PlayerMenu::SendPointOfInterest( float X, float Y, uint32 Icon, uint32 Flag
 void PlayerMenu::SendPointOfInterest( uint32 poi_id )
 {
     PointOfInterest const* poi = sObjectMgr.GetPointOfInterest(poi_id);
-    if(!poi)
+    if (!poi)
     {
         sLog.outErrorDb("Requested send not existed POI (Id: %u), ignore.",poi_id);
         return;
@@ -366,7 +366,7 @@ void QuestMenu::AddMenuItem( uint32 QuestId, uint8 Icon)
 bool QuestMenu::HasItem( uint32 questid )
 {
     for (QuestMenuItemList::const_iterator i = m_qItems.begin(); i != m_qItems.end(); ++i)
-        if(i->m_qId == questid)
+        if (i->m_qId == questid)
             return true;
     return false;
 }
@@ -393,14 +393,14 @@ void PlayerMenu::SendQuestGiverQuestList( QEmote eEmote, const std::string& Titl
 
         uint32 questID = qmi.m_qId;
 
-        if(Quest const *pQuest = sObjectMgr.GetQuestTemplate(questID))
+        if (Quest const *pQuest = sObjectMgr.GetQuestTemplate(questID))
         {
             std::string title = pQuest->GetTitle();
 
             int loc_idx = pSession->GetSessionDbLocaleIndex();
             if (loc_idx >= 0)
             {
-                if(QuestLocale const *ql = sObjectMgr.GetQuestLocale(questID))
+                if (QuestLocale const *ql = sObjectMgr.GetQuestLocale(questID))
                 {
                     if (ql->Title.size() > (size_t)loc_idx && !ql->Title[loc_idx].empty())
                         title = ql->Title[loc_idx];
@@ -733,7 +733,7 @@ void PlayerMenu::SendQuestGiverOfferReward( Quest const* pQuest, uint64 npcGUID,
     uint32 EmoteCount = 0;
     for (uint32 i = 0; i < QUEST_EMOTE_COUNT; ++i)
     {
-        if(pQuest->OfferRewardEmote[i] <= 0)
+        if (pQuest->OfferRewardEmote[i] <= 0)
             break;
         ++EmoteCount;
     }
@@ -845,7 +845,7 @@ void PlayerMenu::SendQuestGiverRequestItems( Quest const *pQuest, uint64 npcGUID
 
     data << uint32(0x00);                                   // emote delay
 
-    if(Completable)
+    if (Completable)
         data << pQuest->GetCompleteEmote();                 // emote id
     else
         data << pQuest->GetIncompleteEmote();

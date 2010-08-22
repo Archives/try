@@ -60,7 +60,7 @@ WheatyExceptionReport::WheatyExceptionReport( )             // Constructor
 //============
 WheatyExceptionReport::~WheatyExceptionReport( )
 {
-    if(m_previousFilter)
+    if (m_previousFilter)
         SetUnhandledExceptionFilter( m_previousFilter );
 }
 
@@ -73,16 +73,16 @@ PEXCEPTION_POINTERS pExceptionInfo )
     TCHAR module_folder_name[MAX_PATH];
     GetModuleFileName( 0, module_folder_name, MAX_PATH );
     TCHAR* pos = _tcsrchr(module_folder_name, '\\');
-    if(!pos)
+    if (!pos)
         return 0;
     pos[0] = '\0';
     ++pos;
 
     TCHAR crash_folder_path[MAX_PATH];
     sprintf(crash_folder_path, "%s\\%s", module_folder_name, CrashFolder);
-    if(!CreateDirectory(crash_folder_path, NULL))
+    if (!CreateDirectory(crash_folder_path, NULL))
     {
-        if(GetLastError() != ERROR_ALREADY_EXISTS)
+        if (GetLastError() != ERROR_ALREADY_EXISTS)
             return 0;
     }
 
@@ -118,7 +118,7 @@ PEXCEPTION_POINTERS pExceptionInfo )
 
 BOOL WheatyExceptionReport::_GetProcessorName(TCHAR* sProcessorName, DWORD maxcount)
 {
-    if(!sProcessorName)
+    if (!sProcessorName)
         return FALSE;
 
     HKEY hKey;
@@ -322,7 +322,7 @@ void WheatyExceptionReport::PrintSystemInfo()
         _tprintf(_T("*** Hardware ***\r\nProcessor: <unknown>\r\nNumber Of Processors: %d\r\nPhysical Memory: %d KB (Available: %d KB)\r\nCommit Charge Limit: %d KB\r\n"),
             SystemInfo.dwNumberOfProcessors, MemoryStatus.dwTotalPhys/0x400, MemoryStatus.dwAvailPhys/0x400, MemoryStatus.dwTotalPageFile/0x400);
 
-    if(_GetWindowsVersion(sString, countof(sString)))
+    if (_GetWindowsVersion(sString, countof(sString)))
         _tprintf(_T("\r\n*** Operation System ***\r\n%s\r\n"), sString);
     else
         _tprintf(_T("\r\n*** Operation System:\r\n<unknown>\r\n"));
@@ -338,7 +338,7 @@ void WheatyExceptionReport::printTracesForAllThreads()
   m_hProcess = GetCurrentProcess();
   // Take a snapshot of all running threads
   hThreadSnap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
-  if( hThreadSnap == INVALID_HANDLE_VALUE )
+  if ( hThreadSnap == INVALID_HANDLE_VALUE )
     return;
 
   // Fill in the size of the structure before using it.
@@ -346,7 +346,7 @@ void WheatyExceptionReport::printTracesForAllThreads()
 
   // Retrieve information about the first thread,
   // and exit if unsuccessful
-  if( !Thread32First( hThreadSnap, &te32 ) )
+  if ( !Thread32First( hThreadSnap, &te32 ) )
   {
     CloseHandle( hThreadSnap );    // Must clean up the
                                    //   snapshot object!
@@ -358,12 +358,12 @@ void WheatyExceptionReport::printTracesForAllThreads()
   // associated with the specified process
   do
   {
-    if( te32.th32OwnerProcessID == dwOwnerPID )
+    if ( te32.th32OwnerProcessID == dwOwnerPID )
     {
         CONTEXT context;
         context.ContextFlags = 0xffffffff;
         HANDLE threadHandle = OpenThread(THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION,false, te32.th32ThreadID);
-        if(threadHandle && GetThreadContext(threadHandle, &context))
+        if (threadHandle && GetThreadContext(threadHandle, &context))
         {
             WriteStackDetails( &context, false, threadHandle );
         }

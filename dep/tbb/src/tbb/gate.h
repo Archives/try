@@ -83,25 +83,25 @@ public:
 retry:
         state_t old_state = state;
         // First test for condition without using atomic operation
-        if( flip ? old_state!=comparand : old_state==comparand ) {
+        if ( flip ? old_state!=comparand : old_state==comparand ) {
             // Now atomically retest condition and set.
             state_t s = state.compare_and_swap( value, old_state );
-            if( s==old_state ) {
+            if ( s==old_state ) {
                 // compare_and_swap succeeded
-                if( value!=0 )   
+                if ( value!=0 )   
                     futex_wakeup_all( &state );  // Update was successful and new state is not SNAPSHOT_EMPTY
             } else {
                 // compare_and_swap failed.  But for != case, failure may be spurious for our purposes if
                 // the value there is nonetheless not equal to value.  This is a fairly rare event, so
                 // there is no need for backoff.  In event of such a failure, we must retry.
-                if( flip && s!=value ) 
+                if ( flip && s!=value ) 
                     goto retry;
             }
         }
     }
     //! Wait for state!=0.
     void wait() {
-        if( state==0 )
+        if ( state==0 )
             futex_wait( &state, 0 );
     }
 private:
@@ -142,18 +142,18 @@ public:
         __TBB_ASSERT( comparand!=0 || value!=0, "either value or comparand must be non-zero" );
         EnterCriticalSection( &critical_section );
         state_t old = state;
-        if( flip ? old!=comparand : old==comparand ) {
+        if ( flip ? old!=comparand : old==comparand ) {
             state = value;
-            if( !old )
+            if ( !old )
                 SetEvent( event );
-            else if( !value )
+            else if ( !value )
                 ResetEvent( event );
         }
         LeaveCriticalSection( &critical_section );
     }
     //! Wait for state!=0.
     void wait() {
-        if( state==0 ) {
+        if ( state==0 ) {
             WaitForSingleObject( event, INFINITE );
         }
     }
@@ -191,16 +191,16 @@ public:
         __TBB_ASSERT( comparand!=0 || value!=0, "either value or comparand must be non-zero" );
         pthread_mutex_lock( &mutex );
         state_t old = state;
-        if( flip ? old!=comparand : old==comparand ) {
+        if ( flip ? old!=comparand : old==comparand ) {
             state = value;
-            if( !old )
+            if ( !old )
                 pthread_cond_broadcast( &cond );
         }
         pthread_mutex_unlock( &mutex );
     }
     //! Wait for state!=0.
     void wait() {
-        if( state==0 ) {
+        if ( state==0 ) {
             pthread_mutex_lock( &mutex );
             while( state==0 ) {
                 pthread_cond_wait( &cond, &mutex );

@@ -34,14 +34,14 @@
 bool ChatHandler::HandleHelpCommand(const char* args)
 {
     char* cmd = strtok((char*)args, " ");
-    if(!cmd)
+    if (!cmd)
     {
         ShowHelpForCommand(getCommandTable(), "help");
         ShowHelpForCommand(getCommandTable(), "");
     }
     else
     {
-        if(!ShowHelpForCommand(getCommandTable(), cmd))
+        if (!ShowHelpForCommand(getCommandTable(), cmd))
             SendSysMessage(LANG_NO_HELP_CMD);
     }
 
@@ -65,14 +65,14 @@ bool ChatHandler::HandleStartCommand(const char* /*args*/)
 {
     Player *chr = m_session->GetPlayer();
 
-    if(chr->isInFlight())
+    if (chr->isInFlight())
     {
         SendSysMessage(LANG_YOU_IN_FLIGHT);
         SetSentErrorMessage(true);
         return false;
     }
 
-    if(chr->isInCombat())
+    if (chr->isInCombat())
     {
         SendSysMessage(LANG_YOU_IN_COMBAT);
         SetSentErrorMessage(true);
@@ -95,13 +95,13 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     char const* valhalla_rev_date = REVISION_VP_DATE;
 
     char const* full;
-    if(m_session)
+    if (m_session)
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,"|cffffffff|Hurl:" REVISION_ID "|h" REVISION_ID "|h|r");
     else
         full = _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID);
 
     SendSysMessage(full);
-    if(GetAccessLevel() > SEC_PLAYER)
+    if (GetAccessLevel() > SEC_PLAYER)
     {
         PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
         PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
@@ -112,18 +112,18 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
     PSendSysMessage("World diff time: %u", sWorld.GetDiffTime());
-    if(sWorld.IsShutdowning())
+    if (sWorld.IsShutdowning())
     {
         const char *type = (sWorld.GetShutdownMask() & SHUTDOWN_MASK_RESTART) ? "Restart" : "Shutdown";
         uint32 shutdownTimer = sWorld.GetShutdownTimer();
-        if(shutdownTimer > 60*60) //Hours
+        if (shutdownTimer > 60*60) //Hours
         {
             uint8 hours = shutdownTimer / (60*60);
             uint8 mins = (shutdownTimer - hours*60*60) / 60;
             uint8 secs = (shutdownTimer - hours*60*60 - mins*60);
             PSendSysMessage("[SERVER] %s in %u hours, %u minutes and %u seconds", type, hours, mins, secs);
         }
-        else if(shutdownTimer > 60) // Minutes
+        else if (shutdownTimer > 60) // Minutes
         {
             uint8 mins = shutdownTimer / 60;
             uint8 secs = (shutdownTimer - mins*60);
@@ -145,7 +145,7 @@ bool ChatHandler::HandleDismountCommand(const char* /*args*/)
         return false;
     }
 
-    if(m_session->GetPlayer( )->isInFlight())
+    if (m_session->GetPlayer( )->isInFlight())
     {
         SendSysMessage(LANG_YOU_IN_FLIGHT);
         SetSentErrorMessage(true);
@@ -162,7 +162,7 @@ bool ChatHandler::HandleSaveCommand(const char* /*args*/)
     Player *player=m_session->GetPlayer();
 
     // save GM account without delay and output message (testing, etc)
-    if(GetAccessLevel() > SEC_PLAYER)
+    if (GetAccessLevel() > SEC_PLAYER)
     {
         player->SaveToDB();
         SendSysMessage(LANG_PLAYER_SAVED);
@@ -218,7 +218,7 @@ bool ChatHandler::HandleAccountPasswordCommand(const char* args)
         return false;
     }
 
-    if(!*args)
+    if (!*args)
         return false;
 
     char *old_pass = strtok ((char*)args, " ");
@@ -315,24 +315,24 @@ bool ChatHandler::HandleLitakCommand(const char* args)
     std::string argstr = (char*)args;
     Player *player=m_session->GetPlayer();
 
-    if(player->isInCombat())
+    if (player->isInCombat())
     {
         SendSysMessage(LANG_YOU_IN_COMBAT);
         SetSentErrorMessage(true);
         return false;
     }
-    if(player->isInFlight())
+    if (player->isInFlight())
         player->Unmount();
     player->clearUnitState(UNIT_STAT_IN_FLIGHT);
     player->GetMotionMaster()->Clear(false, true);
 
     if (argstr == "textura")
     {
-        if(!player->m_taxi.empty())
+        if (!player->m_taxi.empty())
         {
             TaxiNodesEntry const* curSrcNode = sTaxiNodesStore.LookupEntry(player->m_taxi.GetTaxiSource());
             player->m_taxi.ClearTaxiDestinations();
-            if(curSrcNode)
+            if (curSrcNode)
                 player->TeleportTo(curSrcNode->map_id, curSrcNode->x, curSrcNode->y, curSrcNode->z, 0);
             else
                 player->MonsterMove(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), 0);

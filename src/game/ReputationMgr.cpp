@@ -58,7 +58,7 @@ int32 ReputationMgr::GetBaseReputation(FactionEntry const* factionEntry) const
     uint32 classMask = m_player->getClassMask();
     for (int i=0; i < 4; i++)
     {
-        if( (factionEntry->BaseRepRaceMask[i] & raceMask) &&
+        if ( (factionEntry->BaseRepRaceMask[i] & raceMask) &&
             (factionEntry->BaseRepClassMask[i]==0 ||
             (factionEntry->BaseRepClassMask[i] & classMask) ) )
             return factionEntry->BaseRepValue[i];
@@ -71,10 +71,10 @@ int32 ReputationMgr::GetBaseReputation(FactionEntry const* factionEntry) const
 int32 ReputationMgr::GetReputation(FactionEntry const* factionEntry) const
 {
     // Faction without recorded reputation. Just ignore.
-    if(!factionEntry)
+    if (!factionEntry)
         return 0;
 
-    if(FactionState const* state = GetState(factionEntry))
+    if (FactionState const* state = GetState(factionEntry))
         return GetBaseReputation(factionEntry) + state->Standing;
 
     return 0;
@@ -94,7 +94,7 @@ ReputationRank ReputationMgr::GetBaseRank(FactionEntry const* factionEntry) cons
 
 void ReputationMgr::ApplyForceReaction( uint32 faction_id,ReputationRank rank,bool apply )
 {
-    if(apply)
+    if (apply)
         m_forcedReactions[faction_id] = rank;
     else
         m_forcedReactions.erase(faction_id);
@@ -109,7 +109,7 @@ uint32 ReputationMgr::GetDefaultStateFlags(FactionEntry const* factionEntry) con
     uint32 classMask = m_player->getClassMask();
     for (int i=0; i < 4; i++)
     {
-        if( (factionEntry->BaseRepRaceMask[i] & raceMask) &&
+        if ( (factionEntry->BaseRepRaceMask[i] & raceMask) &&
             (factionEntry->BaseRepClassMask[i]==0 ||
             (factionEntry->BaseRepClassMask[i] & classMask) ) )
             return factionEntry->ReputationFlags[i];
@@ -132,7 +132,7 @@ void ReputationMgr::SendForceReactions()
 
 void ReputationMgr::SendState(FactionState const* faction) const
 {
-    if(faction->Flags & FACTION_FLAG_VISIBLE)               //If faction is visible then update it
+    if (faction->Flags & FACTION_FLAG_VISIBLE)               //If faction is visible then update it
     {
         uint32 count = 1;
 
@@ -202,7 +202,7 @@ void ReputationMgr::SendStates() const
 
 void ReputationMgr::SendVisible(FactionState const* faction) const
 {
-    if(m_player->GetSession()->PlayerLoading())
+    if (m_player->GetSession()->PlayerLoading())
         return;
 
     // make faction visible in reputation list at client
@@ -223,7 +223,7 @@ void ReputationMgr::Initialize()
     {
         FactionEntry const *factionEntry = sFactionStore.LookupEntry(i);
 
-        if( factionEntry && (factionEntry->reputationListID >= 0))
+        if ( factionEntry && (factionEntry->reputationListID >= 0))
         {
             FactionState newFaction;
             newFaction.ID = factionEntry->ID;
@@ -232,7 +232,7 @@ void ReputationMgr::Initialize()
             newFaction.Flags = GetDefaultStateFlags(factionEntry);
             newFaction.Changed = true;
 
-            if( newFaction.Flags & FACTION_FLAG_VISIBLE )
+            if ( newFaction.Flags & FACTION_FLAG_VISIBLE )
                 ++m_visibleFactionCount;
 
             UpdateRankCounters(REP_HOSTILE,GetBaseRank(factionEntry));
@@ -304,7 +304,7 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
     {
         int32 BaseRep = GetBaseReputation(factionEntry);
 
-        if(incremental)
+        if (incremental)
             standing += itr->second.Standing + BaseRep;
 
         if (standing > Reputation_Cap)
@@ -320,7 +320,7 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
 
         SetVisible(&itr->second);
 
-        if(new_rank <= REP_HOSTILE)
+        if (new_rank <= REP_HOSTILE)
             SetAtWar(&itr->second,true);
 
         UpdateRankCounters(old_rank, new_rank);
@@ -339,16 +339,16 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
 
 void ReputationMgr::SetVisible(FactionTemplateEntry const*factionTemplateEntry)
 {
-    if(!factionTemplateEntry->faction)
+    if (!factionTemplateEntry->faction)
         return;
 
-    if(FactionEntry const *factionEntry = sFactionStore.LookupEntry(factionTemplateEntry->faction))
+    if (FactionEntry const *factionEntry = sFactionStore.LookupEntry(factionTemplateEntry->faction))
         SetVisible(factionEntry);
 }
 
 void ReputationMgr::SetVisible(FactionEntry const *factionEntry)
 {
-    if(factionEntry->reputationListID < 0)
+    if (factionEntry->reputationListID < 0)
         return;
 
     FactionStateList::iterator itr = m_factions.find(factionEntry->reputationListID);
@@ -361,11 +361,11 @@ void ReputationMgr::SetVisible(FactionEntry const *factionEntry)
 void ReputationMgr::SetVisible(FactionState* faction)
 {
     // always invisible or hidden faction can't be make visible
-    if(faction->Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN))
+    if (faction->Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN))
         return;
 
     // already set
-    if(faction->Flags & FACTION_FLAG_VISIBLE)
+    if (faction->Flags & FACTION_FLAG_VISIBLE)
         return;
 
     faction->Flags |= FACTION_FLAG_VISIBLE;
@@ -383,7 +383,7 @@ void ReputationMgr::SetAtWar( RepListID repListID, bool on )
         return;
 
     // always invisible or hidden faction can't change war state
-    if(itr->second.Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN) )
+    if (itr->second.Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN) )
         return;
 
     SetAtWar(&itr->second,on);
@@ -392,14 +392,14 @@ void ReputationMgr::SetAtWar( RepListID repListID, bool on )
 void ReputationMgr::SetAtWar(FactionState* faction, bool atWar)
 {
     // not allow declare war to own faction
-    if(atWar && (faction->Flags & FACTION_FLAG_PEACE_FORCED) )
+    if (atWar && (faction->Flags & FACTION_FLAG_PEACE_FORCED) )
         return;
 
     // already set
-    if(((faction->Flags & FACTION_FLAG_AT_WAR) != 0) == atWar)
+    if (((faction->Flags & FACTION_FLAG_AT_WAR) != 0) == atWar)
         return;
 
-    if( atWar )
+    if ( atWar )
         faction->Flags |= FACTION_FLAG_AT_WAR;
     else
         faction->Flags &= ~FACTION_FLAG_AT_WAR;
@@ -419,14 +419,14 @@ void ReputationMgr::SetInactive( RepListID repListID, bool on )
 void ReputationMgr::SetInactive(FactionState* faction, bool inactive)
 {
     // always invisible or hidden faction can't be inactive
-    if(inactive && ((faction->Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN)) || !(faction->Flags & FACTION_FLAG_VISIBLE) ) )
+    if (inactive && ((faction->Flags & (FACTION_FLAG_INVISIBLE_FORCED|FACTION_FLAG_HIDDEN)) || !(faction->Flags & FACTION_FLAG_VISIBLE) ) )
         return;
 
     // already set
-    if(((faction->Flags & FACTION_FLAG_INACTIVE) != 0) == inactive)
+    if (((faction->Flags & FACTION_FLAG_INACTIVE) != 0) == inactive)
         return;
 
-    if(inactive)
+    if (inactive)
         faction->Flags |= FACTION_FLAG_INACTIVE;
     else
         faction->Flags &= ~FACTION_FLAG_INACTIVE;
@@ -441,14 +441,14 @@ void ReputationMgr::LoadFromDB(QueryResult *result)
 
     //QueryResult *result = CharacterDatabase.PQuery("SELECT faction,standing,flags FROM character_reputation WHERE guid = '%u'",GetGUIDLow());
 
-    if(result)
+    if (result)
     {
         do
         {
             Field *fields = result->Fetch();
 
             FactionEntry const *factionEntry = sFactionStore.LookupEntry(fields[0].GetUInt32());
-            if( factionEntry && (factionEntry->reputationListID >= 0))
+            if ( factionEntry && (factionEntry->reputationListID >= 0))
             {
                 FactionState* faction = &m_factions[factionEntry->reputationListID];
 
@@ -463,27 +463,27 @@ void ReputationMgr::LoadFromDB(QueryResult *result)
 
                 uint32 dbFactionFlags = fields[2].GetUInt32();
 
-                if( dbFactionFlags & FACTION_FLAG_VISIBLE )
+                if ( dbFactionFlags & FACTION_FLAG_VISIBLE )
                     SetVisible(faction);                    // have internal checks for forced invisibility
 
-                if( dbFactionFlags & FACTION_FLAG_INACTIVE)
+                if ( dbFactionFlags & FACTION_FLAG_INACTIVE)
                     SetInactive(faction,true);              // have internal checks for visibility requirement
 
-                if( dbFactionFlags & FACTION_FLAG_AT_WAR )  // DB at war
+                if ( dbFactionFlags & FACTION_FLAG_AT_WAR )  // DB at war
                     SetAtWar(faction,true);                 // have internal checks for FACTION_FLAG_PEACE_FORCED
                 else                                        // DB not at war
                 {
                     // allow remove if visible (and then not FACTION_FLAG_INVISIBLE_FORCED or FACTION_FLAG_HIDDEN)
-                    if( faction->Flags & FACTION_FLAG_VISIBLE )
+                    if ( faction->Flags & FACTION_FLAG_VISIBLE )
                         SetAtWar(faction,false);            // have internal checks for FACTION_FLAG_PEACE_FORCED
                 }
 
                 // set atWar for hostile
-                if(GetRank(factionEntry) <= REP_HOSTILE)
+                if (GetRank(factionEntry) <= REP_HOSTILE)
                     SetAtWar(faction,true);
 
                 // reset changed flag if values similar to saved in DB
-                if(faction->Flags==dbFactionFlags)
+                if (faction->Flags==dbFactionFlags)
                     faction->Changed = false;
             }
         }
@@ -508,17 +508,17 @@ void ReputationMgr::SaveToDB()
 
 void ReputationMgr::UpdateRankCounters( ReputationRank old_rank, ReputationRank new_rank )
 {
-    if(old_rank >= REP_EXALTED)
+    if (old_rank >= REP_EXALTED)
         --m_exaltedFactionCount;
-    if(old_rank >= REP_REVERED)
+    if (old_rank >= REP_REVERED)
         --m_reveredFactionCount;
-    if(old_rank >= REP_HONORED)
+    if (old_rank >= REP_HONORED)
         --m_honoredFactionCount;
 
-    if(new_rank >= REP_EXALTED)
+    if (new_rank >= REP_EXALTED)
         ++m_exaltedFactionCount;
-    if(new_rank >= REP_REVERED)
+    if (new_rank >= REP_REVERED)
         ++m_reveredFactionCount;
-    if(new_rank >= REP_HONORED)
+    if (new_rank >= REP_HONORED)
         ++m_honoredFactionCount;
 }

@@ -51,7 +51,7 @@ void queuing_mutex::scoped_lock::acquire( queuing_mutex& m )
     // The fetch_and_store must have release semantics, because we are
     // "sending" the fields initialized above to other processors.
     scoped_lock* pred = m.q_tail.fetch_and_store<tbb::release>(this);
-    if( pred ) {
+    if ( pred ) {
         ITT_NOTIFY(sync_prepare, mutex);
         __TBB_ASSERT( !pred->next, "the predecessor has another successor!");
         pred->next = this;
@@ -74,7 +74,7 @@ bool queuing_mutex::scoped_lock::try_acquire( queuing_mutex& m )
     next  = NULL;
     going = 0;
 
-    if( m.q_tail ) return false;
+    if ( m.q_tail ) return false;
     // The CAS must have release semantics, because we are
     // "sending" the fields initialized above to other processors.
     scoped_lock* pred = m.q_tail.compare_and_swap<tbb::release>(this, NULL);
@@ -83,7 +83,7 @@ bool queuing_mutex::scoped_lock::try_acquire( queuing_mutex& m )
     // from processor that was previously in the user's critical section.
     // try_acquire should always have acquire semantic, even if failed.
     __TBB_load_with_acquire(going);
-    if( !pred ) {
+    if ( !pred ) {
         mutex = &m;
         ITT_NOTIFY(sync_acquired, mutex);
         return true;
@@ -96,8 +96,8 @@ void queuing_mutex::scoped_lock::release( )
     __TBB_ASSERT(this->mutex!=NULL, "no lock acquired");
 
     ITT_NOTIFY(sync_releasing, mutex);
-    if( !next ) {
-        if( this == mutex->q_tail.compare_and_swap<tbb::release>(NULL, this) ) {
+    if ( !next ) {
+        if ( this == mutex->q_tail.compare_and_swap<tbb::release>(NULL, this) ) {
             // this was the only item in the queue, and the queue is now empty.
             goto done;
         }

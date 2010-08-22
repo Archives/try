@@ -74,7 +74,7 @@ void BattleGroundRB::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 
     std::map<uint64, BattleGroundScore*>::iterator itr = m_PlayerScores.find(Source->GetGUID());
 
-    if(itr == m_PlayerScores.end())                         // player not found...
+    if (itr == m_PlayerScores.end())                         // player not found...
         return;
 
     BattleGround::UpdatePlayerScore(Source,type,value);

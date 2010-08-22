@@ -96,7 +96,7 @@ MapManager::_createBaseMap(uint32 id)
 {
     Map *m = _findMap(id);
 
-    if( m == NULL )
+    if ( m == NULL )
     {
         Guard guard(*this);
 
@@ -119,7 +119,7 @@ MapManager::_createBaseMap(uint32 id)
 Map* MapManager::CreateMap(uint32 id, const WorldObject* obj)
 {
     ASSERT(obj);
-    //if(!obj->IsInWorld()) sLog.outError("GetMap: called for map %d with object (typeid %d, guid %d, mapid %d, instanceid %d) who is not in world!", id, obj->GetTypeId(), obj->GetGUIDLow(), obj->GetMapId(), obj->GetInstanceId());
+    //if (!obj->IsInWorld()) sLog.outError("GetMap: called for map %d with object (typeid %d, guid %d, mapid %d, instanceid %d) who is not in world!", id, obj->GetTypeId(), obj->GetGUIDLow(), obj->GetMapId(), obj->GetInstanceId());
     Map *m = _createBaseMap(id);
 
     if (m && (obj->GetTypeId() == TYPEID_PLAYER) && m->Instanceable())
@@ -138,10 +138,10 @@ Map* MapManager::CreateBgMap(uint32 mapid, BattleGround* bg)
 Map* MapManager::FindMap(uint32 mapid, uint32 instanceId) const
 {
     Map *map = _findMap(mapid);
-    if(!map)
+    if (!map)
         return NULL;
 
-    if(!map->Instanceable())
+    if (!map->Instanceable())
         return instanceId == 0 ? map : NULL;
 
     return ((MapInstanced*)map)->FindMap(instanceId);
@@ -154,15 +154,15 @@ Map* MapManager::FindMap(uint32 mapid, uint32 instanceId) const
 bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
 {
     const MapEntry *entry = sMapStore.LookupEntry(mapid);
-    if(!entry) return false;
+    if (!entry) return false;
     const char *mapName = entry->name[player->GetSession()->GetSessionDbcLocale()];
 
-    if(entry->map_type == MAP_INSTANCE || entry->map_type == MAP_RAID)
+    if (entry->map_type == MAP_INSTANCE || entry->map_type == MAP_RAID)
     {
         if (entry->map_type == MAP_RAID)
         {
             // GMs can avoid raid limitations
-            if(!player->isGameMaster() && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_RAID))
+            if (!player->isGameMaster() && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_RAID))
             {
                 // can only enter in a raid group
                 Group* group = player->GetGroup();
@@ -191,13 +191,13 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
 
         if (!player->isAlive())
         {
-            if(Corpse *corpse = player->GetCorpse())
+            if (Corpse *corpse = player->GetCorpse())
             {
                 // let enter in ghost mode in instance that connected to inner instance with corpse
                 uint32 instance_map = corpse->GetMapId();
                 do
                 {
-                    if(instance_map==mapid)
+                    if (instance_map==mapid)
                         break;
 
                     InstanceTemplate const* instance = ObjectMgr::GetInstanceTemplate(instance_map);
@@ -222,7 +222,7 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
         }
 
         // TODO: move this to a map dependent location
-        /*if(i_data && i_data->IsEncounterInProgress())
+        /*if (i_data && i_data->IsEncounterInProgress())
         {
             DEBUG_LOG("MAP: Player '%s' can't enter instance '%s' while an encounter is in progress.", player->GetName(), GetMapName());
             player->SendTransferAborted(GetId(), TRANSFER_ABORT_ZONE_IN_COMBAT);
@@ -247,7 +247,7 @@ void
 MapManager::Update(uint32 diff)
 {
     i_timer.Update(diff);
-    if( !i_timer.Passed() )
+    if ( !i_timer.Passed() )
         return;
 
     MapMapType::iterator iter = i_maps.begin();
@@ -308,7 +308,7 @@ void MapManager::InitMaxInstanceId()
     i_MaxInstanceId = 0;
 
     QueryResult *result = CharacterDatabase.Query( "SELECT MAX(id) FROM instance" );
-    if( result )
+    if ( result )
     {
         i_MaxInstanceId = result->Fetch()[0].GetUInt32();
         delete result;
@@ -323,10 +323,10 @@ uint32 MapManager::GetNumInstances()
     for(MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {
         Map *map = itr->second;
-        if(!map->Instanceable()) continue;
+        if (!map->Instanceable()) continue;
         MapInstanced::InstancedMaps &maps = ((MapInstanced *)map)->GetInstancedMaps();
         for(MapInstanced::InstancedMaps::iterator mitr = maps.begin(); mitr != maps.end(); ++mitr)
-            if(mitr->second->IsDungeon()) ret++;
+            if (mitr->second->IsDungeon()) ret++;
     }
     return ret;
 }
@@ -339,10 +339,10 @@ uint32 MapManager::GetNumPlayersInInstances()
     for(MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {
         Map *map = itr->second;
-        if(!map->Instanceable()) continue;
+        if (!map->Instanceable()) continue;
         MapInstanced::InstancedMaps &maps = ((MapInstanced *)map)->GetInstancedMaps();
         for(MapInstanced::InstancedMaps::iterator mitr = maps.begin(); mitr != maps.end(); ++mitr)
-            if(mitr->second->IsDungeon())
+            if (mitr->second->IsDungeon())
                 ret += ((InstanceMap*)mitr->second)->GetPlayers().getSize();
     }
     return ret;

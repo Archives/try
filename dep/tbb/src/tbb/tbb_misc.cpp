@@ -73,7 +73,7 @@ void throw_bad_last_alloc_exception_v4()
 #endif //__EXCEPTIONS || _CPPUNWIND
 
 bool GetBoolEnvironmentVariable( const char * name ) {
-    if( const char* s = getenv(name) )
+    if ( const char* s = getenv(name) )
         return strcmp(s,"0") != 0;
     return false;
 }
@@ -91,7 +91,7 @@ void PrintVersion() {
 }
 
 void PrintExtraVersionInfo( const char* category, const char* description ) {
-    if( PrintVersionFlag ) 
+    if ( PrintVersionFlag ) 
         fprintf(stderr, "%s: %s\t%s\n", "TBB", category, description );
 }
 
@@ -125,7 +125,7 @@ extern "C" void __TBB_machine_store8_slow_perf_warning( volatile void *ptr ) {
     static tbb::atomic<void*> cache[n];
     static tbb::atomic<unsigned> k;
     for( unsigned i=0; i<n; ++i ) 
-        if( ptr==cache[i] ) 
+        if ( ptr==cache[i] ) 
             goto done;
     cache[(k++)%n] = const_cast<void*>(ptr);
     tbb::internal::runtime_warning( "atomic store on misaligned 8-byte location %p is slow", ptr );
@@ -136,7 +136,7 @@ done:;
 extern "C" void __TBB_machine_store8_slow( volatile void *ptr, int64_t value ) {
     for( tbb::internal::atomic_backoff b;; b.pause() ) {
         int64_t tmp = *(int64_t*)ptr;
-        if( __TBB_machine_cmpswp8(ptr,value,tmp)==tmp ) 
+        if ( __TBB_machine_cmpswp8(ptr,value,tmp)==tmp ) 
             break;
     }
 }

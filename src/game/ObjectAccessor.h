@@ -174,7 +174,7 @@ class MANGOS_DLL_DECL ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, 
 
 inline Unit* ObjectAccessor::GetUnitInWorld(WorldObject const& obj, ObjectGuid guid)
 {
-    if(guid.IsEmpty())
+    if (guid.IsEmpty())
         return NULL;
 
     if (guid.IsPlayer())

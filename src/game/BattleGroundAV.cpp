@@ -115,7 +115,7 @@ void BattleGroundAV::HandleQuestComplete(uint32 questid, Player *player)
         case BG_AV_QUEST_H_SCRAPS2:
             m_Team_QuestStatus[team][0] += 20;
             reputation = 1;
-            if( m_Team_QuestStatus[team][0] == 500 || m_Team_QuestStatus[team][0] == 1000 || m_Team_QuestStatus[team][0] == 1500 ) //25,50,75 turn ins
+            if ( m_Team_QuestStatus[team][0] == 500 || m_Team_QuestStatus[team][0] == 1000 || m_Team_QuestStatus[team][0] == 1500 ) //25,50,75 turn ins
             {
                 DEBUG_LOG("BattleGroundAV: Quest %i completed starting with unit upgrading..", questid);
                 for (BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i <= BG_AV_NODES_FROSTWOLF_HUT; ++i)
@@ -393,7 +393,7 @@ void BattleGroundAV::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 {
 
     BattleGroundScoreMap::iterator itr = m_PlayerScores.find(Source->GetGUID());
-    if(itr == m_PlayerScores.end())                         // player not found...
+    if (itr == m_PlayerScores.end())                         // player not found...
         return;
 
     switch(type)
@@ -544,7 +544,7 @@ void BattleGroundAV::EventPlayerDefendsPoint(Player* player, BG_AV_Nodes node)
 
     if (m_Nodes[node].Owner == team || m_Nodes[node].State != POINT_ASSAULTED)
         return;
-    if( m_Nodes[node].TotalOwner == BG_AV_NEUTRAL_TEAM )    // initial snowfall capture
+    if ( m_Nodes[node].TotalOwner == BG_AV_NEUTRAL_TEAM )    // initial snowfall capture
     {
         // until snowfall doesn't belong to anyone it is better handled in assault - code (best would be to have a special function
         // for neutral nodes.. but doing this just for snowfall will be a bit to much i think
@@ -628,12 +628,12 @@ void BattleGroundAV::FillInitialWorldStates(WorldPacket& data, uint32& count)
         }
     }
 
-    if( m_Nodes[BG_AV_NODES_SNOWFALL_GRAVE].Owner == BG_AV_NEUTRAL_TEAM )   // cause neutral teams aren't handled generic
+    if ( m_Nodes[BG_AV_NODES_SNOWFALL_GRAVE].Owner == BG_AV_NEUTRAL_TEAM )   // cause neutral teams aren't handled generic
         FillInitialWorldState(data, count, AV_SNOWFALL_N, 1);
 
     FillInitialWorldState(data, count, BG_AV_Alliance_Score, m_TeamScores[BG_TEAM_ALLIANCE]);
     FillInitialWorldState(data, count, BG_AV_Horde_Score,    m_TeamScores[BG_TEAM_HORDE]);
-    if( GetStatus() == STATUS_IN_PROGRESS )                 // only if game is running the teamscores are displayed
+    if ( GetStatus() == STATUS_IN_PROGRESS )                 // only if game is running the teamscores are displayed
     {
         FillInitialWorldState(data, count, BG_AV_SHOW_A_SCORE, 1);
         FillInitialWorldState(data, count, BG_AV_SHOW_H_SCORE, 1);
@@ -656,7 +656,7 @@ void BattleGroundAV::FillInitialWorldStates(WorldPacket& data, uint32& count)
 void BattleGroundAV::UpdateNodeWorldState(BG_AV_Nodes node)
 {
     UpdateWorldState(BG_AV_NodeWorldStates[node][GetWorldStateType(m_Nodes[node].State,m_Nodes[node].Owner)], 1);
-    if( m_Nodes[node].PrevOwner == BG_AV_NEUTRAL_TEAM )     // currently only snowfall is supported as neutral node
+    if ( m_Nodes[node].PrevOwner == BG_AV_NEUTRAL_TEAM )     // currently only snowfall is supported as neutral node
         UpdateWorldState(AV_SNOWFALL_N, 0);
     else
         UpdateWorldState(BG_AV_NodeWorldStates[node][GetWorldStateType(m_Nodes[node].PrevState,m_Nodes[node].PrevOwner)], 0);

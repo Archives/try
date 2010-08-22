@@ -33,9 +33,9 @@ void WorldSession::HandleAttackSwingOpcode( WorldPacket & recv_data )
 
     Unit *pEnemy = ObjectAccessor::GetUnit(*_player, guid);
 
-    if(!pEnemy)
+    if (!pEnemy)
     {
-        if(!guid.IsUnit())
+        if (!guid.IsUnit())
             sLog.outError("WORLD: %s isn't player, pet or creature", guid.GetString().c_str());
         else
             sLog.outError( "WORLD: Enemy %s not found", guid.GetString().c_str());
@@ -45,7 +45,7 @@ void WorldSession::HandleAttackSwingOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if(_player->IsFriendlyTo(pEnemy) || pEnemy->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
+    if (_player->IsFriendlyTo(pEnemy) || pEnemy->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE))
     {
         sLog.outError( "WORLD: Enemy %s is friendly",guid.GetString().c_str());
 
@@ -54,7 +54,7 @@ void WorldSession::HandleAttackSwingOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if(!pEnemy->isAlive())
+    if (!pEnemy->isAlive())
     {
         // client can generate swing to known dead target if autoswitch between autoshot and autohit is enabled in client options
         // stop attack state at client
@@ -77,7 +77,7 @@ void WorldSession::HandleSetSheathedOpcode( WorldPacket & recv_data )
 
     //DEBUG_LOG( "WORLD: Recvd CMSG_SETSHEATHED Message guidlow:%u value1:%u", GetPlayer()->GetGUIDLow(), sheathed );
 
-    if(sheathed >= MAX_SHEATH_STATE)
+    if (sheathed >= MAX_SHEATH_STATE)
     {
         sLog.outError("Unknown sheath state %u ??",sheathed);
         return;

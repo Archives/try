@@ -57,7 +57,7 @@ struct ServerPktHeader
     ServerPktHeader(uint32 size, uint16 cmd) : size(size)
     {
         uint8 headerIndex=0;
-        if(isLargePacket())
+        if (isLargePacket())
         {
             DEBUG_LOG("initializing large server to client packet. Size: %u, cmd: %u", size, cmd);
             header[headerIndex++] = 0x80|(0xFF &(size>>16));
@@ -192,7 +192,7 @@ int WorldSocket::SendPacket (const WorldPacket& pct)
         if (!pct.empty ())
             mb->copy((const char*)pct.contents(), pct.size ());
 
-        if(msg_queue()->enqueue_tail(mb,(ACE_Time_Value*)&ACE_Time_Value::zero) == -1)
+        if (msg_queue()->enqueue_tail(mb,(ACE_Time_Value*)&ACE_Time_Value::zero) == -1)
         {
             sLog.outError("WorldSocket::SendPacket enqueue_tail");
             mb->release();
@@ -367,12 +367,12 @@ int WorldSocket::handle_output (ACE_HANDLE)
 
 int WorldSocket::handle_output_queue (GuardType& g)
 {
-    if(msg_queue()->is_empty())
+    if (msg_queue()->is_empty())
         return cancel_wakeup_output(g);
 
     ACE_Message_Block *mblk;
 
-    if(msg_queue()->dequeue_head(mblk, (ACE_Time_Value*)&ACE_Time_Value::zero) == -1)
+    if (msg_queue()->dequeue_head(mblk, (ACE_Time_Value*)&ACE_Time_Value::zero) == -1)
     {
         sLog.outError("WorldSocket::handle_output_queue dequeue_head");
         return -1;
@@ -490,7 +490,7 @@ int WorldSocket::handle_input_header (void)
 
     ACE_NEW_RETURN (m_RecvWPct, WorldPacket ((uint16) header.cmd, header.size), -1);
 
-    if(header.size > 0)
+    if (header.size > 0)
     {
         m_RecvWPct->resize (header.size);
         m_RecvPct.base ((char*) m_RecvWPct->contents (), m_RecvWPct->size ());
@@ -813,7 +813,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     trial = (fields[10].GetUInt8() == 1) ? true : false;
 
     // Check the version of client trying to connect
-    if(!IsAcceptableClientBuild(ClientBuild) && !trial)
+    if (!IsAcceptableClientBuild(ClientBuild) && !trial)
     {
         packet.Initialize (SMSG_AUTH_RESPONSE, 1);
         packet << uint8 (AUTH_VERSION_MISMATCH);
@@ -860,7 +860,7 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
 
     id = fields[0].GetUInt32 ();
     security = fields[1].GetUInt16 ();
-    if(security > SEC_ADMINISTRATOR)                        // prevent invalid security settings in DB
+    if (security > SEC_ADMINISTRATOR)                        // prevent invalid security settings in DB
         security = SEC_ADMINISTRATOR;
 
     K.SetHexStr (fields[2].GetString ());

@@ -42,7 +42,7 @@
  * @param X - Argument (ACE: u_int, TAO: RtecScheduler::handle_t)
  */
 #  define START_DISPATCH_METRIC(METRICS_PTR,NAME,X) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_start(X); \
 } } while (0)
 
@@ -58,7 +58,7 @@ METRICS_PTR->report_##NAME##_start(X); \
  * @param X - Argument (ACE: u_int, TAO: RtecScheduler::handle_t)
  */
 #  define STOP_DISPATCH_METRIC(METRICS_PTR,NAME,X) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_stop(X); \
 } } while (0)
 
@@ -73,7 +73,7 @@ METRICS_PTR->report_##NAME##_stop(X); \
  * @param X - Argument (ACE: u_int, TAO: RtecScheduler::handle_t)
  */
 #  define PAUSE_DISPATCH_METRIC(METRICS_PTR,NAME,X) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_suspend(X); \
 } } while (0)
 
@@ -88,7 +88,7 @@ METRICS_PTR->report_##NAME##_suspend(X); \
  * @param X - Argument (ACE: u_int, TAO: RtecScheduler::handle_t)
  */
 #  define RESUME_DISPATCH_METRIC(METRICS_PTR,NAME,X) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_resume(X); \
 } } while (0)
 
@@ -98,12 +98,12 @@ METRICS_PTR->report_##NAME##_resume(X); \
  * start and stop functions had an argument to find the probe in the cache
  */
 #  define START_METRIC(METRICS_PTR,NAME) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_start(); \
 } } while (0)
 
 #  define STOP_METRIC(METRICS_PTR,NAME) \
-do { if((METRICS_PTR->metrics_enabled())) { \
+do { if ((METRICS_PTR->metrics_enabled())) { \
 METRICS_PTR->report_##NAME##_stop(); \
 } } while (0)
 

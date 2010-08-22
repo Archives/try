@@ -42,7 +42,7 @@ VisibleNotifier::Notify()
     Player& player = *i_camera.GetOwner();
     // at this moment i_clientGUIDs have guids that not iterate at grid level checks
     // but exist one case when this possible and object not out of range: transports
-    if(Transport* transport = player.GetTransport())
+    if (Transport* transport = player.GetTransport())
     {
         for(Transport::PlayerSet::const_iterator itr = transport->GetPassengers().begin();itr!=transport->GetPassengers().end();++itr)
         {
@@ -143,10 +143,10 @@ ObjectMessageDeliverer::Visit(CameraMapType &m)
 {
     for(CameraMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
-        if(!iter->getSource()->GetBody()->InSamePhase(i_phaseMask))
+        if (!iter->getSource()->GetBody()->InSamePhase(i_phaseMask))
             continue;
 
-        if(WorldSession* session = iter->getSource()->GetOwner()->GetSession())
+        if (WorldSession* session = iter->getSource()->GetOwner()->GetSession())
             session->SendPacket(i_message);
     }
 }
@@ -199,15 +199,15 @@ ObjectUpdater::Visit(GridRefManager<T> &m)
 bool CannibalizeObjectCheck::operator()(Corpse* u)
 {
     // ignore bones
-    if(u->GetType()==CORPSE_BONES)
+    if (u->GetType()==CORPSE_BONES)
         return false;
 
     Player* owner = ObjectAccessor::FindPlayer(u->GetOwnerGUID());
 
-    if( !owner || i_fobj->IsFriendlyTo(owner))
+    if ( !owner || i_fobj->IsFriendlyTo(owner))
         return false;
 
-    if(i_fobj->IsWithinDistInMap(u, i_range) )
+    if (i_fobj->IsWithinDistInMap(u, i_range) )
         return true;
 
     return false;

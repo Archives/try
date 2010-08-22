@@ -90,7 +90,7 @@ void tbb_thread_v3::join()
     my_thread_id = 0;
 #else
     int status = pthread_join( my_handle, NULL );
-    if( status )
+    if ( status )
         handle_perror( status, "pthread_join" );
 #endif // _WIN32||_WIN64 
     my_handle = 0;
@@ -105,7 +105,7 @@ void tbb_thread_v3::detach() {
     my_thread_id = 0;
 #else
     int status = pthread_detach( my_handle );
-    if( status )
+    if ( status )
         handle_perror( status, "pthread_detach" );
 #endif // _WIN32||_WIN64
     my_handle = 0;
@@ -128,7 +128,7 @@ void tbb_thread_v3::internal_start( __TBB_NATIVE_THREAD_ROUTINE_PTR(start_routin
     // and 'unsigned long' on old MS compilers.  Our uintptr works for both.
     uintptr status = _beginthreadex( NULL, ThreadStackSize, start_routine,
                                      closure, 0, &thread_id ); 
-    if( status==0 )
+    if ( status==0 )
         handle_perror(errno,"__beginthreadex");
     else {
         my_handle = (HANDLE)status;
@@ -139,14 +139,14 @@ void tbb_thread_v3::internal_start( __TBB_NATIVE_THREAD_ROUTINE_PTR(start_routin
     int status;
     pthread_attr_t stack_size;
     status = pthread_attr_init( &stack_size );
-    if( status )
+    if ( status )
         handle_perror( status, "pthread_attr_init" );
     status = pthread_attr_setstacksize( &stack_size, ThreadStackSize );
-    if( status )
+    if ( status )
         handle_perror( status, "pthread_attr_setstacksize" );
 
     status = pthread_create( &thread_handle, &stack_size, start_routine, closure );
-    if( status )
+    if ( status )
         handle_perror( status, "pthread_create" );
 
     my_handle = thread_handle;
@@ -189,7 +189,7 @@ void thread_sleep_v3(const tick_count::interval_t &i)
      tick_count t1 = t0;
      for(;;) {
          double remainder = (i-(t1-t0)).seconds()*1e3;  // milliseconds remaining to sleep
-         if( remainder<=0 ) break;
+         if ( remainder<=0 ) break;
          DWORD t = remainder>=INFINITE ? INFINITE-1 : DWORD(remainder);
          Sleep( t );
          t1 = tick_count::now();

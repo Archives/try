@@ -106,7 +106,7 @@ void ConfusedMovementGenerator<T>::Reset(T &unit)
 template<class T>
 bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
 {
-    if(!&unit)
+    if (!&unit)
         return true;
 
     // ignore in case other no reaction state
@@ -137,7 +137,7 @@ bool ConfusedMovementGenerator<T>::Update(T &unit, const uint32 &diff)
     {
         // waiting for next move
         i_nextMoveTime.Update(diff);
-        if( i_nextMoveTime.Passed() )
+        if ( i_nextMoveTime.Passed() )
         {
             // start moving
             unit.addUnitState(UNIT_STAT_CONFUSED_MOVE);

@@ -57,13 +57,13 @@ ObjectAccessor::~ObjectAccessor()
 Creature*
 ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, ObjectGuid guid)
 {
-    if(guid.IsPlayer() || !u.IsInWorld())
+    if (guid.IsPlayer() || !u.IsInWorld())
         return NULL;
 
-    if(guid.IsPet())
+    if (guid.IsPet())
         return u.GetMap()->GetPet(guid);
 
-    if(guid.IsVehicle())
+    if (guid.IsVehicle())
         return u.GetMap()->GetVehicle(guid);
 
     return u.GetMap()->GetCreature(guid);
@@ -72,10 +72,10 @@ ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, ObjectGuid guid)
 Unit*
 ObjectAccessor::GetUnit(WorldObject const &u, ObjectGuid guid)
 {
-    if(guid.IsEmpty())
+    if (guid.IsEmpty())
         return NULL;
 
-    if(guid.IsPlayer())
+    if (guid.IsPlayer())
         return FindPlayer(guid);
 
     return GetCreatureOrPetOrVehicle(u, guid);
@@ -84,9 +84,9 @@ ObjectAccessor::GetUnit(WorldObject const &u, ObjectGuid guid)
 Corpse* ObjectAccessor::GetCorpseInMap(ObjectGuid guid, uint32 mapid)
 {
     Corpse * ret = HashMapHolder<Corpse>::Find(guid);
-    if(!ret)
+    if (!ret)
         return NULL;
-    if(ret->GetMapId() != mapid)
+    if (ret->GetMapId() != mapid)
         return NULL;
 
     return ret;
@@ -96,7 +96,7 @@ Player*
 ObjectAccessor::FindPlayer(ObjectGuid guid)
 {
     Player * plr = HashMapHolder<Player>::Find(guid);;
-    if(!plr || !plr->IsInWorld())
+    if (!plr || !plr->IsInWorld())
         return NULL;
 
     return plr;
@@ -109,7 +109,7 @@ ObjectAccessor::FindPlayerByName(const char *name)
     HashMapHolder<Player>::ReadGuard g(HashMapHolder<Player>::GetLock());
     HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
     for(HashMapHolder<Player>::MapType::iterator iter = m.begin(); iter != m.end(); ++iter)
-        if(iter->second->IsInWorld() && ( ::strcmp(name, iter->second->GetName()) == 0 ))
+        if (iter->second->IsInWorld() && ( ::strcmp(name, iter->second->GetName()) == 0 ))
             return iter->second;
 
     return NULL;
@@ -140,7 +140,7 @@ ObjectAccessor::GetCorpseForPlayerGUID(ObjectGuid guid)
     Guard guard(i_corpseGuard);
 
     Player2CorpsesMapType::iterator iter = i_player2corpse.find(guid.GetRawValue());
-    if( iter == i_player2corpse.end() ) return NULL;
+    if ( iter == i_player2corpse.end() ) return NULL;
 
     ASSERT(iter->second->GetType() != CORPSE_BONES);
 
@@ -154,7 +154,7 @@ ObjectAccessor::RemoveCorpse(Corpse *corpse)
 
     Guard guard(i_corpseGuard);
     Player2CorpsesMapType::iterator iter = i_player2corpse.find(corpse->GetOwnerGUID());
-    if( iter == i_player2corpse.end() )
+    if ( iter == i_player2corpse.end() )
         return;
 
     // build mapid*cellid -> guid_set map
@@ -188,7 +188,7 @@ ObjectAccessor::AddCorpsesToGrid(GridPair const& gridpair,GridType& grid,Map* ma
 {
     Guard guard(i_corpseGuard);
     for(Player2CorpsesMapType::iterator iter = i_player2corpse.begin(); iter != i_player2corpse.end(); ++iter)
-        if(iter->second->GetGrid() == gridpair)
+        if (iter->second->GetGrid() == gridpair)
     {
         // verify, if the corpse in our instance (add only corpses which are)
         if (map->Instanceable())
@@ -209,7 +209,7 @@ Corpse*
 ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
 {
     Corpse *corpse = GetCorpseForPlayerGUID(player_guid);
-    if(!corpse)
+    if (!corpse)
     {
         //in fact this function is called from several places
         //even when player doesn't have a corpse, not an error
@@ -225,7 +225,7 @@ ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
     // remove resurrectable corpse from grid object registry (loaded state checked into call)
     // do not load the map if it's not loaded
     Map *map = sMapMgr.FindMap(corpse->GetMapId(), corpse->GetInstanceId());
-    if(map)
+    if (map)
         map->Remove(corpse, false);
 
     // remove corpse from DB
@@ -257,7 +257,7 @@ ObjectAccessor::ConvertCorpseForPlayer(ObjectGuid player_guid, bool insignia)
 
         for (int i = 0; i < EQUIPMENT_SLOT_END; ++i)
         {
-            if(corpse->GetUInt32Value(CORPSE_FIELD_ITEM + i))
+            if (corpse->GetUInt32Value(CORPSE_FIELD_ITEM + i))
                 bones->SetUInt32Value(CORPSE_FIELD_ITEM + i, 0);
         }
 
@@ -280,7 +280,7 @@ void ObjectAccessor::RemoveOldCorpses()
         next = itr;
         ++next;
 
-        if(!itr->second->IsExpired(now))
+        if (!itr->second->IsExpired(now))
             continue;
 
         ConvertCorpseForPlayer(itr->first);

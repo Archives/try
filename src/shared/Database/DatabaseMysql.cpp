@@ -42,7 +42,7 @@ size_t DatabaseMysql::db_count = 0;
 DatabaseMysql::DatabaseMysql() : Database(), mMysql(0)
 {
     // before first connection
-    if( db_count++ == 0 )
+    if ( db_count++ == 0 )
     {
         // Mysql Library Init
         mysql_library_init(-1, NULL, NULL);
@@ -65,14 +65,14 @@ DatabaseMysql::~DatabaseMysql()
         mysql_close(mMysql);
 
     //Free Mysql library pointers for last ~DB
-    if(--db_count == 0)
+    if (--db_count == 0)
         mysql_library_end();
 }
 
 bool DatabaseMysql::Initialize(const char *infoString)
 {
 
-    if(!Database::Initialize(infoString))
+    if (!Database::Initialize(infoString))
         return false;
 
     tranThread = NULL;
@@ -96,20 +96,20 @@ bool DatabaseMysql::Initialize(const char *infoString)
 
     iter = tokens.begin();
 
-    if(iter != tokens.end())
+    if (iter != tokens.end())
         host = *iter++;
-    if(iter != tokens.end())
+    if (iter != tokens.end())
         port_or_socket = *iter++;
-    if(iter != tokens.end())
+    if (iter != tokens.end())
         user = *iter++;
-    if(iter != tokens.end())
+    if (iter != tokens.end())
         password = *iter++;
-    if(iter != tokens.end())
+    if (iter != tokens.end())
         database = *iter++;
 
     mysql_options(mysqlInit,MYSQL_SET_CHARSET_NAME,"utf8");
     #ifdef WIN32
-    if(host==".")                                           // named pipe use option (Windows)
+    if (host==".")                                           // named pipe use option (Windows)
     {
         unsigned int opt = MYSQL_PROTOCOL_PIPE;
         mysql_options(mysqlInit,MYSQL_OPT_PROTOCOL,(char const*)&opt);
@@ -122,7 +122,7 @@ bool DatabaseMysql::Initialize(const char *infoString)
         unix_socket = 0;
     }
     #else
-    if(host==".")                                           // socket use option (Unix/Linux)
+    if (host==".")                                           // socket use option (Unix/Linux)
     {
         unsigned int opt = MYSQL_PROTOCOL_SOCKET;
         mysql_options(mysqlInit,MYSQL_OPT_PROTOCOL,(char const*)&opt);
@@ -188,7 +188,7 @@ bool DatabaseMysql::_Query(const char *sql, MYSQL_RES **pResult, MYSQL_FIELD **p
 
         uint32 _s = getMSTime();
 
-        if(mysql_query(mMysql, sql))
+        if (mysql_query(mMysql, sql))
         {
             sLog.outErrorDb( "SQL: %s", sql );
             sLog.outErrorDb("query ERROR: %s", mysql_error(mMysql));
@@ -225,7 +225,7 @@ QueryResult* DatabaseMysql::Query(const char *sql)
     uint64 rowCount = 0;
     uint32 fieldCount = 0;
 
-    if(!_Query(sql,&result,&fields,&rowCount,&fieldCount))
+    if (!_Query(sql,&result,&fields,&rowCount,&fieldCount))
         return NULL;
 
     QueryResultMysql *queryResult = new QueryResultMysql(result, fields, rowCount, fieldCount);
@@ -242,7 +242,7 @@ QueryNamedResult* DatabaseMysql::QueryNamed(const char *sql)
     uint64 rowCount = 0;
     uint32 fieldCount = 0;
 
-    if(!_Query(sql,&result,&fields,&rowCount,&fieldCount))
+    if (!_Query(sql,&result,&fields,&rowCount,&fieldCount))
         return NULL;
 
     QueryFieldNames names(fieldCount);
@@ -290,7 +290,7 @@ bool DatabaseMysql::DirectExecute(const char* sql)
 
         uint32 _s = getMSTime();
 
-        if(mysql_query(mMysql, sql))
+        if (mysql_query(mMysql, sql))
         {
             sLog.outErrorDb("SQL: %s", sql);
             sLog.outErrorDb("SQL ERROR: %s", mysql_error(mMysql));

@@ -96,7 +96,7 @@ public:
 
         //! Release lock (if lock is held).
         ~scoped_lock() {
-            if( mutex ) release();
+            if ( mutex ) release();
         }
 
         //! Acquire lock on given mutex.
@@ -104,7 +104,7 @@ public:
             __TBB_ASSERT( !mutex, "holding mutex already" );
             is_writer = write; 
             mutex = &m;
-            if( write ) internal_acquire_writer(mutex);
+            if ( write ) internal_acquire_writer(mutex);
             else        internal_acquire_reader(mutex);
         }
 
@@ -122,7 +122,7 @@ public:
             __TBB_ASSERT( mutex, "lock is not acquired" );
             spin_rw_mutex *m = mutex; 
             mutex = NULL;
-            if( is_writer ) {
+            if ( is_writer ) {
 #if TBB_DO_THREADING_TOOLS||TBB_DO_ASSERT
                 internal_release_writer(m);
 #else
@@ -154,7 +154,7 @@ public:
             is_writer = write; 
             result = write? internal_try_acquire_writer(&m)
                           : internal_try_acquire_reader(&m);
-            if( result ) mutex = &m;
+            if ( result ) mutex = &m;
             return result;
         }
 

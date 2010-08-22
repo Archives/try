@@ -148,7 +148,7 @@ bool WaypointMovementGenerator<Creature>::Update(Creature &creature, const uint3
             i_destinationHolder.SetDestination(traveller, node.x, node.y, node.z);
             i_nextMoveTime.Reset(i_destinationHolder.GetTotalTravelTime());
         }
-        else // if( !i_nextMoveTime.Passed())
+        else // if ( !i_nextMoveTime.Passed())
         {
             // unexpected end of timer && creature stopped && not at end of segment
             if (!IsStoppedByPlayer())
@@ -309,7 +309,7 @@ void FlightPathMovementGenerator::Initialize(Player &player)
 
 void FlightPathMovementGenerator::Finalize(Player & player)
 {
-    if(!player.IsInWorld())
+    if (!player.IsInWorld())
         return;
 
     // remove flag to prevent send object build movement packets for flight state and crash (movement generator already not at top of stack)
@@ -322,10 +322,10 @@ void FlightPathMovementGenerator::Finalize(Player & player)
     player.Unmount();
     player.RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
 
-    if(player.m_taxi.empty())
+    if (player.m_taxi.empty())
     {
         player.getHostileRefManager().setOnlineOfflineState(true);
-        if(player.pvpInfo.inHostileArea)
+        if (player.pvpInfo.inHostileArea)
             player.CastSpell(&player, 2479, true);
 
         // update z position to ground and orientation for landing point
@@ -348,9 +348,9 @@ void FlightPathMovementGenerator::Reset(Player & player)
     Traveller<Player> traveller(player);
     // do not send movement, it was sent already
     const TaxiPathNodeList* debug_path = i_path;
-    if(i_path && !i_path->empty())
+    if (i_path && !i_path->empty())
     {
-        if(i_path->size() <= i_currentNode)
+        if (i_path->size() <= i_currentNode)
             i_currentNode = uint32(i_path->size()-1);
         i_destinationHolder.SetDestination(traveller, (*i_path)[i_currentNode].x, (*i_path)[i_currentNode].y, (*i_path)[i_currentNode].z, false);
     }
@@ -362,7 +362,7 @@ bool FlightPathMovementGenerator::Update(Player &player, const uint32 &diff)
     if (MovementInProgress())
     {
         Traveller<Player> traveller(player);
-        if( i_destinationHolder.UpdateTraveller(traveller, diff, false) )
+        if ( i_destinationHolder.UpdateTraveller(traveller, diff, false) )
         {
             if (!IsActive(player))                          // force stop processing (movement can move out active zone with cleanup movegens list)
                 return true;                                // not expire now, but already lost

@@ -102,7 +102,7 @@ struct ArenaTeamMember
             personal_rating = 0;
         else
             personal_rating += mod;
-        if(plr)
+        if (plr)
             plr->SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, personal_rating);
     }
 };
@@ -168,7 +168,7 @@ class ArenaTeam
         ArenaTeamMember* GetMember(const uint64& guid)
         {
             for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-                if(itr->guid == guid)
+                if (itr->guid == guid)
                     return &(*itr);
 
             return NULL;
@@ -177,7 +177,7 @@ class ArenaTeam
         ArenaTeamMember* GetMember(const std::string& name)
         {
             for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-                if(itr->name == name)
+                if (itr->name == name)
                     return &(*itr);
 
             return NULL;

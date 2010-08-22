@@ -35,7 +35,7 @@ DestinationHolder<TRAVELLER>::_findOffSetPoint(float x1, float y1, float x2, flo
      * hence x = x2 - (offset/d)*(x2-x1)
      * like wise offset/d = (y2-y)/(y2-y1);
      */
-    if( offset == 0 )
+    if ( offset == 0 )
     {
         x = x2;
         y = y2;
@@ -45,7 +45,7 @@ DestinationHolder<TRAVELLER>::_findOffSetPoint(float x1, float y1, float x2, flo
         double x_diff = double(x2 - x1);
         double y_diff = double(y2 - y1);
         double distance_d = (double)((x_diff*x_diff) + (y_diff * y_diff));
-        if(distance_d == 0)
+        if (distance_d == 0)
         {
             x = x2;
             y = y2;
@@ -77,7 +77,7 @@ template<typename TRAVELLER>
 uint32
 DestinationHolder<TRAVELLER>::StartTravel(TRAVELLER &traveller, bool sendMove)
 {
-    if(!i_destSet) return 0;
+    if (!i_destSet) return 0;
 
     i_fromX = traveller.GetPositionX();
     i_fromY = traveller.GetPositionY();
@@ -85,7 +85,7 @@ DestinationHolder<TRAVELLER>::StartTravel(TRAVELLER &traveller, bool sendMove)
 
     i_totalTravelTime = traveller.GetTotalTrevelTimeTo(i_destX,i_destY,i_destZ);
     i_timeElapsed = 0;
-    if(sendMove)
+    if (sendMove)
     {
         if (i_totalTravelTime)
             traveller.MoveTo(i_destX, i_destY, i_destZ, i_totalTravelTime);
@@ -189,7 +189,7 @@ DestinationHolder<TRAVELLER>::GetLocationNow(const Map * map, float &x, float &y
             const float groundDist = sqrt(distanceX*distanceX + distanceY*distanceY);
             const float zDist = fabs(i_fromZ - z) + 0.000001f;
             const float slope = groundDist / zDist;
-            if(slope < 1.0f)  // This prevents the ground returned by GetHeight to be used when in cave
+            if (slope < 1.0f)  // This prevents the ground returned by GetHeight to be used when in cave
                 z = z2; // a climb or jump of more than 45 is denied
         }
     }

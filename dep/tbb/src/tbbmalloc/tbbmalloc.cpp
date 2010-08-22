@@ -79,7 +79,7 @@ void MallocInitializeITT() {
 #else
     bool success = false;
     // Check if we are running under control of VTune.
-    if( GetBoolEnvironmentVariable("KMP_FOR_TCHECK") || GetBoolEnvironmentVariable("KMP_FOR_TPROFILE") ) {
+    if ( GetBoolEnvironmentVariable("KMP_FOR_TCHECK") || GetBoolEnvironmentVariable("KMP_FOR_TPROFILE") ) {
         // Yes, we are under control of VTune.  Check for libittnotify library.
         success = dynamic_link( LIBITTNOTIFY_NAME, ITT_HandlerTable, 5 );
     }
