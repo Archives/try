@@ -3751,7 +3751,7 @@ uint32 Player::resetTalentsCost() const
 bool Player::resetTalents(bool no_cost, bool all_specs)
 {
     // not need after this call
-    if(HasAtLoginFlag(AT_LOGIN_RESET_TALENTS) && all_specs)
+    if (HasAtLoginFlag(AT_LOGIN_RESET_TALENTS) && all_specs && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         RemoveAtLoginFlag(AT_LOGIN_RESET_TALENTS,true);
 
     if (m_usedTalentCount == 0 && !all_specs)
@@ -16074,16 +16074,16 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     _LoadEquipmentSets(holder->GetResult(PLAYER_LOGIN_QUERY_LOADEQUIPMENTSETS));
 
     //For character transfer
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         LearnAviableSpells();
 
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         LearnSkillRecipesFromTrainer();
 
-    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+    if(HasAtLoginFlag(AT_LOGIN_ADD_EQUIP) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         AddLoginEquip();
 
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
+    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         LearnAllAviableTaxiPaths();
 
     return true;
@@ -16454,7 +16454,7 @@ void Player::_LoadInventory(QueryResult *result, uint32 timediff)
 void Player::AddLoginEquip()
 {
     //Make sure we really want this
-    if(!HasAtLoginFlag(AT_LOGIN_ADD_EQUIP))
+    if(!HasAtLoginFlag(AT_LOGIN_ADD_EQUIP) || HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         return;
 
     RemoveAtLoginFlag(AT_LOGIN_ADD_EQUIP,true);
@@ -16836,7 +16836,7 @@ void Player::_LoadSpells(QueryResult *result)
 void Player::LearnAviableSpells()
 {
     //Make sure we really want this
-    if(!HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS))
+    if(!HasAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS) || HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         return;
 
     RemoveAtLoginFlag(AT_LOGIN_LEARN_CLASS_SPELLS,true);
@@ -17543,6 +17543,10 @@ void Player::SaveToDB()
         if(ArenaTeam * at = sObjectMgr.GetArenaTeamById(GetArenaTeamId(i)))
             at->UpdateTeamRank(false, true);
     }
+
+    // remove delay login flag
+    if (HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
+        RemoveAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN,true);
 }
 
 // fast save function for item/money cheating preventing - save only inventory and money state
@@ -20395,7 +20399,7 @@ void Player::ApplyEquipCooldown( Item * pItem )
 void Player::resetSpells()
 {
     // not need after this call
-    if(HasAtLoginFlag(AT_LOGIN_RESET_SPELLS))
+    if (HasAtLoginFlag(AT_LOGIN_RESET_SPELLS) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         RemoveAtLoginFlag(AT_LOGIN_RESET_SPELLS,true);
 
     // make full copy of map (spells removed and marked as deleted at another spell remove
@@ -21898,8 +21902,9 @@ void Player::_LoadSkills(QueryResult *result)
 void Player::LearnSkillRecipesFromTrainer()
 {
     //Make sure we really want this
-    if(!HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES))
+    if(!HasAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES) || HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         return;
+
     RemoveAtLoginFlag(AT_LOGIN_LEARN_SKILL_RECIPES,true);
         
     DEBUG_LOG("Player::LearnSkillRecipesFromTrainer(): Player %u has flag AT_LOGIN_LEARN_SKILL_RECIPES, learning recipes...", GetGUID());
@@ -23023,7 +23028,7 @@ void Player::SetRestType( RestType n_r_type, uint32 areaTriggerId /*= 0*/)
 
 void Player::LearnAllAviableTaxiPaths()
 {
-    if(HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES))
+    if (HasAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES) && !HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         RemoveAtLoginFlag(AT_LOGIN_LEARN_TAXI_NODES,true);
 
     for(uint32 i = 1; i < sTaxiNodesStore.GetNumRows(); ++i)

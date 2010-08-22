@@ -747,7 +747,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     pCurrChar->ContinueTaxiFlight();
 
     // reset for all pets before pet loading
-    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS))
+    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS) && !pCurrChar->HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         Pet::resetTalentsForAllPetsOf(pCurrChar);
 
     // Load pet if any (if player not alive and in taxi flight or another then pet will remember as temporary unsummoned)
@@ -761,13 +761,13 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         pCurrChar->SetContestedPvP();
 
     // Apply at_login requests
-    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_SPELLS))
+    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_SPELLS) && !pCurrChar->HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
     {
         pCurrChar->resetSpells();
         SendNotification(LANG_RESET_SPELLS);
     }
 
-    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_TALENTS))
+    if(pCurrChar->HasAtLoginFlag(AT_LOGIN_RESET_TALENTS) && !pCurrChar->HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
     {
         pCurrChar->resetTalents(true,true);
         pCurrChar->SendTalentsInfoData(false);              // original talents send already in to SendInitialPacketsBeforeAddToMap, resend reset state

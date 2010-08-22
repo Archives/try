@@ -1512,7 +1512,7 @@ bool Pet::resetTalents(bool no_cost)
         return false;
 
     // not need after this call
-    if(((Player*)owner)->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS))
+    if (((Player*)owner)->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS) && !((Player*)owner)->HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
         ((Player*)owner)->RemoveAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS,true);
 
     CreatureInfo const * ci = GetCreatureInfo();
@@ -1583,8 +1583,8 @@ bool Pet::resetTalents(bool no_cost)
 void Pet::resetTalentsForAllPetsOf(Player* owner, Pet* online_pet /*= NULL*/)
 {
     // not need after this call
-    if(((Player*)owner)->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS))
-        ((Player*)owner)->RemoveAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS,true);
+    if (owner->HasAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS) && !owner->HasAtLoginFlag(AT_LOGIN_DELAY_ONE_LOGIN))
+        owner->RemoveAtLoginFlag(AT_LOGIN_RESET_PET_TALENTS,true);
 
     // reset for online
     if(online_pet)
