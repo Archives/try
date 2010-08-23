@@ -4685,6 +4685,10 @@ void Aura::HandleModStealth(bool apply, bool Real)
         // only at real aura add
         if (Real)
         {
+            //Player stealths has no logner ranks...could be correct
+            if(GetSpellProto()->EffectRealPointsPerLevel[GetEffIndex()])
+                m_modifier.m_amount = target->getLevel()*GetSpellProto()->EffectRealPointsPerLevel[GetEffIndex()];
+
             target->SetStandFlags(UNIT_STAND_FLAGS_CREEP);
 
             if (target->GetTypeId()==TYPEID_PLAYER)
