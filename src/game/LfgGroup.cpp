@@ -241,11 +241,8 @@ void LfgGroup::TeleportToDungeon()
                 continue;
             }
             DungeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID);
-            uint32 originalDungeonId = m_dungeonInfo->ID;
-            if (m_isRandom)
-                originalDungeonId = (randomDungeonEntry & 0x00FFFFFF);
             plr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS, GetMembersCount()-1);
-            TeleportPlayer(plr, dungeonInfo, originalDungeonId);
+            TeleportPlayer(plr, dungeonInfo, m_dungeonInfo->ID);
         }
         SendUpdate();
         return;
