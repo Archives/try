@@ -292,7 +292,7 @@ class MANGOS_DLL_SPEC AchievementGlobalMgr
             AchievementRewards::const_iterator iter_low = m_achievementRewards.lower_bound(achievement->ID);
             AchievementRewards::const_iterator iter_up  = m_achievementRewards.upper_bound(achievement->ID);
             for (AchievementRewards::const_iterator iter = iter_low; iter != iter_up; ++iter)
-                if(iter->second.gender == GENDER_NONE || uint8(iter->second.gender) == gender)
+                if (iter->second.gender == GENDER_NONE || uint8(iter->second.gender) == gender)
                     return &iter->second;
 
             return NULL;
@@ -303,7 +303,7 @@ class MANGOS_DLL_SPEC AchievementGlobalMgr
             AchievementRewardLocales::const_iterator iter_low = m_achievementRewardLocales.lower_bound(achievement->ID);
             AchievementRewardLocales::const_iterator iter_up  = m_achievementRewardLocales.upper_bound(achievement->ID);
             for (AchievementRewardLocales::const_iterator iter = iter_low; iter != iter_up; ++iter)
-                if(iter->second.gender == GENDER_NONE || uint8(iter->second.gender) == gender)
+                if (iter->second.gender == GENDER_NONE || uint8(iter->second.gender) == gender)
                     return &iter->second;
 
             return NULL;

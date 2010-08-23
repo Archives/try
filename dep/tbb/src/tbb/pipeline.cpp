@@ -118,8 +118,8 @@ public:
         {
             spin_mutex::scoped_lock lock( array_mutex );
             Token token;
-            if( is_ordered ) {
-                if( !putter.my_token_ready ) {
+            if ( is_ordered ) {
+                if ( !putter.my_token_ready ) {
                     putter.my_token = high_token++;
                     putter.my_token_ready = true;
                 }
@@ -127,10 +127,10 @@ public:
             } else
                 token = high_token++;
             __TBB_ASSERT( (tokendiff_t)(token-low_token)>=0, NULL );
-            if( token!=low_token || is_bound ) {
+            if ( token!=low_token || is_bound ) {
                 // Trying to put token that is beyond low_token.
                 // Need to wait until low_token catches up before dispatching.
-                if( token-low_token>=array_size ) 
+                if ( token-low_token>=array_size ) 
                     grow( token-low_token+1 );
                 ITT_NOTIFY( sync_releasing, this );
                 putter.put_task_info(array[token&array_size-1]);
@@ -149,7 +149,7 @@ public:
         wakee.reset();
         {
             spin_mutex::scoped_lock lock( array_mutex );
-            if( !is_ordered || token==low_token ) {
+            if ( !is_ordered || token==low_token ) {
                 // Wake the next task
                 task_info& item = array[++low_token & array_size-1];
                 ITT_NOTIFY( sync_acquired, this );
@@ -157,7 +157,7 @@ public:
                 item.is_valid = false;
             }
         }
-        if( wakee.is_valid )
+        if ( wakee.is_valid )
             spawner.spawn_stage_task(wakee);
     }
 
@@ -179,7 +179,7 @@ public:
         spin_mutex::scoped_lock lock( array_mutex );
         task_info& item = array[low_token&array_size-1];
         ITT_NOTIFY( sync_acquired, this );
-        if( item.is_valid ) {
+        if ( item.is_valid ) {
             info = item;
             item.is_valid = false;
             if (advance) low_token++;
@@ -192,8 +192,8 @@ public:
         info.is_valid = true;
         spin_mutex::scoped_lock lock( array_mutex );
         Token token;
-        if( is_ordered ) {
-            if( !info.my_token_ready ) {
+        if ( is_ordered ) {
+            if ( !info.my_token_ready ) {
                 info.my_token = high_token++;
                 info.my_token_ready = true;
             }
@@ -201,7 +201,7 @@ public:
         } else
             token = high_token++;
         __TBB_ASSERT( (tokendiff_t)(token-low_token)>=0, NULL );
-        if( token-low_token>=array_size ) 
+        if ( token-low_token>=array_size ) 
             grow( token-low_token+1 );
         ITT_NOTIFY( sync_releasing, this );
         array[token&array_size-1] = info;
@@ -222,7 +222,7 @@ void input_buffer::grow( size_type minimum_size ) {
         new_array[t&new_size-1] = old_array[t&old_size-1];
     array = new_array;
     array_size = new_size;
-    if( old_array )
+    if ( old_array )
         cache_aligned_allocator<task_info>().deallocate(old_array,old_size);
 }
 
@@ -287,23 +287,23 @@ public:
 task* stage_task::execute() {
     __TBB_ASSERT( !my_at_start || !my_object, NULL );
     __TBB_ASSERT( !my_filter->is_bound(), NULL );
-    if( my_at_start ) {
-        if( my_filter->is_serial() ) {
+    if ( my_at_start ) {
+        if ( my_filter->is_serial() ) {
             my_object = (*my_filter)(my_object);
-            if( my_object ) {
-                if( my_filter->is_ordered() ) {
+            if ( my_object ) {
+                if ( my_filter->is_ordered() ) {
                     my_token = my_pipeline.token_counter++; // ideally, with relaxed semantics
                     my_token_ready = true;
-                } else if( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
-                    if( my_pipeline.has_thread_bound_filters )
+                } else if ( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
+                    if ( my_pipeline.has_thread_bound_filters )
                         my_pipeline.token_counter++; // ideally, with relaxed semantics
                 }
-                if( !my_filter->next_filter_in_pipeline ) {
+                if ( !my_filter->next_filter_in_pipeline ) {
                     reset();
                     goto process_another_stage;
                 } else {
                     ITT_NOTIFY( sync_releasing, &my_pipeline.input_tokens );
-                    if( --my_pipeline.input_tokens>0 )
+                    if ( --my_pipeline.input_tokens>0 )
                         spawn( *new( allocate_additional_child_of(*parent()) ) stage_task( my_pipeline ) );
                 }
             } else {
@@ -311,20 +311,20 @@ task* stage_task::execute() {
                 return NULL;
             }
         } else /*not is_serial*/ {
-            if( my_pipeline.end_of_input )
+            if ( my_pipeline.end_of_input )
                 return NULL;
-            if( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
-                if( my_pipeline.has_thread_bound_filters )
+            if ( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
+                if ( my_pipeline.has_thread_bound_filters )
                     my_pipeline.token_counter++;
             }
             ITT_NOTIFY( sync_releasing, &my_pipeline.input_tokens );
-            if( --my_pipeline.input_tokens>0 )
+            if ( --my_pipeline.input_tokens>0 )
                 spawn( *new( allocate_additional_child_of(*parent()) ) stage_task( my_pipeline ) );
             my_object = (*my_filter)(my_object);
-            if( !my_object ) {
+            if ( !my_object ) {
                 my_pipeline.end_of_input = true; 
-                if( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
-                    if( my_pipeline.has_thread_bound_filters )
+                if ( (my_filter->my_filter_mode & my_filter->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
+                    if ( my_pipeline.has_thread_bound_filters )
                         my_pipeline.token_counter--;
                 }
                 return NULL;
@@ -333,25 +333,25 @@ task* stage_task::execute() {
         my_at_start = false;
     } else {
         my_object = (*my_filter)(my_object);
-        if( my_filter->is_serial() )
+        if ( my_filter->is_serial() )
             my_filter->my_input_buffer->note_done(my_token, *this);
     }
     my_filter = my_filter->next_filter_in_pipeline; 
-    if( my_filter ) {
+    if ( my_filter ) {
         // There is another filter to execute.
         // Crank up priority a notch.
         add_to_depth(1);
-        if( my_filter->is_serial() ) {
+        if ( my_filter->is_serial() ) {
             // The next filter must execute tokens in order
-            if( my_filter->my_input_buffer->put_token(*this) ){
+            if ( my_filter->my_input_buffer->put_token(*this) ){
                 // Can't proceed with the same item
-                if( my_filter->is_bound() ) {
+                if ( my_filter->is_bound() ) {
                     // Find the next non-thread-bound filter
                     do {
                         my_filter = my_filter->next_filter_in_pipeline;
                     } while( my_filter && my_filter->is_bound() );
                     // Check if there is an item ready to process
-                    if( my_filter && my_filter->my_input_buffer->return_item(*this, !my_filter->is_serial()) ) 
+                    if ( my_filter && my_filter->my_input_buffer->return_item(*this, !my_filter->is_serial()) ) 
                         goto process_another_stage;
                 } 
                 my_filter = NULL; // To prevent deleting my_object twice if exception occurs
@@ -360,7 +360,7 @@ task* stage_task::execute() {
         }
     } else {
         // Reached end of the pipe.
-        if( ++my_pipeline.input_tokens>1 || my_pipeline.end_of_input || my_pipeline.filter_list->is_bound() )
+        if ( ++my_pipeline.input_tokens>1 || my_pipeline.end_of_input || my_pipeline.filter_list->is_bound() )
             return NULL; // No need to recycle for new input
         ITT_NOTIFY( sync_acquired, &my_pipeline.input_tokens );
         // Recycle as an input stage task.
@@ -379,14 +379,14 @@ class pipeline_root_task: public task {
     bool do_segment_scanning;
 
     /*override*/ task* execute() {
-        if( !my_pipeline.end_of_input )
-            if( !my_pipeline.filter_list->is_bound() )
-                if( my_pipeline.input_tokens > 0 ) {
+        if ( !my_pipeline.end_of_input )
+            if ( !my_pipeline.filter_list->is_bound() )
+                if ( my_pipeline.input_tokens > 0 ) {
                     recycle_as_continuation();
                     set_ref_count(1);
                     return new( allocate_child() ) stage_task( my_pipeline );
                 }
-        if( do_segment_scanning ) {
+        if ( do_segment_scanning ) {
             filter* current_filter = my_pipeline.filter_list->next_segment;
             /* first non-thread-bound filter that follows thread-bound one 
             and may have valid items to process */
@@ -394,19 +394,19 @@ class pipeline_root_task: public task {
             while( current_filter ) {
                 __TBB_ASSERT( !current_filter->is_bound(), "filter is thread-bound?" );
                 __TBB_ASSERT( current_filter->prev_filter_in_pipeline->is_bound(), "previous filter is not thread-bound?" );
-                if( !my_pipeline.end_of_input
+                if ( !my_pipeline.end_of_input
                     || (tokendiff_t)(my_pipeline.token_counter - current_filter->my_input_buffer->low_token) > 0 )
                 {
                     task_info info;
                     info.reset();
-                    if( current_filter->my_input_buffer->return_item(info, !current_filter->is_serial()) ) {
+                    if ( current_filter->my_input_buffer->return_item(info, !current_filter->is_serial()) ) {
                         set_ref_count(1);
                         recycle_as_continuation();
                         return new( allocate_child() ) stage_task( my_pipeline, current_filter, info);
                     }
                     current_filter = current_filter->next_segment;
-                    if( !current_filter ) {
-                        if( !my_pipeline.end_of_input ) {
+                    if ( !current_filter ) {
+                        if ( !my_pipeline.end_of_input ) {
                             recycle_as_continuation();
                             return this;
                         }
@@ -422,7 +422,7 @@ class pipeline_root_task: public task {
             } /* end of while */
             return NULL;
         } else { 
-            if( !my_pipeline.end_of_input ) {
+            if ( !my_pipeline.end_of_input ) {
                 recycle_as_continuation();
                 return this;
             }
@@ -434,14 +434,14 @@ public:
     {
         __TBB_ASSERT( my_pipeline.filter_list, NULL );
         filter* first = my_pipeline.filter_list;
-        if( (first->my_filter_mode & first->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
+        if ( (first->my_filter_mode & first->version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
             // Scanning the pipeline for segments 
             filter* head_of_previous_segment = first;
             for(  filter* subfilter=first->next_filter_in_pipeline;
                   subfilter!=NULL;
                   subfilter=subfilter->next_filter_in_pipeline )
             {
-                if( subfilter->prev_filter_in_pipeline->is_bound() && !subfilter->is_bound() ) {
+                if ( subfilter->prev_filter_in_pipeline->is_bound() && !subfilter->is_bound() ) {
                     do_segment_scanning = true;
                     head_of_previous_segment->next_segment = subfilter;
                     head_of_previous_segment = subfilter;
@@ -483,7 +483,7 @@ void pipeline::inject_token( task& ) {
 void pipeline::clear_filters() {
     for( filter* f = filter_list; f; f = f->next_filter_in_pipeline ) {
         if ((f->my_filter_mode & filter::version_mask) >= __TBB_PIPELINE_VERSION(4))
-            if( internal::input_buffer* b = f->my_input_buffer )
+            if ( internal::input_buffer* b = f->my_input_buffer )
                 b->clear(f);
     }
 }
@@ -507,7 +507,7 @@ pipeline::~pipeline() {
 void pipeline::clear() {
     filter* next;
     for( filter* f = filter_list; f; f=next ) {
-        if( internal::input_buffer* b = f->my_input_buffer ) {
+        if ( internal::input_buffer* b = f->my_input_buffer ) {
             delete b; 
             f->my_input_buffer = NULL;
         }
@@ -542,25 +542,25 @@ void pipeline::add_filter( filter& filter_ ) {
     }
     else
     {
-        if( !filter_end )
+        if ( !filter_end )
             filter_end = reinterpret_cast<filter*>(&filter_list);
         
         *reinterpret_cast<filter**>(filter_end) = &filter_;
         filter_end = reinterpret_cast<filter*>(&filter_.next_filter_in_pipeline);
         *reinterpret_cast<filter**>(filter_end) = NULL;
     }
-    if( (filter_.my_filter_mode & filter_.version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
-        if( filter_.is_serial() ) {
-            if( filter_.is_bound() )
+    if ( (filter_.my_filter_mode & filter_.version_mask) >= __TBB_PIPELINE_VERSION(5) ) {
+        if ( filter_.is_serial() ) {
+            if ( filter_.is_bound() )
                 has_thread_bound_filters = true;
             filter_.my_input_buffer = new internal::input_buffer( filter_.is_ordered(), filter_.is_bound() );
         }
         else {
-            if( filter_.prev_filter_in_pipeline && filter_.prev_filter_in_pipeline->is_bound() )
+            if ( filter_.prev_filter_in_pipeline && filter_.prev_filter_in_pipeline->is_bound() )
                 filter_.my_input_buffer = new internal::input_buffer( false, false );
         }
     } else {
-        if( filter_.is_serial() ) {
+        if ( filter_.is_serial() ) {
             filter_.my_input_buffer = new internal::input_buffer( filter_.is_ordered(), false );
         }
     }
@@ -580,7 +580,7 @@ void pipeline::remove_filter( filter& filter_ ) {
         __TBB_ASSERT( filter_.next_filter_in_pipeline, "filter list broken?" ); 
         filter_.next_filter_in_pipeline->prev_filter_in_pipeline = filter_.prev_filter_in_pipeline;
     }
-    if( internal::input_buffer* b = filter_.my_input_buffer ) {
+    if ( internal::input_buffer* b = filter_.my_input_buffer ) {
         delete b; 
         filter_.my_input_buffer = NULL;
     }
@@ -597,7 +597,7 @@ void pipeline::run( size_t max_number_of_live_tokens
     ) {
     __TBB_ASSERT( max_number_of_live_tokens>0, "pipeline::run must have at least one token" );
     __TBB_ASSERT( !end_counter, "pipeline already running?" );
-    if( filter_list ) {
+    if ( filter_list ) {
         internal::pipeline_cleaner my_pipeline_cleaner(*this);
         end_of_input = false;
 #if __TBB_EXCEPTIONS            
@@ -642,19 +642,19 @@ thread_bound_filter::result_type thread_bound_filter::internal_process_item(bool
     internal::task_info info;
     info.reset();
     
-    if( !prev_filter_in_pipeline ) {
-        if( my_pipeline->end_of_input )
+    if ( !prev_filter_in_pipeline ) {
+        if ( my_pipeline->end_of_input )
             return end_of_stream;
         while( my_pipeline->input_tokens == 0 ) {
-            if( is_blocking )
+            if ( is_blocking )
                 __TBB_Yield();
             else
                 return item_not_available;
         }
         info.my_object = (*this)(info.my_object);
-        if( info.my_object ) {
+        if ( info.my_object ) {
             my_pipeline->input_tokens--;
-            if( is_ordered() ) {
+            if ( is_ordered() ) {
                 info.my_token = my_pipeline->token_counter;
                 info.my_token_ready = true;
             }
@@ -665,16 +665,16 @@ thread_bound_filter::result_type thread_bound_filter::internal_process_item(bool
         }
     } else { /* this is not an input filter */
         while( !my_input_buffer->return_item(info, /*advance=*/true) ) {
-            if( my_pipeline->end_of_input && my_input_buffer->low_token == my_pipeline->token_counter )
+            if ( my_pipeline->end_of_input && my_input_buffer->low_token == my_pipeline->token_counter )
                 return end_of_stream;
-            if( is_blocking )
+            if ( is_blocking )
                 __TBB_Yield();
             else
                 return item_not_available;
         }
         info.my_object = (*this)(info.my_object);
     }
-    if( next_filter_in_pipeline ) {
+    if ( next_filter_in_pipeline ) {
         next_filter_in_pipeline->my_input_buffer->put_item(info);
     } else {
         my_pipeline->input_tokens++;

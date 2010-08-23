@@ -62,18 +62,18 @@ namespace tbb {
     }
 
     void __TBB_EXPORTED_FUNC assertion_failure( const char* filename, int line, const char* expression, const char* comment ) {
-        if( assertion_handler_type a = assertion_handler ) {
+        if ( assertion_handler_type a = assertion_handler ) {
             (*a)(filename,line,expression,comment);
         } else {
             static bool already_failed;
-            if( !already_failed ) {
+            if ( !already_failed ) {
                 already_failed = true;
                 fprintf( stderr, "Assertion %s failed on line %d of file %s\n",
                          expression, line, filename );
-                if( comment )
+                if ( comment )
                     fprintf( stderr, "Detailed description: %s\n", comment );
 #if __TBB_USE_DBGBREAK_DLG
-                if(1 == _CrtDbgReport(_CRT_ASSERT, filename, line, "tbb_debug.dll", "%s\r\n%s", expression, comment?comment:""))
+                if (1 == _CrtDbgReport(_CRT_ASSERT, filename, line, "tbb_debug.dll", "%s\r\n%s", expression, comment?comment:""))
                         _CrtDbgBreak();
 #else
                 fflush(stderr);

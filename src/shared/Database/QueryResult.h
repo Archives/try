@@ -65,7 +65,7 @@ class MANGOS_DLL_SPEC QueryNamedResult
         {
             for(size_t idx = 0; idx < mFieldNames.size(); ++idx)
             {
-                if(mFieldNames[idx] == name)
+                if (mFieldNames[idx] == name)
                     return idx;
             }
             ASSERT(false && "unknown field name");

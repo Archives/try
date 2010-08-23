@@ -98,25 +98,25 @@ int ns1__executeCommand(soap* soap, char* command, char** result)
     }
 
     uint32 accountId = sAccountMgr.GetId(soap->userid);
-    if(!accountId)
+    if (!accountId)
     {
         DEBUG_LOG("MaNGOSsoap: Client used invalid username '%s'", soap->userid);
         return 401;
     }
 
-    if(!sAccountMgr.CheckPassword(accountId, soap->passwd))
+    if (!sAccountMgr.CheckPassword(accountId, soap->passwd))
     {
         DEBUG_LOG("MaNGOSsoap: invalid password for account '%s'", soap->userid);
         return 401;
     }
 
-    if(sAccountMgr.GetSecurity(accountId) < SEC_ADMINISTRATOR)
+    if (sAccountMgr.GetSecurity(accountId) < SEC_ADMINISTRATOR)
     {
         DEBUG_LOG("MaNGOSsoap: %s's gmlevel is too low", soap->userid);
         return 403;
     }
 
-    if(!command || !*command)
+    if (!command || !*command)
         return soap_sender_fault(soap, "Command mustn't be empty", "The supplied command was an empty string");
 
     DEBUG_LOG("MaNGOSsoap: got command '%s'", command);
@@ -132,7 +132,7 @@ int ns1__executeCommand(soap* soap, char* command, char** result)
     // wait for callback to complete command
 
     int acc = connection.pendingCommands.acquire();
-    if(acc)
+    if (acc)
     {
         sLog.outError("MaNGOSsoap: Error while acquiring lock, acc = %i, errno = %u", acc, errno);
     }
@@ -140,7 +140,7 @@ int ns1__executeCommand(soap* soap, char* command, char** result)
     // alright, command finished
 
     char* printBuffer = soap_strdup(soap, connection.m_printBuffer.c_str());
-    if(connection.hasCommandSucceeded())
+    if (connection.hasCommandSucceeded())
     {
         *result = printBuffer;
         return SOAP_OK;

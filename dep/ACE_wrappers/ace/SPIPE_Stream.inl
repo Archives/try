@@ -113,7 +113,7 @@ ACE_SPIPE_Stream::send_handle (ACE_HANDLE handle) const
   ssize_t res = this->recv(&procID, sizeof(procID));
   if (res != sizeof(procID))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
     return -1;
   }
@@ -125,7 +125,7 @@ ACE_SPIPE_Stream::send_handle (ACE_HANDLE handle) const
   res = this->send(&protInfo, sizeof(protInfo));
   if (res != sizeof(protInfo))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
     return -1;
   }
@@ -133,7 +133,7 @@ ACE_SPIPE_Stream::send_handle (ACE_HANDLE handle) const
   res = this->recv(&procID, sizeof(procID));
   if (res != sizeof(procID))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
     return -1;
   }
@@ -167,14 +167,14 @@ ACE_SPIPE_Stream::recv_handle (ACE_HANDLE &handle) const
   ssize_t res = this->send(&procID, sizeof(procID));
   if (res != sizeof(procID))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
     return -1;
   }
   res = this->recv(&protInfo, sizeof(protInfo));
   if (res != sizeof(protInfo))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
      return -1;
   }
@@ -189,7 +189,7 @@ ACE_SPIPE_Stream::recv_handle (ACE_HANDLE &handle) const
   res = this->send(&procID, sizeof(procID));
   if (res != sizeof(procID))
   {
-    if(res != -1)
+    if (res != -1)
         errno = ENXIO;
     return -1;
   }

@@ -111,7 +111,7 @@ class GMTicketMgr
         GMTicket* GetGMTicket(uint32 guid)
         {
             GMTicketMap::iterator itr = m_GMTicketMap.find(guid);
-            if(itr == m_GMTicketMap.end())
+            if (itr == m_GMTicketMap.end())
                 return NULL;
             return &(itr->second);
         }
@@ -124,7 +124,7 @@ class GMTicketMgr
         void Delete(uint32 guid)
         {
             GMTicketMap::iterator itr = m_GMTicketMap.find(guid);
-            if(itr == m_GMTicketMap.end())
+            if (itr == m_GMTicketMap.end())
                 return;
             itr->second.DeleteFromDB();
             m_GMTicketMap.erase(itr);

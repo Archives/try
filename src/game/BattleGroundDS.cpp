@@ -48,14 +48,14 @@ void BattleGroundDS::Update(uint32 diff)
     BattleGround::Update(diff);
     if (GetStatus() == STATUS_IN_PROGRESS)
     {
-        if(m_uiKnock < diff && !Knocked)
+        if (m_uiKnock < diff && !Knocked)
             KnockOutOfTubes();
         else m_uiKnock -= diff;
 
         // Waterfall
-        if(m_uiWaterfall < diff)
+        if (m_uiWaterfall < diff)
         {
-            if(WaterfallActivated)
+            if (WaterfallActivated)
             {
                 DespawnEvent(WATERFALL_EVENT, 0);
                 WaterfallActivated = false;
@@ -98,7 +98,7 @@ void BattleGroundDS::KnockOutOfTubes()
             if (GameObject* obj = plr->GetGameObject(48018))
                 obj->Delete();
     }
-    if(m_lPlrInTube.empty())
+    if (m_lPlrInTube.empty())
         Knocked = true;
 }
 void BattleGroundDS::WaterfallSpawn()
@@ -128,7 +128,7 @@ void BattleGroundDS::DespawnBGObject(uint64 const& guid)
     Map* map = GetBgMap();
 
     GameObject *obj = map->GetGameObject(guid);
-    if(obj)
+    if (obj)
         obj->Delete();
 }
 

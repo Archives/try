@@ -71,7 +71,7 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
 
         //We don't update Mob Movement, if the difference between New destination and last destination is < BothObjectSize
         float  bothObjectSize = i_target->GetObjectBoundingRadius() + owner.GetObjectBoundingRadius() + CONTACT_DISTANCE;
-        if( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
+        if ( i_destinationHolder.HasDestination() && i_destinationHolder.GetDestinationDiff(x,y,z) < bothObjectSize )
             return;
     */
     Traveller<T> traveller(owner);
@@ -196,7 +196,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
 template<class T>
 void ChaseMovementGenerator<T>::_reachTarget(T &owner)
 {
-    if(owner.canReachWithAttack(this->i_target.getTarget()))
+    if (owner.canReachWithAttack(this->i_target.getTarget()))
         owner.Attack(this->i_target.getTarget(),true);
 }
 

@@ -202,7 +202,7 @@ public: // workaround for MSVC
         }
         Value& operator*() const {
             Value* item = my_item;
-            if( !item ) {
+            if ( !item ) {
                 item = my_item = &my_vector->internal_subscript(my_index);
             }
             __TBB_ASSERT( item==&my_vector->internal_subscript(my_index), "corrupt cache" );
@@ -216,10 +216,10 @@ public: // workaround for MSVC
         //! Pre increment
         vector_iterator& operator++() {
             size_t k = ++my_index;
-            if( my_item ) {
+            if ( my_item ) {
                 // Following test uses 2's-complement wizardry and fact that
                 // min_segment_size is a power of 2.
-                if( (k& k-concurrent_vector<Container>::min_segment_size)==0 ) {
+                if ( (k& k-concurrent_vector<Container>::min_segment_size)==0 ) {
                     // k is a power of two that is at least k-min_segment_size  
                     my_item= NULL;
                 } else {
@@ -233,10 +233,10 @@ public: // workaround for MSVC
         vector_iterator& operator--() {
             __TBB_ASSERT( my_index>0, "operator--() applied to iterator already at beginning of concurrent_vector" ); 
             size_t k = my_index--;
-            if( my_item ) {
+            if ( my_item ) {
                 // Following test uses 2's-complement wizardry and fact that
                 // min_segment_size is a power of 2.
-                if( (k& k-concurrent_vector<Container>::min_segment_size)==0 ) {
+                if ( (k& k-concurrent_vector<Container>::min_segment_size)==0 ) {
                     // k is a power of two that is at least k-min_segment_size  
                     my_item= NULL;
                 } else {
@@ -340,7 +340,7 @@ public:
 
     //! Assignment 
     concurrent_vector& operator=( const concurrent_vector& vector ) {
-        if( this!=&vector )
+        if ( this!=&vector )
             internal_assign(vector,sizeof(T),&destroy_array,&assign_array,&copy_array);
         return *this;
     }
@@ -359,7 +359,7 @@ public:
 
     //! Grow array until it has at least n elements.
     void grow_to_at_least( size_type n ) {
-        if( my_early_size<n )
+        if ( my_early_size<n )
             internal_grow_to_at_least( n, sizeof(T), &initialize_array );
     };
 
@@ -425,7 +425,7 @@ public:
     /** Like most of the methods provided for STL compatibility, this method is *not* thread safe. 
         The capacity afterwards may be bigger than the requested reservation. */
     void reserve( size_type n ) {
-        if( n )
+        if ( n )
             internal_reserve(n, sizeof(T), max_size());
     }
 

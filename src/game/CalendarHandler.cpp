@@ -48,7 +48,7 @@ void WorldSession::HandleCalendarGetCalendar(WorldPacket &/*recv_data*/)
     {
         for (Player::BoundInstancesMap::const_iterator itr = _player->m_boundInstances[i].begin(); itr != _player->m_boundInstances[i].end(); ++itr)
         {
-            if(itr->second.perm)
+            if (itr->second.perm)
             {
                 InstanceSave *save = itr->second.save;
                 data << uint32(save->GetMapId());

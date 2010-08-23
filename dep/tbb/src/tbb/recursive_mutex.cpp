@@ -96,7 +96,7 @@ bool recursive_mutex::scoped_lock::internal_try_acquire( recursive_mutex& m ) {
 #else
     result = pthread_mutex_trylock(&m.impl)==0;
 #endif /* _WIN32||_WIN64 */
-    if( result )
+    if ( result )
         my_mutex = &m;
     return result;
 }
@@ -108,12 +108,12 @@ void recursive_mutex::internal_construct() {
 #else
     pthread_mutexattr_t mtx_attr;
     int error_code = pthread_mutexattr_init( &mtx_attr );
-    if( error_code )
+    if ( error_code )
         tbb::internal::handle_perror(error_code,"recursive_mutex: pthread_mutexattr_init failed");
 
     pthread_mutexattr_settype( &mtx_attr, PTHREAD_MUTEX_RECURSIVE );
     error_code = pthread_mutex_init( &impl, &mtx_attr );
-    if( error_code )
+    if ( error_code )
         tbb::internal::handle_perror(error_code,"recursive_mutex: pthread_mutex_init failed");
     pthread_mutexattr_destroy( &mtx_attr );
 #endif /* _WIN32||_WIN64*/    

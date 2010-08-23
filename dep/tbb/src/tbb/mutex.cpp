@@ -101,14 +101,14 @@ bool mutex::scoped_lock::internal_try_acquire( mutex& m ) {
     bool result;
 #if _WIN32||_WIN64
     result = TryEnterCriticalSection(&m.impl)!=0;
-    if( result ) {
+    if ( result ) {
         __TBB_ASSERT(m.state!=HELD, "mutex::scoped_lock: deadlock caused by attempt to reacquire held mutex");
         m.state = HELD;
     }
 #else
     result = pthread_mutex_trylock(&m.impl)==0;
 #endif /* _WIN32||_WIN64 */
-    if( result ) 
+    if ( result ) 
         my_mutex = &m;
     return result;
 }
@@ -119,7 +119,7 @@ void mutex::internal_construct() {
     state = INITIALIZED;  
 #else
     int error_code = pthread_mutex_init(&impl,NULL);
-    if( error_code )
+    if ( error_code )
         tbb::internal::handle_perror(error_code,"mutex: pthread_mutex_init failed");
 #endif /* _WIN32||_WIN64*/    
     ITT_SYNC_CREATE(&impl, _T("tbb::mutex"), _T(""));

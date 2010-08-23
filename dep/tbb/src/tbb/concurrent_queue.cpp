@@ -102,16 +102,16 @@ public:
     {}
     ~micro_queue_pop_finalizer() {
         page* p = my_page;
-        if( p ) {
+        if ( p ) {
             spin_mutex::scoped_lock lock( my_queue.page_mutex );
             page* q = p->next;
             my_queue.head_page = q;
-            if( !q ) {
+            if ( !q ) {
                 my_queue.tail_page = NULL;
             }
         }
         my_queue.head_counter = my_ticket;
-        if( p )
+        if ( p )
            base.deallocate_page( p );
     }
 };
@@ -203,7 +203,7 @@ void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base 
     k &= -concurrent_queue_rep::n_queue;
     page* p = NULL;
     size_t index = k/concurrent_queue_rep::n_queue & (base.items_per_page-1);
-    if( !index ) {
+    if ( !index ) {
         try {
             p = base.allocate_page();
         } catch (...) {
@@ -214,21 +214,21 @@ void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base 
         p->next = NULL;
     }
 
-    if( tail_counter!=k ) {
+    if ( tail_counter!=k ) {
         atomic_backoff backoff;
         do {
             backoff.pause();
             // no memory. throws an exception; assumes concurrent_queue_rep::n_queue>1
-            if( tail_counter&0x1 ) {
+            if ( tail_counter&0x1 ) {
                 ++base.my_rep->n_invalid_entries;
                 throw bad_last_alloc();
             }
         } while( tail_counter!=k ) ;
     }
         
-    if( p ) {
+    if ( p ) {
         spin_mutex::scoped_lock lock( page_mutex );
-        if( page* q = tail_page )
+        if ( page* q = tail_page )
             q->next = p;
         else
             head_page = p; 
@@ -261,10 +261,10 @@ bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
     bool success = false; 
     {
         micro_queue_pop_finalizer finalizer( *this, base, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? &p : NULL ); 
-        if( p.mask & uintptr(1)<<index ) {
+        if ( p.mask & uintptr(1)<<index ) {
             success = true;
 #if DO_ITT_NOTIFY
-            if( ((intptr_t)dst&1) ) {
+            if ( ((intptr_t)dst&1) ) {
                 dst = (void*) ((intptr_t)dst&~1);
                 ITT_NOTIFY( sync_acquired, dst );
             }
@@ -286,7 +286,7 @@ micro_queue& micro_queue::assign( const micro_queue& src, concurrent_queue_base&
     page_mutex   = src.page_mutex;
 
     const page* srcp = src.head_page;
-    if( srcp ) {
+    if ( srcp ) {
         ticket g_index = head_counter;
         try {
             size_t n_items  = (tail_counter-head_counter)/concurrent_queue_rep::n_queue;
@@ -296,7 +296,7 @@ micro_queue& micro_queue::assign( const micro_queue& src, concurrent_queue_base&
             head_page = make_copy( base, srcp, index, end_in_first_page, g_index );
             page* cur_page = head_page;
 
-            if( srcp != src.tail_page ) {
+            if ( srcp != src.tail_page ) {
                 for( srcp = srcp->next; srcp!=src.tail_page; srcp=srcp->next ) {
                     cur_page->next = make_copy( base, srcp, 0, base.items_per_page, g_index );
                     cur_page = cur_page->next;
@@ -305,7 +305,7 @@ micro_queue& micro_queue::assign( const micro_queue& src, concurrent_queue_base&
                 __TBB_ASSERT( srcp==src.tail_page, NULL );
 
                 size_t last_index = tail_counter/concurrent_queue_rep::n_queue & (base.items_per_page-1);
-                if( last_index==0 ) last_index = base.items_per_page;
+                if ( last_index==0 ) last_index = base.items_per_page;
 
                 cur_page->next = make_copy( base, srcp, 0, last_index, g_index );
                 cur_page = cur_page->next;
@@ -326,7 +326,7 @@ concurrent_queue_base::page* micro_queue::make_copy( concurrent_queue_base& base
     new_page->next = NULL;
     new_page->mask = src_page->mask;
     for( ; begin_in_page!=end_in_page; ++begin_in_page, ++g_index )
-        if( new_page->mask & uintptr(1)<<begin_in_page )
+        if ( new_page->mask & uintptr(1)<<begin_in_page )
             base.copy_page_item( *new_page, begin_in_page, *src_page, begin_in_page );
     return new_page;
 }
@@ -339,7 +339,7 @@ void micro_queue::make_invalid( ticket k )
     {
         spin_mutex::scoped_lock lock( page_mutex );
         tail_counter = k+concurrent_queue_rep::n_queue+1;
-        if( page* q = tail_page )
+        if ( page* q = tail_page )
             q->next = static_cast<page*>(invalid_page);
         else
             head_page = static_cast<page*>(invalid_page); 
@@ -421,10 +421,10 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
 #if !__TBB_NO_BUSY_WAIT_IN_CONCURRENT_QUEUE
     ticket k = r.tail_counter++;
     ptrdiff_t e = my_capacity;
-    if( e<concurrent_queue_rep::infinite_capacity ) {
+    if ( e<concurrent_queue_rep::infinite_capacity ) {
         atomic_backoff backoff;
         for(;;) {
-            if( (ptrdiff_t)(k-r.head_counter)<e ) break;
+            if ( (ptrdiff_t)(k-r.head_counter)<e ) break;
             backoff.pause();
             e = const_cast<volatile ptrdiff_t&>(my_capacity);
         }
@@ -440,12 +440,12 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
 
     while( (ptrdiff_t)(k-r.head_counter)>=e ) {
 #if DO_ITT_NOTIFY
-        if( !sync_prepare_done ) {
+        if ( !sync_prepare_done ) {
             ITT_NOTIFY( sync_prepare, &sync_prepare_done );
             sync_prepare_done = true;
         }
 #endif
-        if( !backoff.bounded_pause() ) {
+        if ( !backoff.bounded_pause() ) {
             EnterCriticalSection( &r.mtx_slots_avail );
             r.n_waiting_producers++;
             while( (ptrdiff_t)(k-r.head_counter)>=const_cast<volatile ptrdiff_t&>(my_capacity) ) {
@@ -454,10 +454,10 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
                     LeaveCriticalSection( &r.mtx_slots_avail );
                     WaitForSingleObject( r.var_wait_for_slots, INFINITE );
                     EnterCriticalSection( &r.mtx_slots_avail );
-                    if( r.n_producers_to_wakeup > 0 && r.producer_wait_generation != my_generation )
+                    if ( r.n_producers_to_wakeup > 0 && r.producer_wait_generation != my_generation )
                         break;
                 }
-                if( --r.n_producers_to_wakeup == 0 )
+                if ( --r.n_producers_to_wakeup == 0 )
                     ResetEvent( r.var_wait_for_slots );
             }
             --r.n_waiting_producers;
@@ -467,15 +467,15 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
         e = const_cast<volatile ptrdiff_t&>(my_capacity);
     }
 #if DO_ITT_NOTIFY
-    if( sync_prepare_done )
+    if ( sync_prepare_done )
         ITT_NOTIFY( sync_acquired, &sync_prepare_done );
 #endif
 
     r.choose( k ).push( src, k, *this );
 
-    if( r.n_waiting_consumers>0 ) {
+    if ( r.n_waiting_consumers>0 ) {
         EnterCriticalSection( &r.mtx_items_avail );
-        if( r.n_waiting_consumers>0 ) {
+        if ( r.n_waiting_consumers>0 ) {
             r.consumer_wait_generation++;
             r.n_consumers_to_wakeup = r.n_waiting_consumers;
             SetEvent( r.var_wait_for_items );
@@ -491,12 +491,12 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
 #endif
     while( (ptrdiff_t)(k-r.head_counter)>=e ) {
 #if DO_ITT_NOTIFY
-        if( !sync_prepare_done ) {
+        if ( !sync_prepare_done ) {
             ITT_NOTIFY( sync_prepare, &sync_prepare_done );
             sync_prepare_done = true;
         }
 #endif
-        if( !backoff.bounded_pause() ) {
+        if ( !backoff.bounded_pause() ) {
             // queue is full.  go to sleep. let them go to sleep in order.
             pthread_mutex_lock( &r.mtx_slots_avail );
             r.n_waiting_producers++;
@@ -510,15 +510,15 @@ void concurrent_queue_base_v3::internal_push( const void* src ) {
         e = const_cast<volatile ptrdiff_t&>(my_capacity);
     }
 #if DO_ITT_NOTIFY
-    if( sync_prepare_done )
+    if ( sync_prepare_done )
         ITT_NOTIFY( sync_acquired, &sync_prepare_done );
 #endif
     r.choose( k ).push( src, k, *this );
 
-    if( r.n_waiting_consumers>0 ) {
+    if ( r.n_waiting_consumers>0 ) {
         pthread_mutex_lock( &r.mtx_items_avail );
         // pthread_cond_broadcast() wakes up all consumers. 
-        if( r.n_waiting_consumers>0 )
+        if ( r.n_waiting_consumers>0 )
             pthread_cond_broadcast( &r.var_wait_for_items );
         pthread_mutex_unlock( &r.mtx_items_avail );
     }
@@ -542,14 +542,14 @@ void concurrent_queue_base_v3::internal_pop( void* dst ) {
         k=r.head_counter++;
         while( r.tail_counter<=k ) {
 #if DO_ITT_NOTIFY
-            if( !sync_prepare_done ) {
+            if ( !sync_prepare_done ) {
                 ITT_NOTIFY( sync_prepare, dst );
                 dst = (void*) ((intptr_t)dst | 1);
                 sync_prepare_done = true;
             }
 #endif
             // Queue is empty; pause and re-try a few times
-            if( !backoff.bounded_pause() ) {
+            if ( !backoff.bounded_pause() ) {
                 // it is really empty.. go to sleep
                 EnterCriticalSection( &r.mtx_items_avail );
                 r.n_waiting_consumers++;
@@ -559,10 +559,10 @@ void concurrent_queue_base_v3::internal_pop( void* dst ) {
                         LeaveCriticalSection( &r.mtx_items_avail );
                         WaitForSingleObject( r.var_wait_for_items, INFINITE );
                         EnterCriticalSection( &r.mtx_items_avail );
-                        if( r.n_consumers_to_wakeup > 0 && r.consumer_wait_generation != my_generation )
+                        if ( r.n_consumers_to_wakeup > 0 && r.consumer_wait_generation != my_generation )
                             break;
                     }
-                    if( --r.n_consumers_to_wakeup == 0 )
+                    if ( --r.n_consumers_to_wakeup == 0 )
                         ResetEvent( r.var_wait_for_items );
                 }
                 --r.n_waiting_consumers;
@@ -574,9 +574,9 @@ void concurrent_queue_base_v3::internal_pop( void* dst ) {
     } while( !r.choose(k).pop(dst,k,*this) );
 
     // wake up a producer..
-    if( r.n_waiting_producers>0 ) {
+    if ( r.n_waiting_producers>0 ) {
         EnterCriticalSection( &r.mtx_slots_avail );
-        if( r.n_waiting_producers>0 ) {
+        if ( r.n_waiting_producers>0 ) {
             r.producer_wait_generation++;
             r.n_producers_to_wakeup = r.n_waiting_producers;
             SetEvent( r.var_wait_for_slots );
@@ -593,14 +593,14 @@ void concurrent_queue_base_v3::internal_pop( void* dst ) {
         k = r.head_counter++;
         while( r.tail_counter<=k ) {
 #if DO_ITT_NOTIFY
-            if( !sync_prepare_done ) {
+            if ( !sync_prepare_done ) {
                 ITT_NOTIFY( sync_prepare, dst );
                 dst = (void*) ((intptr_t)dst | 1);
                 sync_prepare_done = true;
             }
 #endif
             // Queue is empty; pause and re-try a few times
-            if( !backoff.bounded_pause() ) {
+            if ( !backoff.bounded_pause() ) {
                 // it is really empty.. go to sleep
                 pthread_mutex_lock( &r.mtx_items_avail );
                 r.n_waiting_consumers++;
@@ -614,9 +614,9 @@ void concurrent_queue_base_v3::internal_pop( void* dst ) {
         }
     } while( !r.choose(k).pop(dst,k,*this) );
 
-    if( r.n_waiting_producers>0 ) {
+    if ( r.n_waiting_producers>0 ) {
         pthread_mutex_lock( &r.mtx_slots_avail );
-        if( r.n_waiting_producers>0 )
+        if ( r.n_waiting_producers>0 )
             pthread_cond_broadcast( &r.var_wait_for_slots );
         pthread_mutex_unlock( &r.mtx_slots_avail );
     }
@@ -629,14 +629,14 @@ bool concurrent_queue_base_v3::internal_pop_if_present( void* dst ) {
     do {
         k = r.head_counter;
         for(;;) {
-            if( r.tail_counter<=k ) {
+            if ( r.tail_counter<=k ) {
                 // Queue is empty 
                 return false;
             }
             // Queue had item with ticket k when we looked.  Attempt to get that item.
             ticket tk=k;
             k = r.head_counter.compare_and_swap( tk+1, tk );
-            if( k==tk )
+            if ( k==tk )
                 break;
             // Another thread snatched the item, retry.
         }
@@ -645,9 +645,9 @@ bool concurrent_queue_base_v3::internal_pop_if_present( void* dst ) {
 #if __TBB_NO_BUSY_WAIT_IN_CONCURRENT_QUEUE
 #if _WIN32||_WIN64
     // wake up a producer..
-    if( r.n_waiting_producers>0 ) {
+    if ( r.n_waiting_producers>0 ) {
         EnterCriticalSection( &r.mtx_slots_avail );
-        if( r.n_waiting_producers>0 ) {
+        if ( r.n_waiting_producers>0 ) {
             r.producer_wait_generation++;
             r.n_producers_to_wakeup = r.n_waiting_producers;
             SetEvent( r.var_wait_for_slots );
@@ -655,9 +655,9 @@ bool concurrent_queue_base_v3::internal_pop_if_present( void* dst ) {
         LeaveCriticalSection( &r.mtx_slots_avail );
     }
 #else /* including MacOS */
-    if( r.n_waiting_producers>0 ) {
+    if ( r.n_waiting_producers>0 ) {
         pthread_mutex_lock( &r.mtx_slots_avail );
-        if( r.n_waiting_producers>0 )
+        if ( r.n_waiting_producers>0 )
             pthread_cond_broadcast( &r.var_wait_for_slots );
         pthread_mutex_unlock( &r.mtx_slots_avail );
     }
@@ -671,14 +671,14 @@ bool concurrent_queue_base_v3::internal_push_if_not_full( const void* src ) {
     concurrent_queue_rep& r = *my_rep;
     ticket k = r.tail_counter;
     for(;;) {
-        if( (ptrdiff_t)(k-r.head_counter)>=my_capacity ) {
+        if ( (ptrdiff_t)(k-r.head_counter)>=my_capacity ) {
             // Queue is full
             return false;
         }
         // Queue had empty slot with ticket k when we looked.  Attempt to claim that slot.
         ticket tk=k;
         k = r.tail_counter.compare_and_swap( tk+1, tk );
-        if( k==tk ) 
+        if ( k==tk ) 
             break;
         // Another thread claimed the slot, so retry. 
     }
@@ -686,9 +686,9 @@ bool concurrent_queue_base_v3::internal_push_if_not_full( const void* src ) {
 
 #if __TBB_NO_BUSY_WAIT_IN_CONCURRENT_QUEUE
 #if _WIN32||_WIN64
-    if( r.n_waiting_consumers>0 ) {
+    if ( r.n_waiting_consumers>0 ) {
         EnterCriticalSection( &r.mtx_items_avail );
-        if( r.n_waiting_consumers>0 ) {
+        if ( r.n_waiting_consumers>0 ) {
             r.consumer_wait_generation++;
             r.n_consumers_to_wakeup = r.n_waiting_consumers;
             SetEvent( r.var_wait_for_items );
@@ -696,9 +696,9 @@ bool concurrent_queue_base_v3::internal_push_if_not_full( const void* src ) {
         LeaveCriticalSection( &r.mtx_items_avail );
     }
 #else /* including MacOS */
-    if( r.n_waiting_consumers>0 ) {
+    if ( r.n_waiting_consumers>0 ) {
         pthread_mutex_lock( &r.mtx_items_avail );
-        if( r.n_waiting_consumers>0 )
+        if ( r.n_waiting_consumers>0 )
             pthread_cond_broadcast( &r.var_wait_for_items );
         pthread_mutex_unlock( &r.mtx_items_avail );
     }
@@ -728,8 +728,8 @@ void concurrent_queue_base_v3::internal_finish_clear() {
     for( size_t i=0; i<nq; ++i ) {
         page* tp = my_rep->array[i].tail_page;
         __TBB_ASSERT( my_rep->array[i].head_page==tp, "at most one page should remain" );
-        if( tp!=NULL) {
-            if( tp!=invalid_page ) deallocate_page( tp );
+        if ( tp!=NULL) {
+            if ( tp!=invalid_page ) deallocate_page( tp );
             my_rep->array[i].tail_page = NULL;
         }
     }
@@ -774,7 +774,7 @@ public:
     }
     //! Set item to point to kth element.  Return true if at end of queue or item is marked valid; false otherwise.
     bool get_item( void*& item, size_t k ) {
-        if( k==my_queue.my_rep->tail_counter ) {
+        if ( k==my_queue.my_rep->tail_counter ) {
             item = NULL;
             return true;
         } else {
@@ -794,16 +794,16 @@ concurrent_queue_iterator_base_v3::concurrent_queue_iterator_base_v3( const conc
     my_rep = cache_aligned_allocator<concurrent_queue_iterator_rep>().allocate(1);
     new( my_rep ) concurrent_queue_iterator_rep(queue);
     size_t k = my_rep->head_counter;
-    if( !my_rep->get_item(my_item, k) ) advance();
+    if ( !my_rep->get_item(my_item, k) ) advance();
 }
 
 void concurrent_queue_iterator_base_v3::assign( const concurrent_queue_iterator_base& other ) {
-    if( my_rep!=other.my_rep ) {
-        if( my_rep ) {
+    if ( my_rep!=other.my_rep ) {
+        if ( my_rep ) {
             cache_aligned_allocator<concurrent_queue_iterator_rep>().deallocate(my_rep, 1);
             my_rep = NULL;
         }
-        if( other.my_rep ) {
+        if ( other.my_rep ) {
             my_rep = cache_aligned_allocator<concurrent_queue_iterator_rep>().allocate(1);
             new( my_rep ) concurrent_queue_iterator_rep( *other.my_rep );
         }
@@ -821,13 +821,13 @@ void concurrent_queue_iterator_base_v3::advance() {
     __TBB_ASSERT( my_item==tmp, NULL );
 #endif /* TBB_USE_ASSERT */
     size_t i = k/concurrent_queue_rep::n_queue & (queue.items_per_page-1);
-    if( i==queue.items_per_page-1 ) {
+    if ( i==queue.items_per_page-1 ) {
         concurrent_queue_base::page*& root = my_rep->array[concurrent_queue_rep::index(k)];
         root = root->next;
     }
     // advance k
     my_rep->head_counter = ++k;
-    if( !my_rep->get_item(my_item, k) ) advance();
+    if ( !my_rep->get_item(my_item, k) ) advance();
 }
 
 concurrent_queue_iterator_base_v3::~concurrent_queue_iterator_base_v3() {

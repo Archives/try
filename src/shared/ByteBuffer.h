@@ -273,7 +273,7 @@ class ByteBuffer
 
         void read_skip(size_t skip)
         {
-            if(_rpos + skip > size())
+            if (_rpos + skip > size())
                 throw ByteBufferException(false, _rpos, skip, size());
             _rpos += skip;
         }
@@ -287,7 +287,7 @@ class ByteBuffer
 
         template <typename T> T read(size_t pos) const
         {
-            if(pos + sizeof(T) > size())
+            if (pos + sizeof(T) > size())
                 throw ByteBufferException(false, pos, sizeof(T), size());
             T val = *((T const*)&_storage[pos]);
             EndianConvert(val);
@@ -296,7 +296,7 @@ class ByteBuffer
 
         void read(uint8 *dest, size_t len)
         {
-            if(_rpos  + len > size())
+            if (_rpos  + len > size())
                 throw ByteBufferException(false, _rpos, len, size());
             memcpy(dest, &_storage[_rpos], len);
             _rpos += len;
@@ -310,7 +310,7 @@ class ByteBuffer
 
             for(int i = 0; i < 8; ++i)
             {
-                if(guidmark & (uint8(1) << i))
+                if (guidmark & (uint8(1) << i))
                 {
                     uint8 bit;
                     (*this) >> bit;
@@ -369,7 +369,7 @@ class ByteBuffer
 
         void append(const ByteBuffer& buffer)
         {
-            if(buffer.wpos())
+            if (buffer.wpos())
                 append(buffer.contents(), buffer.wpos());
         }
 
@@ -405,7 +405,7 @@ class ByteBuffer
 
         void put(size_t pos, const uint8 *src, size_t cnt)
         {
-            if(pos + cnt > size())
+            if (pos + cnt > size())
                 throw ByteBufferException(true, pos, cnt, size());
             memcpy(&_storage[pos], src, cnt);
         }
@@ -462,7 +462,7 @@ class ByteBuffer
                     if (read<uint8>(i) < 0x10)
                     {
                         sLog.outDebugInLine("\n");
-                        if(sLog.IsIncludeTime())
+                        if (sLog.IsIncludeTime())
                             sLog.outDebugInLine("         ");
 
                         sLog.outDebugInLine("0%X ", read<uint8>(i) );
@@ -470,7 +470,7 @@ class ByteBuffer
                     else
                     {
                         sLog.outDebugInLine("\n");
-                        if(sLog.IsIncludeTime())
+                        if (sLog.IsIncludeTime())
                             sLog.outDebugInLine("         ");
 
                         sLog.outDebugInLine("%X ", read<uint8>(i) );

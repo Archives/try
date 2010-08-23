@@ -99,7 +99,7 @@ template<typename X, typename Functor>
 ACE_INLINE ACE_Utils::Auto_Functor<X,Functor> &
 ACE_Utils::Auto_Functor<X,Functor>::operator=(Auto_Functor_Ref<X,Functor> rhs)
 {
-  if(rhs.p_ != p_)
+  if (rhs.p_ != p_)
   {
     reset(rhs.p_);
     f_ = rhs.f_;

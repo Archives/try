@@ -91,11 +91,11 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
 
     ~Log()
     {
-        if( logfile != NULL )
+        if ( logfile != NULL )
             fclose(logfile);
         logfile = NULL;
 
-        if( gmLogfile != NULL )
+        if ( gmLogfile != NULL )
             fclose(gmLogfile);
         gmLogfile = NULL;
 
@@ -103,7 +103,7 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
             fclose(charLogfile);
         charLogfile = NULL;
 
-        if( dberLogfile != NULL )
+        if ( dberLogfile != NULL )
             fclose(dberLogfile);
         dberLogfile = NULL;
 
@@ -115,7 +115,7 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
             fclose(worldLogfile);
         worldLogfile = NULL;
 
-        if( arenaLogfile != NULL)
+        if ( arenaLogfile != NULL)
             fclose(arenaLogfile);
         arenaLogfile = NULL;
     }

@@ -10,7 +10,7 @@ namespace ACE_OS {
   floor (double x)
   {
     // This method computes the largest integral value not greater than x.
-    if(x > 0)
+    if (x > 0)
       return static_cast<long> (x);
     else if (static_cast<long> (x) == x)
       return x;

@@ -102,7 +102,7 @@ struct ArenaTeamMember
             personal_rating = 0;
         else
             personal_rating += mod;
-        if(plr)
+        if (plr)
             plr->SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, personal_rating);
     }
 };
@@ -140,6 +140,9 @@ class ArenaTeam
         void SetStats(uint32 stat_type, uint32 value);
         uint32 GetRating() const          { return m_stats.rating; }
         void SetRank (uint32 rank)        { m_stats.rank = rank; }
+        
+        void UpdateAllRanks();
+        void UpdateTeamRank(bool update_packet = true, bool save_to_db = false);
 
         uint32 GetEmblemStyle() const     { return m_EmblemStyle; }
         uint32 GetEmblemColor() const     { return m_EmblemColor; }
@@ -165,7 +168,7 @@ class ArenaTeam
         ArenaTeamMember* GetMember(const uint64& guid)
         {
             for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-                if(itr->guid == guid)
+                if (itr->guid == guid)
                     return &(*itr);
 
             return NULL;
@@ -174,7 +177,7 @@ class ArenaTeam
         ArenaTeamMember* GetMember(const std::string& name)
         {
             for (MemberList::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-                if(itr->name == name)
+                if (itr->name == name)
                     return &(*itr);
 
             return NULL;

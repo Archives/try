@@ -32,38 +32,38 @@ bool DBCFileLoader::Load(const char *filename, const char *fmt)
 {
 
     uint32 header;
-    if(data)
+    if (data)
     {
         delete [] data;
         data=NULL;
     }
 
     FILE * f=fopen(filename,"rb");
-    if(!f)return false;
+    if (!f)return false;
 
-    if(fread(&header,4,1,f)!=1)                             // Number of records
+    if (fread(&header,4,1,f)!=1)                             // Number of records
         return false;
 
     EndianConvert(header);
-    if(header!=0x43424457)
+    if (header!=0x43424457)
         return false;                                       //'WDBC'
 
-    if(fread(&recordCount,4,1,f)!=1)                        // Number of records
+    if (fread(&recordCount,4,1,f)!=1)                        // Number of records
         return false;
 
     EndianConvert(recordCount);
 
-    if(fread(&fieldCount,4,1,f)!=1)                         // Number of fields
+    if (fread(&fieldCount,4,1,f)!=1)                         // Number of fields
         return false;
 
     EndianConvert(fieldCount);
 
-    if(fread(&recordSize,4,1,f)!=1)                         // Size of a record
+    if (fread(&recordSize,4,1,f)!=1)                         // Size of a record
         return false;
 
     EndianConvert(recordSize);
 
-    if(fread(&stringSize,4,1,f)!=1)                         // String size
+    if (fread(&stringSize,4,1,f)!=1)                         // String size
         return false;
 
     EndianConvert(stringSize);
@@ -82,7 +82,7 @@ bool DBCFileLoader::Load(const char *filename, const char *fmt)
     data = new unsigned char[recordSize*recordCount+stringSize];
     stringTable = data + recordSize*recordCount;
 
-    if(fread(data,recordSize*recordCount+stringSize,1,f)!=1)
+    if (fread(data,recordSize*recordCount+stringSize,1,f)!=1)
         return false;
 
     fclose(f);
@@ -91,9 +91,9 @@ bool DBCFileLoader::Load(const char *filename, const char *fmt)
 
 DBCFileLoader::~DBCFileLoader()
 {
-    if(data)
+    if (data)
         delete [] data;
-    if(fieldsOffset)
+    if (fieldsOffset)
         delete [] fieldsOffset;
 }
 
@@ -129,7 +129,7 @@ uint32 DBCFileLoader::GetFormatRecordSize(const char * format,int32* index_pos)
                 break;
         }
 
-    if(index_pos)
+    if (index_pos)
         *index_pos = i;
 
     return recordsize;
@@ -149,21 +149,21 @@ char* DBCFileLoader::AutoProduceData(const char* format, uint32& records, char**
     */
 
     typedef char * ptr;
-    if(strlen(format)!=fieldCount)
+    if (strlen(format)!=fieldCount)
         return NULL;
 
     //get struct size and index pos
     int32 i;
     uint32 recordsize=GetFormatRecordSize(format,&i);
 
-    if(i>=0)
+    if (i>=0)
     {
         uint32 maxi=0;
         //find max index
         for(uint32 y=0;y<recordCount;y++)
         {
             uint32 ind=getRecord(y).getUInt (i);
-            if(ind>maxi)maxi=ind;
+            if (ind>maxi)maxi=ind;
         }
 
         ++maxi;
@@ -183,7 +183,7 @@ char* DBCFileLoader::AutoProduceData(const char* format, uint32& records, char**
 
     for(uint32 y =0;y<recordCount;y++)
     {
-        if(i>=0)
+        if (i>=0)
         {
             indexTable[getRecord(y).getUInt(i)]=&dataTable[offset];
         }
@@ -220,7 +220,7 @@ char* DBCFileLoader::AutoProduceData(const char* format, uint32& records, char**
 
 char* DBCFileLoader::AutoProduceStrings(const char* format, char* dataTable)
 {
-    if(strlen(format)!=fieldCount)
+    if (strlen(format)!=fieldCount)
         return NULL;
 
     char* stringPool= new char[stringSize];
@@ -245,7 +245,7 @@ char* DBCFileLoader::AutoProduceStrings(const char* format, char* dataTable)
             {
                 // fill only not filled entries
                 char** slot = (char**)(&dataTable[offset]);
-                if(!*slot || !**slot)
+                if (!*slot || !**slot)
                 {
                     const char * st = getRecord(y).getString(x);
                     *slot=stringPool+(st-(const char*)stringTable);

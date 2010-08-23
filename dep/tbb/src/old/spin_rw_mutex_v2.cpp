@@ -52,11 +52,11 @@ bool spin_rw_mutex::internal_acquire_writer(spin_rw_mutex *mutex)
     atomic_backoff backoff;
     for(;;) {
         state_t s = mutex->state;
-        if( !(s & BUSY) ) { // no readers, no writers
-            if( CAS(mutex->state, WRITER, s) )
+        if ( !(s & BUSY) ) { // no readers, no writers
+            if ( CAS(mutex->state, WRITER, s) )
                 break; // successfully stored writer flag
             backoff.reset(); // we could be very close to complete op.
-        } else if( !(s & WRITER_PENDING) ) { // no pending writers
+        } else if ( !(s & WRITER_PENDING) ) { // no pending writers
             __TBB_AtomicOR(&mutex->state, WRITER_PENDING);
         }
         backoff.pause();
@@ -79,8 +79,8 @@ void spin_rw_mutex::internal_acquire_reader(spin_rw_mutex *mutex) {
     atomic_backoff backoff;
     for(;;) {
         state_t s = mutex->state;
-        if( !(s & (WRITER|WRITER_PENDING)) ) { // no writer or write requests
-            if( CAS(mutex->state, s+ONE_READER, s) )
+        if ( !(s & (WRITER|WRITER_PENDING)) ) { // no writer or write requests
+            if ( CAS(mutex->state, s+ONE_READER, s) )
                 break; // successfully stored increased number of readers
             backoff.reset(); // we could be very close to complete op.
         }
@@ -101,7 +101,7 @@ bool spin_rw_mutex::internal_upgrade(spin_rw_mutex *mutex) {
     // required conditions: either no pending writers, or we are the only reader
     // (with multiple readers and pending writer, another upgrade could have been requested)
     while( (s & READERS)==ONE_READER || !(s & WRITER_PENDING) ) {
-        if( CAS(mutex->state, s | WRITER_PENDING, s) )
+        if ( CAS(mutex->state, s | WRITER_PENDING, s) )
         {
             atomic_backoff backoff;
             ITT_NOTIFY(sync_prepare, mutex);
@@ -143,8 +143,8 @@ bool spin_rw_mutex::internal_try_acquire_writer( spin_rw_mutex * mutex )
 {
 // for a writer: only possible to acquire if no active readers or writers
     state_t s = mutex->state; // on Itanium, this volatile load has acquire semantic
-    if( !(s & BUSY) ) // no readers, no writers; mask is 1..1101
-        if( CAS(mutex->state, WRITER, s) ) {
+    if ( !(s & BUSY) ) // no readers, no writers; mask is 1..1101
+        if ( CAS(mutex->state, WRITER, s) ) {
             ITT_NOTIFY(sync_acquired, mutex);
             return true; // successfully stored writer flag
         }
@@ -156,7 +156,7 @@ bool spin_rw_mutex::internal_try_acquire_reader( spin_rw_mutex * mutex )
 // for a reader: acquire if no active or waiting writers
     state_t s = mutex->state;    // on Itanium, a load of volatile variable has acquire semantic
     while( !(s & (WRITER|WRITER_PENDING)) ) // no writers
-        if( CAS(mutex->state, s+ONE_READER, s) ) {
+        if ( CAS(mutex->state, s+ONE_READER, s) ) {
             ITT_NOTIFY(sync_acquired, mutex);
             return true; // successfully stored increased number of readers
         }

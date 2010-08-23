@@ -145,7 +145,7 @@ ACE_Ascii_To_Wide::convert (const char *str)
   wchar_t *wstri=buf;
 
   size_t hr=iconv(ACE_Ascii_To_Wide_iconv_env, &stri, &lensi, (char**)&wstri, &lenwi);
-  if((hr==size_t(-1))||(lenwi==ACE_MAX_ICONV_BUFFER)){
+  if ((hr==size_t(-1))||(lenwi==ACE_MAX_ICONV_BUFFER)){
   wchar_t *wstr=new wchar_t[len*sizeof(wchar_t)];
   for (size_t i = 0; i < len; i++){
     char *t = const_cast<char *> (str);

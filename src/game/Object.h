@@ -97,7 +97,7 @@ class MANGOS_DLL_SPEC Object
         const bool& IsInWorld() const { return m_inWorld; }
         virtual void AddToWorld()
         {
-            if(m_inWorld)
+            if (m_inWorld)
                 return;
 
             m_inWorld = true;
@@ -212,7 +212,7 @@ class MANGOS_DLL_SPEC Object
 
         void ToggleFlag( uint16 index, uint32 flag)
         {
-            if(HasFlag(index, flag))
+            if (HasFlag(index, flag))
                 RemoveFlag(index, flag);
             else
                 SetFlag(index, flag);
@@ -229,7 +229,7 @@ class MANGOS_DLL_SPEC Object
 
         void ToggleFlag( uint16 index, uint8 offset, uint8 flag )
         {
-            if(HasByteFlag(index, offset, flag))
+            if (HasByteFlag(index, offset, flag))
                 RemoveByteFlag(index, offset, flag);
             else
                 SetByteFlag(index, offset, flag);
@@ -244,7 +244,7 @@ class MANGOS_DLL_SPEC Object
 
         void ApplyModFlag( uint16 index, uint32 flag, bool apply)
         {
-            if(apply) SetFlag(index,flag); else RemoveFlag(index,flag);
+            if (apply) SetFlag(index,flag); else RemoveFlag(index,flag);
         }
 
         void SetFlag64( uint16 index, uint64 newFlag )
@@ -263,7 +263,7 @@ class MANGOS_DLL_SPEC Object
 
         void ToggleFlag64( uint16 index, uint64 flag)
         {
-            if(HasFlag64(index, flag))
+            if (HasFlag64(index, flag))
                 RemoveFlag64(index, flag);
             else
                 SetFlag64(index, flag);
@@ -277,7 +277,7 @@ class MANGOS_DLL_SPEC Object
 
         void ApplyModFlag64( uint16 index, uint64 flag, bool apply)
         {
-            if(apply) SetFlag64(index,flag); else RemoveFlag64(index, flag);
+            if (apply) SetFlag64(index,flag); else RemoveFlag64(index, flag);
         }
 
         void ClearUpdateMask(bool remove);

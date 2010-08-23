@@ -46,7 +46,7 @@ class MANGOS_DLL_SPEC RandomMovementGenerator
         bool GetResetPosition(T&, float& x, float& y, float& z);
         bool GetDestination(float& x, float& y, float& z) const
         {
-            if(!i_destinationHolder.HasDestination()) return false;
+            if (!i_destinationHolder.HasDestination()) return false;
             i_destinationHolder.GetDestination(x,y,z);
             return true;               
         }

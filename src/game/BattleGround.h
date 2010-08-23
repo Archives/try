@@ -557,8 +557,6 @@ class BattleGround
         bool ArenaPlayersCount(); //End arena if some players were not ported
         uint32 GetDamageDoneForTeam(uint32 TeamID);
 
-        void UpdateArenaTeamRanks();
-
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
         void EndNow();

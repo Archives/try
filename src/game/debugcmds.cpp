@@ -142,46 +142,46 @@ bool ChatHandler::HandleDebugSendOpcodeCommand(const char* /*args*/)
         std::string type;
         ifs >> type;
 
-        if(type == "")
+        if (type == "")
             break;
 
-        if(type == "uint8")
+        if (type == "uint8")
         {
             uint16 val1;
             ifs >> val1;
             data << uint8(val1);
         }
-        else if(type == "uint16")
+        else if (type == "uint16")
         {
             uint16 val2;
             ifs >> val2;
             data << val2;
         }
-        else if(type == "uint32")
+        else if (type == "uint32")
         {
             uint32 val3;
             ifs >> val3;
             data << val3;
         }
-        else if(type == "uint64")
+        else if (type == "uint64")
         {
             uint64 val4;
             ifs >> val4;
             data << val4;
         }
-        else if(type == "float")
+        else if (type == "float")
         {
             float val5;
             ifs >> val5;
             data << val5;
         }
-        else if(type == "string")
+        else if (type == "string")
         {
             std::string val6;
             ifs >> val6;
             data << val6;
         }
-        else if(type == "pguid")
+        else if (type == "pguid")
         {
             data << unit->GetPackGUID();
         }
@@ -346,7 +346,7 @@ bool ChatHandler::HandleDebugGetLootRecipientCommand(const char* /*args*/)
 
     if (!target->HasLootRecipient())
         SendSysMessage("loot recipient: no loot recipient");
-    else if(Player* recipient = target->GetLootRecipient())
+    else if (Player* recipient = target->GetLootRecipient())
         PSendSysMessage("loot recipient: %s with raw data %s from group %u",
             recipient->GetObjectGuid().GetString().c_str(),
             target->GetLootRecipientGuid().GetString().c_str(),
@@ -390,7 +390,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(const char* args)
         SendSysMessage(state_str.c_str());
         for (uint8 i = PLAYER_SLOT_START; i < PLAYER_SLOT_END; ++i)
         {
-            if(i >= BUYBACK_SLOT_START && i < BUYBACK_SLOT_END)
+            if (i >= BUYBACK_SLOT_START && i < BUYBACK_SLOT_END)
                 continue;
 
             Item *item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
@@ -419,7 +419,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(const char* args)
         for(size_t i = 0; i < updateQueue.size(); ++i)
         {
             Item *item = updateQueue[i];
-            if(!item) continue;
+            if (!item) continue;
 
             Bag *container = item->GetContainer();
             uint8 bag_slot = container ? container->GetSlot() : uint8(INVENTORY_SLOT_BAG_0);
@@ -445,7 +445,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(const char* args)
         std::vector<Item *> &updateQueue = player->GetItemUpdateQueue();
         for (uint8 i = PLAYER_SLOT_START; i < PLAYER_SLOT_END; ++i)
         {
-            if(i >= BUYBACK_SLOT_START && i < BUYBACK_SLOT_END)
+            if (i >= BUYBACK_SLOT_START && i < BUYBACK_SLOT_END)
                 continue;
 
             Item *item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
@@ -496,7 +496,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(const char* args)
                 error = true; continue;
             }
 
-            if(item->IsBag())
+            if (item->IsBag())
             {
                 Bag *bag = (Bag*)item;
                 for (uint8 j = 0; j < bag->GetBagSize(); ++j)
@@ -562,7 +562,7 @@ bool ChatHandler::HandleDebugGetItemStateCommand(const char* args)
         for(size_t i = 0; i < updateQueue.size(); ++i)
         {
             Item *item = updateQueue[i];
-            if(!item) continue;
+            if (!item) continue;
 
             if (item->GetOwnerGUID() != player->GetGUID())
             {
@@ -790,7 +790,7 @@ bool ChatHandler::HandleDebugSetAuraStateCommand(const char* args)
 
 bool ChatHandler::HandleDebugSetValueCommand(const char* args)
 {
-    if(!*args)
+    if (!*args)
         return false;
 
     char* px = strtok((char*)args, " ");
@@ -801,7 +801,7 @@ bool ChatHandler::HandleDebugSetValueCommand(const char* args)
         return false;
 
     Unit* target = getSelectedUnit();
-    if(!target)
+    if (!target)
     {
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
@@ -811,7 +811,7 @@ bool ChatHandler::HandleDebugSetValueCommand(const char* args)
     uint64 guid = target->GetGUID();
 
     uint32 Opcode = (uint32)atoi(px);
-    if(Opcode >= target->GetValuesCount())
+    if (Opcode >= target->GetValuesCount())
     {
         PSendSysMessage(LANG_TOO_BIG_INDEX, Opcode, GUID_LOPART(guid), target->GetValuesCount());
         return false;
@@ -819,9 +819,9 @@ bool ChatHandler::HandleDebugSetValueCommand(const char* args)
     uint32 iValue;
     float fValue;
     bool isint32 = true;
-    if(pz)
+    if (pz)
         isint32 = (bool)atoi(pz);
-    if(isint32)
+    if (isint32)
     {
         iValue = (uint32)atoi(py);
         DEBUG_LOG(GetMangosString(LANG_SET_UINT), GUID_LOPART(guid), Opcode, iValue);
@@ -841,7 +841,7 @@ bool ChatHandler::HandleDebugSetValueCommand(const char* args)
 
 bool ChatHandler::HandleDebugGetValueCommand(const char* args)
 {
-    if(!*args)
+    if (!*args)
         return false;
 
     char* px = strtok((char*)args, " ");
@@ -851,7 +851,7 @@ bool ChatHandler::HandleDebugGetValueCommand(const char* args)
         return false;
 
     Unit* target = getSelectedUnit();
-    if(!target)
+    if (!target)
     {
         SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
         SetSentErrorMessage(true);
@@ -861,7 +861,7 @@ bool ChatHandler::HandleDebugGetValueCommand(const char* args)
     uint64 guid = target->GetGUID();
 
     uint32 Opcode = (uint32)atoi(px);
-    if(Opcode >= target->GetValuesCount())
+    if (Opcode >= target->GetValuesCount())
     {
         PSendSysMessage(LANG_TOO_BIG_INDEX, Opcode, GUID_LOPART(guid), target->GetValuesCount());
         return false;
@@ -869,10 +869,10 @@ bool ChatHandler::HandleDebugGetValueCommand(const char* args)
     uint32 iValue;
     float fValue;
     bool isint32 = true;
-    if(pz)
+    if (pz)
         isint32 = (bool)atoi(pz);
 
-    if(isint32)
+    if (isint32)
     {
         iValue = target->GetUInt32Value( Opcode );
         DEBUG_LOG(GetMangosString(LANG_GET_UINT), GUID_LOPART(guid), Opcode, iValue);
@@ -890,7 +890,7 @@ bool ChatHandler::HandleDebugGetValueCommand(const char* args)
 
 bool ChatHandler::HandleDebugMod32ValueCommand(const char* args)
 {
-    if(!*args)
+    if (!*args)
         return false;
 
     char* px = strtok((char*)args, " ");
@@ -902,7 +902,7 @@ bool ChatHandler::HandleDebugMod32ValueCommand(const char* args)
     uint32 Opcode = (uint32)atoi(px);
     int Value = atoi(py);
 
-    if(Opcode >= m_session->GetPlayer()->GetValuesCount())
+    if (Opcode >= m_session->GetPlayer()->GetValuesCount())
     {
         PSendSysMessage(LANG_TOO_BIG_INDEX, Opcode, m_session->GetPlayer()->GetGUIDLow(), m_session->GetPlayer( )->GetValuesCount());
         return false;
@@ -922,7 +922,7 @@ bool ChatHandler::HandleDebugMod32ValueCommand(const char* args)
 
 bool ChatHandler::HandleDebugUpdateCommand(const char* args)
 {
-    if(!*args)
+    if (!*args)
         return false;
 
     uint32 updateIndex;
@@ -938,13 +938,13 @@ bool ChatHandler::HandleDebugUpdateCommand(const char* args)
         return false;
     }
 
-    if(!pUpdateIndex)
+    if (!pUpdateIndex)
     {
         return true;
     }
     updateIndex = atoi(pUpdateIndex);
     //check updateIndex
-    if(chr->GetTypeId() == TYPEID_PLAYER)
+    if (chr->GetTypeId() == TYPEID_PLAYER)
     {
         if (updateIndex>=PLAYER_END) return true;
     }

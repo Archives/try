@@ -87,16 +87,16 @@ struct micro_queue {
         {}
         ~pop_finalizer() {
             page* p = my_page;
-            if( p ) {
+            if ( p ) {
                 spin_mutex::scoped_lock lock( my_queue.page_mutex );
                 page* q = p->next;
                 my_queue.head_page = q;
-                if( !q ) {
+                if ( !q ) {
                     my_queue.tail_page = NULL;
                 }
             }
             my_queue.head_counter = my_ticket;
-            if( p ) 
+            if ( p ) 
                 operator delete(p);
         }
     };
@@ -155,7 +155,7 @@ void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base 
     k &= -concurrent_queue_rep::n_queue;
     page* p = NULL;
     size_t index = (k/concurrent_queue_rep::n_queue & base.items_per_page-1);
-    if( !index ) {
+    if ( !index ) {
         size_t n = sizeof(page) + base.items_per_page*base.item_size;
         p = static_cast<page*>(operator new( n ));
         p->mask = 0;
@@ -164,9 +164,9 @@ void micro_queue::push( const void* item, ticket k, concurrent_queue_base& base 
     {
         push_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue ); 
         spin_wait_until_eq( tail_counter, k );
-        if( p ) {
+        if ( p ) {
             spin_mutex::scoped_lock lock( page_mutex );
-            if( page* q = tail_page )
+            if ( page* q = tail_page )
                 q->next = p;
             else
                 head_page = p; 
@@ -190,7 +190,7 @@ bool micro_queue::pop( void* dst, ticket k, concurrent_queue_base& base ) {
     bool success = false; 
     {
         pop_finalizer finalizer( *this, k+concurrent_queue_rep::n_queue, index==base.items_per_page-1 ? &p : NULL ); 
-        if( p.mask & uintptr(1)<<index ) {
+        if ( p.mask & uintptr(1)<<index ) {
             success = true;
             base.assign_and_destroy_item( dst, p, index );
         }
@@ -227,7 +227,7 @@ concurrent_queue_base::~concurrent_queue_base() {
     for( size_t i=0; i<nq; i++ ) {
         page* tp = my_rep->array[i].tail_page;
         __TBB_ASSERT( my_rep->array[i].head_page==tp, "at most one page should remain" );
-        if( tp!=NULL )
+        if ( tp!=NULL )
             delete tp;
     }
     cache_aligned_allocator<concurrent_queue_rep>().deallocate(my_rep,1);
@@ -237,10 +237,10 @@ void concurrent_queue_base::internal_push( const void* src ) {
     concurrent_queue_rep& r = *my_rep;
     concurrent_queue_rep::ticket k  = r.tail_counter++;
     ptrdiff_t e = my_capacity;
-    if( e<concurrent_queue_rep::infinite_capacity ) {
+    if ( e<concurrent_queue_rep::infinite_capacity ) {
         atomic_backoff backoff;
         for(;;) {
-            if( (ptrdiff_t)(k-r.head_counter)<e ) break;
+            if ( (ptrdiff_t)(k-r.head_counter)<e ) break;
             backoff.pause();
             e = const_cast<volatile ptrdiff_t&>(my_capacity);
         }
@@ -263,12 +263,12 @@ bool concurrent_queue_base::internal_pop_if_present( void* dst ) {
         atomic_backoff backoff;
         for(;;) {
             k = r.head_counter;
-            if( r.tail_counter<=k ) {
+            if ( r.tail_counter<=k ) {
                 // Queue is empty 
                 return false;
             }
             // Queue had item with ticket k when we looked.  Attempt to get that item.
-            if( r.head_counter.compare_and_swap(k+1,k)==k ) {
+            if ( r.head_counter.compare_and_swap(k+1,k)==k ) {
                 break;
             }
             // Another thread snatched the item, so pause and retry.
@@ -284,12 +284,12 @@ bool concurrent_queue_base::internal_push_if_not_full( const void* src ) {
     concurrent_queue_rep::ticket k;
     for(;;) {
         k = r.tail_counter;
-        if( (ptrdiff_t)(k-r.head_counter)>=my_capacity ) {
+        if ( (ptrdiff_t)(k-r.head_counter)>=my_capacity ) {
             // Queue is full
             return false;
         }
         // Queue had empty slot with ticket k when we looked.  Attempt to claim that slot.
-        if( r.tail_counter.compare_and_swap(k+1,k)==k ) 
+        if ( r.tail_counter.compare_and_swap(k+1,k)==k ) 
             break;
         // Another thread claimed the slot, so pause and retry.
         backoff.pause();
@@ -326,7 +326,7 @@ public:
     }
     //! Get pointer to kth element
     void* choose( size_t k ) {
-        if( k==my_queue.my_rep->tail_counter )
+        if ( k==my_queue.my_rep->tail_counter )
             return NULL;
         else {
             concurrent_queue_base::page* p = array[concurrent_queue_rep::index(k)];
@@ -346,12 +346,12 @@ concurrent_queue_iterator_base::concurrent_queue_iterator_base( const concurrent
 }
 
 void concurrent_queue_iterator_base::assign( const concurrent_queue_iterator_base& other ) {
-    if( my_rep!=other.my_rep ) {
-        if( my_rep ) {
+    if ( my_rep!=other.my_rep ) {
+        if ( my_rep ) {
             delete my_rep;
             my_rep = NULL;
         }
-        if( other.my_rep ) {
+        if ( other.my_rep ) {
             my_rep = new concurrent_queue_iterator_rep( *other.my_rep );
         }
     }
@@ -364,7 +364,7 @@ void concurrent_queue_iterator_base::advance() {
     const concurrent_queue_base& queue = my_rep->my_queue;
     __TBB_ASSERT( my_item==my_rep->choose(k), NULL );
     size_t i = k/concurrent_queue_rep::n_queue & queue.items_per_page-1;
-    if( i==queue.items_per_page-1 ) {
+    if ( i==queue.items_per_page-1 ) {
         concurrent_queue_base::page*& root = my_rep->array[concurrent_queue_rep::index(k)];
         root = root->next;
     }

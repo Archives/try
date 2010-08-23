@@ -196,7 +196,7 @@ ACE_Service_Repository::close (void)
     return 0;
 
 #ifndef ACE_NLOGGING
-  if(ACE::debug ())
+  if (ACE::debug ())
     ACE_DEBUG ((LM_DEBUG,
                 ACE_TEXT ("(%P|%t) SR::close - repo=%@, size=%d\n"),
                 this,
@@ -212,7 +212,7 @@ ACE_Service_Repository::close (void)
         const_cast<ACE_Service_Type *> (this->service_vector_[i]);
 
 #ifndef ACE_NLOGGING
-      if(ACE::debug ())
+      if (ACE::debug ())
         {
           if (s == 0)
             ACE_DEBUG ((LM_DEBUG,
@@ -243,7 +243,7 @@ ACE_Service_Repository::~ACE_Service_Repository (void)
 {
   ACE_TRACE ("ACE_Service_Repository::~ACE_Service_Repository");
 #ifndef ACE_NLOGGING
-  if(ACE::debug ())
+  if (ACE::debug ())
     ACE_DEBUG ((LM_DEBUG, "(%P|%t) SR::<dtor>, this=%@\n", this));
 #endif
   this->close ();

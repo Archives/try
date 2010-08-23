@@ -46,7 +46,7 @@ void WorldSession::HandleAuctionHelloOpcode( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     SendAuctionHello(guid, unit);
@@ -56,7 +56,7 @@ void WorldSession::HandleAuctionHelloOpcode( WorldPacket & recv_data )
 void WorldSession::SendAuctionHello( uint64 guid, Creature* unit )
 {
     AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntry(unit->getFaction());
-    if(!ahEntry)
+    if (!ahEntry)
         return;
 
     WorldPacket data( MSG_AUCTION_HELLO, 12 );
@@ -113,11 +113,11 @@ void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction, uint32 newPri
     Player *oldBidder = sObjectMgr.GetPlayer(oldBidder_guid);
 
     uint32 oldBidder_accId = 0;
-    if(!oldBidder)
+    if (!oldBidder)
         oldBidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(oldBidder_guid);
 
     // old bidder exist
-    if(oldBidder || oldBidder_accId)
+    if (oldBidder || oldBidder_accId)
     {
         std::ostringstream msgAuctionOutbiddedSubject;
         msgAuctionOutbiddedSubject << auction->item_template << ":0:" << AUCTION_OUTBIDDED << ":0:0";
@@ -138,11 +138,11 @@ void WorldSession::SendAuctionCancelledToBidderMail( AuctionEntry* auction )
     Player *bidder = sObjectMgr.GetPlayer(bidder_guid);
 
     uint32 bidder_accId = 0;
-    if(!bidder)
+    if (!bidder)
         bidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(bidder_guid);
 
     // bidder exist
-    if(bidder || bidder_accId)
+    if (bidder || bidder_accId)
     {
         std::ostringstream msgAuctionCancelledSubject;
         msgAuctionCancelledSubject << auction->item_template << ":0:" << AUCTION_CANCELLED_TO_BIDDER << ":0:0";
@@ -179,7 +179,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     }
 
     AuctionHouseEntry const* auctionHouseEntry = AuctionHouseMgr::GetAuctionHouseEntry(pCreature->getFaction());
-    if(!auctionHouseEntry)
+    if (!auctionHouseEntry)
     {
         DEBUG_LOG( "WORLD: HandleAuctionSellItem - Unit (GUID: %u) has wrong faction.", uint32(GUID_LOPART(auctioneer)) );
         return;
@@ -200,25 +200,25 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     Item *it = pl->GetItemByGuid( item );
     // do not allow to sell already auctioned items
-    if(sAuctionMgr.GetAItem(GUID_LOPART(item)))
+    if (sAuctionMgr.GetAItem(GUID_LOPART(item)))
     {
         sLog.outError("AuctionError, player %s is sending item id: %u, but item is already in another auction", pl->GetName(), GUID_LOPART(item));
         SendAuctionCommandResult(0, AUCTION_SELL_ITEM, AUCTION_INTERNAL_ERROR);
         return;
     }
     // prevent sending bag with items (cheat: can be placed in bag after adding equipped empty bag to auction)
-    if(!it)
+    if (!it)
     {
         SendAuctionCommandResult(0, AUCTION_SELL_ITEM, AUCTION_ITEM_NOT_FOUND);
         return;
     }
 
-    if(!it->CanBeTraded())
+    if (!it->CanBeTraded())
     {
         SendAuctionCommandResult(0, AUCTION_SELL_ITEM, AUCTION_INTERNAL_ERROR);
         return;
@@ -240,7 +240,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
         return;
     }
 
-    if( GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE) )
+    if ( GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_BOOL_GM_LOG_TRADE) )
     {
         sLog.outCommand(GetAccountId(),"GM %s (Account: %u) create auction: %s (Entry: %u Count: %u)",
             GetPlayerName(), GetAccountId(), it->GetProto()->Name1, it->GetEntry(), it->GetCount());
@@ -302,7 +302,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap( pCreature->getFaction() );
@@ -310,7 +310,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
     AuctionEntry *auction = auctionHouse->GetAuction(auctionId);
     Player *pl = GetPlayer();
 
-    if( !auction || auction->owner == pl->GetGUIDLow() )
+    if ( !auction || auction->owner == pl->GetGUIDLow() )
     {
         // you cannot bid your own auction:
         SendAuctionCommandResult( 0, AUCTION_PLACE_BID, CANNOT_BID_YOUR_AUCTION_ERROR );
@@ -319,7 +319,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
 
     // impossible have online own another character (use this for speedup check in case online owner)
     Player* auction_owner = sObjectMgr.GetPlayer(MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER));
-    if( !auction_owner && sObjectMgr.GetPlayerAccountIdByGUID(MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER)) == pl->GetSession()->GetAccountId())
+    if ( !auction_owner && sObjectMgr.GetPlayerAccountIdByGUID(MAKE_NEW_GUID(auction->owner, 0, HIGHGUID_PLAYER)) == pl->GetSession()->GetAccountId())
     {
         // you cannot bid your another character auction:
         SendAuctionCommandResult( 0, AUCTION_PLACE_BID, CANNOT_BID_YOUR_AUCTION_ERROR );
@@ -327,7 +327,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
     }
 
     // cheating
-    if(price <= auction->bid || price < auction->startbid)
+    if (price <= auction->bid || price < auction->startbid)
         return;
 
     // price too low for next bid if not buyout
@@ -426,7 +426,7 @@ void WorldSession::HandleAuctionRemoveItem( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap( pCreature->getFaction() );
@@ -508,7 +508,7 @@ void WorldSession::HandleAuctionListBidderItems( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap( pCreature->getFaction() );
@@ -555,7 +555,7 @@ void WorldSession::HandleAuctionListOwnerItems( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap( pCreature->getFaction() );
@@ -599,7 +599,7 @@ void WorldSession::HandleAuctionListItems( WorldPacket & recv_data )
     }
 
     // remove fake death
-    if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
+    if (GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
     AuctionHouseObject* auctionHouse = sAuctionMgr.GetAuctionsMap( pCreature->getFaction() );
@@ -614,7 +614,7 @@ void WorldSession::HandleAuctionListItems( WorldPacket & recv_data )
 
     // converting string that we try to find to lower case
     std::wstring wsearchedname;
-    if(!Utf8toWStr(searchedname,wsearchedname))
+    if (!Utf8toWStr(searchedname,wsearchedname))
         return;
 
     wstrToLower(wsearchedname);

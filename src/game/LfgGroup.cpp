@@ -65,14 +65,14 @@ void LfgGroup::ResetGroup()
 
 bool LfgGroup::LoadGroupFromDB(Field *fields)
 {
-    if(!Group::LoadGroupFromDB(fields))
+    if (!Group::LoadGroupFromDB(fields))
         return false;
     
     m_tank = m_mainTank;
     m_heal = fields[1].GetUInt64();
     m_dungeonInfo = sLFGDungeonStore.LookupEntry(fields[19].GetUInt32());
     randomDungeonEntry = fields[20].GetUInt32();
-    if(randomDungeonEntry)
+    if (randomDungeonEntry)
         m_isRandom = true;
     m_instanceStatus = fields[21].GetUInt8();
     m_inDungeon = true; 
@@ -81,10 +81,10 @@ bool LfgGroup::LoadGroupFromDB(Field *fields)
 bool LfgGroup::AddMember(const uint64 &guid, const char* name)
 {
     Player *player = sObjectMgr.GetPlayer(guid);
-    if(!player)
+    if (!player)
         return false;
     
-    if(GetMembersCount() == 0)
+    if (GetMembersCount() == 0)
         m_baseLevel = player->getLevel();
     MemberSlot member;
     member.guid      = guid;
@@ -107,21 +107,21 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
         m_memberSlots.erase(slot);
     }
     
-    if(Player *player = sObjectMgr.GetPlayer(guid))
+    if (Player *player = sObjectMgr.GetPlayer(guid))
     {
         player->m_lookingForGroup.groups.erase(m_dungeonInfo->ID);
-        if(method == 1)
+        if (method == 1)
         {
             WorldPacket data(SMSG_GROUP_UNINVITE, 0);
             player->GetSession()->SendPacket( &data );
         }
     }
     //Remove from any role
-    if(m_tank == guid)
+    if (m_tank == guid)
         m_tank = 0;
-    else if(m_heal == guid)
+    else if (m_heal == guid)
         m_heal = 0;
-    else if(dps->find(guid) != dps->end())
+    else if (dps->find(guid) != dps->end())
         dps->erase(guid);
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", GUID_LOPART(guid));
     return 0;
@@ -129,11 +129,11 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
 
 uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
 {
-    if(joinedAs)
+    if (joinedAs)
     {
-        if(Player *player = sObjectMgr.GetPlayer(guid))
+        if (Player *player = sObjectMgr.GetPlayer(guid))
         {
-            if(withLeader)
+            if (withLeader)
                 return player->m_lookingForGroup.roles;
             else
                 return (player->m_lookingForGroup.roles & LEADER) ? player->m_lookingForGroup.roles-LEADER : player->m_lookingForGroup.roles;
@@ -141,11 +141,11 @@ uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
         return 0;
     }
     uint8 roles = (m_leaderGuid == guid && withLeader) ? LEADER : 0;
-    if(m_tank == guid)
+    if (m_tank == guid)
         roles |= TANK;
-    else if(m_heal == guid)
+    else if (m_heal == guid)
         roles |= HEALER;
-    else if(dps->find(guid) != dps->end())
+    else if (dps->find(guid) != dps->end())
         roles |= DAMAGE;
     return roles;        
 }
@@ -156,9 +156,9 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
     LfgGroup *tato2 = this;
     LfgGroup **tato = &tato2;
     uint64 adress = uint64(tato);
-    if(!this || adress == 0x1 ||  m_memberSlots.empty())
+    if (!this || adress == 0x1 ||  m_memberSlots.empty())
 
-    if(m_memberSlots.empty())
+    if (m_memberSlots.empty())
     {
         sLfgMgr.AddGroupToDelete(this);
         return true;
@@ -167,14 +167,14 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if((!plr || (!plr->GetSession() && !plr->IsBeingTeleported())) && premadePlayers.find(citr->guid) == premadePlayers.end())
+        if ((!plr || (!plr->GetSession() && !plr->IsBeingTeleported())) && premadePlayers.find(citr->guid) == premadePlayers.end())
             toRemove.insert(citr->guid);
     }
     for(PlayerList::iterator itr = toRemove.begin(); itr != toRemove.end(); ++itr)
         RemoveMember(*itr, 0);
     toRemove.clear();
     //flush empty group
-    if(GetMembersCount() == 0)
+    if (GetMembersCount() == 0)
     {
         sLfgMgr.AddGroupToDelete(this);
         return true;
@@ -184,14 +184,14 @@ bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after ch
 
 void LfgGroup::KilledCreature(Creature *creature)
 {
-    if(creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
+    if (creature->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
     {
-        if(m_instanceStatus == INSTANCE_NOT_SAVED)
+        if (m_instanceStatus == INSTANCE_NOT_SAVED)
             m_instanceStatus = INSTANCE_SAVED;
         //There are mask values for bosses, this is not correct
         m_killedBosses += !m_killedBosses ? 1 : m_killedBosses*2;
     }
-    if(creature->GetEntry() == sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID)->lastBossId)
+    if (creature->GetEntry() == sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID)->lastBossId)
     {
         //Last boss
         m_instanceStatus = INSTANCE_COMPLETED;
@@ -199,7 +199,7 @@ void LfgGroup::KilledCreature(Creature *creature)
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player *plr = itr->getSource();
-            if(!plr)
+            if (!plr)
                 continue;
             WorldPacket data(SMSG_LFG_PLAYER_REWARD);
             data << uint32(randomDungeonEntry == 0 ? m_dungeonInfo->Entry() : randomDungeonEntry);
@@ -220,21 +220,21 @@ void LfgGroup::KilledCreature(Creature *creature)
 bool LfgGroup::UpdateCheckTimer(uint32 time)
 {
     m_readycheckTimer += time;
-    if(m_readycheckTimer >= LFG_TIMER_READY_CHECK || GetMembersCount() != 5)
+    if (m_readycheckTimer >= LFG_TIMER_READY_CHECK || GetMembersCount() != 5)
         return false;
     return true;
 }
 void LfgGroup::TeleportToDungeon()
 {
-    if(m_inDungeon)
+    if (m_inDungeon)
     {
         for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
             Player *plr = sObjectMgr.GetPlayer(citr->guid);
-            if(!plr || !plr->GetSession())
+            if (!plr || !plr->GetSession())
                 continue;
 
-            if(plr->GetMapId() == m_dungeonInfo->map)
+            if (plr->GetMapId() == m_dungeonInfo->map)
             {
                 sLfgMgr.SendLfgUpdatePlayer(plr, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
                 sLfgMgr.SendLfgUpdateParty(plr, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
@@ -242,7 +242,7 @@ void LfgGroup::TeleportToDungeon()
             }
             DungeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo(m_dungeonInfo->ID);
             uint32 originalDungeonId = m_dungeonInfo->ID;
-            if(m_isRandom)
+            if (m_isRandom)
                 originalDungeonId = (randomDungeonEntry & 0x00FFFFFF);
             plr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS, GetMembersCount()-1);
             TeleportPlayer(plr, dungeonInfo, originalDungeonId);
@@ -252,7 +252,7 @@ void LfgGroup::TeleportToDungeon()
     }
     //If random, then select here
     uint32 originalDungeonId = m_dungeonInfo->ID;
-    if(m_dungeonInfo->type == LFG_TYPE_RANDOM)
+    if (m_dungeonInfo->type == LFG_TYPE_RANDOM)
     {
         randomDungeonEntry = m_dungeonInfo->Entry();
         m_isRandom = true;
@@ -264,9 +264,9 @@ void LfgGroup::TeleportToDungeon()
         for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
         {
             currentRow = sLFGDungeonStore.LookupEntry(i);
-            if(!currentRow)
+            if (!currentRow)
                 continue;
-            if(currentRow->type != LFG_TYPE_RANDOM && currentRow->grouptype == m_dungeonInfo->grouptype)
+            if (currentRow->type != LFG_TYPE_RANDOM && currentRow->grouptype == m_dungeonInfo->grouptype)
                 options.push_back(currentRow);
         }
         //And now get only without locks
@@ -276,10 +276,10 @@ void LfgGroup::TeleportToDungeon()
             {
                 for(std::vector<LFGDungeonEntry const*>::iterator itrDung = options.begin(); itrDung != options.end(); ++itrDung)
                 {
-                    if((*itrDung)->ID != (*itr2)->dungeonInfo->ID)
+                    if ((*itrDung)->ID != (*itr2)->dungeonInfo->ID)
                         continue;
                     DungeonInfo* dungeonInfo = sLfgMgr.GetDungeonInfo((*itr2)->dungeonInfo->ID);
-                    if(dungeonInfo->locked || (*itr2)->lockType != LFG_LOCKSTATUS_RAID_LOCKED)
+                    if (dungeonInfo->locked || (*itr2)->lockType != LFG_LOCKSTATUS_RAID_LOCKED)
                     {
                         options.erase(itrDung);
                         break;
@@ -288,12 +288,12 @@ void LfgGroup::TeleportToDungeon()
             }
         }
         //This should not happen
-        if(options.empty())
+        if (options.empty())
         {
             for(member_witerator itr = m_memberSlots.begin(); itr != m_memberSlots.end(); ++itr)
             {
                 Player *plr = sObjectMgr.GetPlayer(itr->guid);
-                if(!plr)
+                if (!plr)
                     continue;
                 sLfgMgr.SendLfgUpdatePlayer(plr, LFG_UPDATETYPE_GROUP_DISBAND);
                 sLog.outError("LfgMgr: Cannot find any random dungeons for player %s", plr->GetName());
@@ -314,22 +314,22 @@ void LfgGroup::TeleportToDungeon()
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
-        if(m_groupType == GROUPTYPE_LFD_2 && plr->GetGroup())
+        if (m_groupType == GROUPTYPE_LFD_2 && plr->GetGroup())
         {
             m_leaderGuid = plr->GetGroup()->GetLeaderGUID();
             m_leaderName = plr->GetGroup()->GetLeaderName();
             break;
         }
-        else if(plr->m_lookingForGroup.roles & LEADER)
+        else if (plr->m_lookingForGroup.roles & LEADER)
         {
             m_leaderGuid = plr->GetGUID();
             m_leaderName = plr->GetName();
             break;
         }
     }
-    if(m_leaderGuid == 0)
+    if (m_leaderGuid == 0)
     {
         m_leaderGuid = GetFirstMember()->getSource()->GetGUID();
         m_leaderName = GetFirstMember()->getSource()->GetName();
@@ -350,7 +350,7 @@ void LfgGroup::TeleportToDungeon()
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
 
         plr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS, GetMembersCount()-1);   
@@ -361,14 +361,14 @@ void LfgGroup::TeleportToDungeon()
 
 void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 originalDungeonId)
 {
-    if(m_inDungeon && premadePlayers.find(plr->GetGUID()) != premadePlayers.end())
+    if (m_inDungeon && premadePlayers.find(plr->GetGUID()) != premadePlayers.end())
     {
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player *player = itr->getSource();
-            if(!player)
+            if (!player)
                 continue;
-            if(player->GetMapId() == GetDungeonInfo()->map)
+            if (player->GetMapId() == GetDungeonInfo()->map)
             {
                 WorldLocation loc;
                 player->GetPosition(loc);
@@ -381,20 +381,20 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
     {
         for(GroupMap::iterator itr = plr->m_lookingForGroup.groups.begin(); itr != plr->m_lookingForGroup.groups.end(); ++itr)
         {
-            if(itr->first != originalDungeonId)
+            if (itr->first != originalDungeonId)
             {
                 itr->second->RemoveMember(plr->GetGUID(), 0);
-                if(itr->second->GetMembersCount() == 0)
+                if (itr->second->GetMembersCount() == 0)
                     sLfgMgr.AddGroupToDelete(itr->second);
             }
         }
 
-        if(Group *group = plr->GetGroup())
+        if (Group *group = plr->GetGroup())
         {
-            if(!group->isLfgGroup())
+            if (!group->isLfgGroup())
             {
                 group->RemoveMember(plr->GetGUID(), 0);
-                if(group->GetMembersCount() == 0)
+                if (group->GetMembersCount() == 0)
                     group->Disband(true);
             }
             plr->SetGroup(NULL);
@@ -436,7 +436,7 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                 mount_spell = (*auras.begin())->GetId();
         }
         //Nearest graveyard if in dungeon
-        if(plr->GetMap()->IsDungeon())
+        if (plr->GetMap()->IsDungeon())
         {
             if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(plr->GetPositionX(), plr->GetPositionY(), plr->GetPositionZ(), plr->GetMapId(), plr->GetTeam()))
                 joinLoc = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
@@ -476,7 +476,7 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
     plr->m_lookingForGroup.roles = GetPlayerRole(plr->GetGUID());
     plr->ScheduleDelayedOperation(DELAYED_LFG_ENTER_DUNGEON);
     plr->ScheduleDelayedOperation(DELAYED_SAVE_PLAYER);
-    if(!m_inDungeon)
+    if (!m_inDungeon)
     {
         plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
             dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
@@ -486,9 +486,9 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player *player = itr->getSource();
-            if(!player)
+            if (!player)
                 continue;
-            if(player->GetMapId() == GetDungeonInfo()->map)
+            if (player->GetMapId() == GetDungeonInfo()->map)
             {
                 WorldLocation loc;
                 player->GetPosition(loc);
@@ -502,9 +502,9 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
 bool LfgGroup::HasCorrectLevel(uint8 level)
 {
     //Non random
-    if(!m_dungeonInfo->isRandom())
+    if (!m_dungeonInfo->isRandom())
     {
-        if(level >= m_dungeonInfo->minlevel && level <= m_dungeonInfo->maxlevel)
+        if (level >= m_dungeonInfo->minlevel && level <= m_dungeonInfo->maxlevel)
             return true;
         return false;
     }
@@ -513,22 +513,22 @@ bool LfgGroup::HasCorrectLevel(uint8 level)
     {
         case LFG_GROUPTYPE_CLASSIC: 
         case LFG_GROUPTYPE_BC_NORMAL:
-            if(m_baseLevel > level)
+            if (m_baseLevel > level)
                 return (m_baseLevel - level <= 5);
             else
                 return (level - m_baseLevel <= 5);
         case LFG_GROUPTYPE_BC_HEROIC:
-            if(level < 70 || level > 73)
+            if (level < 70 || level > 73)
                 return false;
             else
                 return true;
         case LFG_GROUPTYPE_WTLK_NORMAL:
-            if(level > 68)
+            if (level > 68)
                 return true;
             else
                 return false;
         case LFG_GROUPTYPE_WTLK_HEROIC:
-            if(level == 80)
+            if (level == 80)
                 return true;
             else
                 return false;
@@ -541,7 +541,7 @@ void LfgGroup::SendUpdate()
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         player = sObjectMgr.GetPlayer(citr->guid);
-        if(!player || !player->GetSession() || player->GetGroup() != this )
+        if (!player || !player->GetSession() || player->GetGroup() != this )
             continue;
                                                             // guess size
         WorldPacket data(SMSG_GROUP_LIST, (1+1+1+1+8+4+GetMembersCount()*20));
@@ -556,7 +556,7 @@ void LfgGroup::SendUpdate()
         data << uint32(GetMembersCount()-1);
         for(member_citerator citr2 = m_memberSlots.begin(); citr2 != m_memberSlots.end(); ++citr2)
         {
-            if(citr->guid == citr2->guid)
+            if (citr->guid == citr2->guid)
                 continue;
             Player* member = sObjectMgr.GetPlayer(citr2->guid);
             uint8 onlineState = (member) ? MEMBER_STATUS_ONLINE : MEMBER_STATUS_OFFLINE;
@@ -571,7 +571,7 @@ void LfgGroup::SendUpdate()
         }
 
         data << uint64(m_leaderGuid);                       // leader guid
-        if(GetMembersCount()-1)
+        if (GetMembersCount()-1)
         {
             data << uint8(m_lootMethod);                    // loot method
             data << uint64(m_looterGuid);                   // looter guid
@@ -589,11 +589,11 @@ LfgLocksMap* LfgGroup::GetLocksList() const
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
 
         LfgLocksList *playerLocks = sLfgMgr.GetDungeonsLock(plr);
-        if(!playerLocks->empty())
+        if (!playerLocks->empty())
             groupLocks->insert(std::pair<uint64, LfgLocksList*>(plr->GetGUID(),playerLocks));
     }
     return groupLocks;
@@ -628,7 +628,7 @@ void LfgGroup::SendLfgQueueStatus()
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
 
         uint8 role = plr->m_lookingForGroup.roles;
@@ -648,7 +648,7 @@ void LfgGroup::SendLfgQueueStatus()
 }
 void LfgGroup::SendGroupFormed()
 {
-    if(!premadePlayers.empty())
+    if (!premadePlayers.empty())
     {
         ResetGroup();
         for(PlayerList::iterator itr = premadePlayers.begin(); itr != premadePlayers.end(); ++itr)
@@ -668,7 +668,7 @@ void LfgGroup::SendGroupFormed()
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
         plr->GetSession()->SendPacket(&data);
     }
@@ -682,7 +682,7 @@ void LfgGroup::SendProposalUpdate(uint8 state)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession() || (m_inDungeon && plr->GetMapId() == GetDungeonInfo()->map))
+        if (!plr || !plr->GetSession() || (m_inDungeon && plr->GetMapId() == GetDungeonInfo()->map))
             continue;
         //Correct - 3.3.3a
         WorldPacket data(SMSG_LFG_PROPOSAL_UPDATE);
@@ -695,18 +695,18 @@ void LfgGroup::SendProposalUpdate(uint8 state)
         for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
             Player *plr2 = sObjectMgr.GetPlayer(citr->guid);
-            if(plr2 && plr2->GetSession())
+            if (plr2 && plr2->GetSession())
                 ++membersCount;
         }
         data << uint8(membersCount);
         for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
-            if(Player *plr2 = sObjectMgr.GetPlayer(citr->guid))
+            if (Player *plr2 = sObjectMgr.GetPlayer(citr->guid))
             {
                 //error_log("Player %s", plr2->GetName());
                 uint8 roles = GetPlayerRole(plr2->GetGUID());
                 //Something got wrong
-                if(roles < 2)
+                if (roles < 2)
                 {
                     sLog.outError("LfgMgr: Wrong role for player %s in SMSG_LFG_PROPOSAL_UPDATE", plr2->GetName());
                     m_answers.insert(std::pair<uint64, uint8>(plr2->GetGUID(), 0));
@@ -717,7 +717,7 @@ void LfgGroup::SendProposalUpdate(uint8 state)
                 data << uint8(m_inDungeon); // InDungeon
                 data << uint8(premadePlayers.find(plr2->GetGUID()) != premadePlayers.end()); // Same group
                 //If player agrees with dungeon, these two are 1
-                if(m_answers.find(plr2->GetGUID()) != m_answers.end())
+                if (m_answers.find(plr2->GetGUID()) != m_answers.end())
                 {
                     data << uint8(1);
                     data << uint8(m_answers.find(plr2->GetGUID())->second);
@@ -735,19 +735,19 @@ void LfgGroup::SendProposalUpdate(uint8 state)
 
 void LfgGroup::UpdateRoleCheck(uint32 diff)
 {
-    if(diff != 0)
+    if (diff != 0)
     {
         m_readycheckTimer += diff;
-        if(m_readycheckTimer >= LFG_TIMER_READY_CHECK && m_membersBeforeRoleCheck != m_rolesProposal.size())
+        if (m_readycheckTimer >= LFG_TIMER_READY_CHECK && m_membersBeforeRoleCheck != m_rolesProposal.size())
         {
             SendRoleCheckUpdate(LFG_ROLECHECK_MISSING_ROLE);
             for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
             {
                 Player *player = sObjectMgr.GetPlayer(citr->guid);
-                if(!player || !player->GetSession())
+                if (!player || !player->GetSession())
                     continue;
                 sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_FAILED);
-                if(player->GetGUID() == GetLeaderGUID())
+                if (player->GetGUID() == GetLeaderGUID())
                 {
                     WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
                     data << uint32(LFG_JOIN_FAILED);                                  
@@ -763,22 +763,22 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *player = sObjectMgr.GetPlayer(citr->guid);
-        if(!player)
+        if (!player)
         {
             offline = true;
             break;
         }
     }
-    if(GetMembersCount() != m_membersBeforeRoleCheck || offline)
+    if (GetMembersCount() != m_membersBeforeRoleCheck || offline)
     {
         SendRoleCheckUpdate(LFG_ROLECHECK_ABORTED);
         for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
             Player *player = sObjectMgr.GetPlayer(citr->guid);
-            if(!player)
+            if (!player)
                 continue;
             sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_ABORTED);
-            if(player->GetGUID() == GetLeaderGUID())
+            if (player->GetGUID() == GetLeaderGUID())
             {
                 WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
                 data << uint32(LFG_JOIN_FAILED);                                  
@@ -789,11 +789,11 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
         sLfgMgr.AddCheckedGroup(this, false);
         return;
     }
-    if(m_rolesProposal.empty())
+    if (m_rolesProposal.empty())
         return;
     //Offline members checked at join
     //Check roles
-    if(m_membersBeforeRoleCheck != m_rolesProposal.size())
+    if (m_membersBeforeRoleCheck != m_rolesProposal.size())
         return;
 
     uint64 TankOnly = 0;
@@ -804,61 +804,61 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
     for(ProposalAnswersMap::iterator itr = m_rolesProposal.begin(); itr != m_rolesProposal.end(); ++itr)
     {
         uint8 role = (itr->second & LEADER) ? itr->second-1 : itr->second;
-        if(role == 0)
+        if (role == 0)
         {
             error = LFG_ROLECHECK_NO_ROLE;
             break;
         }
         
-        if((role == TANK && TankOnly != 0) || (role == HEALER && HealOnly != 0) || (role == DAMAGE && dpsOnly->size() == 3))
+        if ((role == TANK && TankOnly != 0) || (role == HEALER && HealOnly != 0) || (role == DAMAGE && dpsOnly->size() == 3))
         {
             error = LFG_ROLECHECK_WRONG_ROLES;
             break;
         }
-        else if(role == TANK)
+        else if (role == TANK)
             TankOnly = itr->first;
-        else if(role == HEALER)
+        else if (role == HEALER)
             HealOnly = itr->first;
-        else if(role == DAMAGE)
+        else if (role == DAMAGE)
             dpsOnly->insert(itr->first);
         else
             others->insert(std::make_pair<uint64, uint8>(itr->first, itr->second));
     }
-    if(error == 0 && !others->empty())
+    if (error == 0 && !others->empty())
     {
         for(ProposalAnswersMap::iterator itr = others->begin(); itr != others->end(); ++itr)
         {
-            if((itr->second & TANK) && TankOnly == 0)
+            if ((itr->second & TANK) && TankOnly == 0)
             {
                 TankOnly = itr->first;
                 others->erase(itr);
             }
-            else if((itr->second & HEALER) && HealOnly == 0)
+            else if ((itr->second & HEALER) && HealOnly == 0)
             {
                 HealOnly = itr->first;
                 others->erase(itr);
             }
-            else if((itr->second & DAMAGE) && dpsOnly->size() != 3)
+            else if ((itr->second & DAMAGE) && dpsOnly->size() != 3)
             {
                 dpsOnly->insert(itr->first);
                 others->erase(itr);
             }
         }
-        if(!others->empty())
+        if (!others->empty())
             error = LFG_ROLECHECK_WRONG_ROLES;
     }
     Player *leader = sObjectMgr.GetPlayer(GetLeaderGUID());
-    if(error != 0 || !leader || !leader->GetSession())
+    if (error != 0 || !leader || !leader->GetSession())
     {
         SendRoleCheckUpdate(error);
         for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
         {
             Player *player = sObjectMgr.GetPlayer(citr->guid);
-            if(!player || !player->GetSession())
+            if (!player || !player->GetSession())
                 continue;
       
             sLfgMgr.SendLfgUpdateParty(player, LFG_UPDATETYPE_ROLECHECK_FAILED);
-            if(player->GetGUID() == GetLeaderGUID())
+            if (player->GetGUID() == GetLeaderGUID())
             {
                 WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
                 data << uint32(LFG_JOIN_FAILED);                                  
@@ -877,11 +877,11 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *player = sObjectMgr.GetPlayer(citr->guid);
-        if(!player || !player->GetSession())
+        if (!player || !player->GetSession())
             continue;
         sLfgMgr.SendLfgUpdateParty(player,  LFG_UPDATETYPE_ADDED_TO_QUEUE);
         
-        if(player->GetGUID() == GetLeaderGUID())
+        if (player->GetGUID() == GetLeaderGUID())
         {
             WorldPacket data(SMSG_LFG_JOIN_RESULT, 8);
             data << uint32(LFG_JOIN_OK);                                  
@@ -890,7 +890,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
         }
         else
             player->m_lookingForGroup.queuedDungeons = *queued;
-        if(m_inDungeon)
+        if (m_inDungeon)
             premadePlayers.insert(player->GetGUID());
 
     } 
@@ -903,16 +903,16 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
 
 void LfgGroup::SendRoleCheckUpdate(uint8 state)
 {
-    if(state == LFG_ROLECHECK_INITIALITING)
+    if (state == LFG_ROLECHECK_INITIALITING)
     {
         ResetGroup();
-        if(m_inDungeon)
+        if (m_inDungeon)
             premadePlayers.clear();
         m_membersBeforeRoleCheck = GetMembersCount();
     }
     
     Player *leader = sObjectMgr.GetPlayer(GetLeaderGUID());
-    if(!leader)
+    if (!leader)
         return;
 
     WorldPacket data(SMSG_LFG_ROLE_CHECK_UPDATE, 6 + leader->m_lookingForGroup.queuedDungeons.size() * 4 + 1 + GetMembersCount() * 14);
@@ -924,7 +924,7 @@ void LfgGroup::SendRoleCheckUpdate(uint8 state)
     data << uint8(GetMembersCount());
     //leader first
     data << uint64(GetLeaderGUID());
-    if(m_rolesProposal.find(GetLeaderGUID()) != m_rolesProposal.end())
+    if (m_rolesProposal.find(GetLeaderGUID()) != m_rolesProposal.end())
     {
         ProposalAnswersMap::iterator itr = m_rolesProposal.find(GetLeaderGUID());
         data << uint8(1); //ready
@@ -939,7 +939,7 @@ void LfgGroup::SendRoleCheckUpdate(uint8 state)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *member = sObjectMgr.GetPlayer(citr->guid);
-        if(!member || !member->GetSession() || member->GetGUID() == GetLeaderGUID())
+        if (!member || !member->GetSession() || member->GetGUID() == GetLeaderGUID())
             continue;
 
         data << uint64(member->GetGUID());
@@ -951,7 +951,7 @@ void LfgGroup::SendRoleCheckUpdate(uint8 state)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
-        if(!plr || !plr->GetSession())
+        if (!plr || !plr->GetSession())
             continue;
         plr->GetSession()->SendPacket(&data);
     }
@@ -961,15 +961,15 @@ void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason)
 {
     //Checks first
     PartyResult error = ERR_PARTY_RESULT_OK;
-    if(GetMembersCount() <= 3)
+    if (GetMembersCount() <= 3)
         error = ERR_PARTY_LFG_BOOT_TOO_FEW_PLAYERS;
-    else if(m_instanceStatus == INSTANCE_COMPLETED)
+    else if (m_instanceStatus == INSTANCE_COMPLETED)
         error = ERR_PARTY_LFG_BOOT_DUNGEON_COMPLETE;
-    else if(m_voteToKick.isInProggres)
+    else if (m_voteToKick.isInProggres)
         error = ERR_PARTY_LFG_BOOT_IN_PROGRESS;
 
     initiator->GetSession()->SendPartyResult(PARTY_OP_LEAVE, "", error);
-    if(error != ERR_PARTY_RESULT_OK)
+    if (error != ERR_PARTY_RESULT_OK)
         return;
 
     m_voteToKick.Reset();
@@ -982,7 +982,7 @@ void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *member = sObjectMgr.GetPlayer(citr->guid);
-        if(!member || !member->GetSession())
+        if (!member || !member->GetSession())
             continue;
         SendBootPlayer(member);
     }
@@ -993,18 +993,18 @@ void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason)
 // return true = remove from update list, false = continue
 bool LfgGroup::UpdateVoteToKick(uint32 diff)
 {
-    if(!m_voteToKick.isInProggres)
+    if (!m_voteToKick.isInProggres)
         return true;
 
-    if(diff)
+    if (diff)
     {
-        if(m_voteToKick.GetTimeLeft() <= 0)
+        if (m_voteToKick.GetTimeLeft() <= 0)
         {
             m_voteToKick.isInProggres = false;
             for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
             {
                 Player *member = sObjectMgr.GetPlayer(citr->guid);
-                if(!member || !member->GetSession())
+                if (!member || !member->GetSession())
                     continue;
                 SendBootPlayer(member);
             }
@@ -1018,22 +1018,22 @@ bool LfgGroup::UpdateVoteToKick(uint32 diff)
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *member = sObjectMgr.GetPlayer(citr->guid);
-        if(!member || !member->GetSession())
+        if (!member || !member->GetSession())
             continue;
         SendBootPlayer(member);
     }
 
-    if(m_voteToKick.GetVotesNum(false) < 3)
+    if (m_voteToKick.GetVotesNum(false) < 3)
         return false;
-    else if(m_voteToKick.GetVotesNum(true) >= 3)
+    else if (m_voteToKick.GetVotesNum(true) >= 3)
     {
         
         Player *victim = sObjectMgr.GetPlayer(m_voteToKick.victim);
         RemoveMember(m_voteToKick.victim, 1);
-        if(victim && victim->GetSession())
+        if (victim && victim->GetSession())
         {
             WorldLocation teleLoc = victim->m_lookingForGroup.joinLoc;
-            if(teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
+            if (teleLoc.coord_x != 0 && teleLoc.coord_y != 0 && teleLoc.coord_z != 0)
             {
                 victim->ScheduleDelayedOperation(DELAYED_LFG_MOUNT_RESTORE);
                 victim->ScheduleDelayedOperation(DELAYED_LFG_TAXI_RESTORE);
@@ -1042,20 +1042,20 @@ bool LfgGroup::UpdateVoteToKick(uint32 diff)
             }
         }
         //Change leader
-        if(m_voteToKick.victim == m_leaderGuid)
+        if (m_voteToKick.victim == m_leaderGuid)
         {
             for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
             {
                 Player *plr = sObjectMgr.GetPlayer(citr->guid);
-                if(!plr || !plr->GetSession())
+                if (!plr || !plr->GetSession())
                     continue;
-                if(plr->m_lookingForGroup.roles & LEADER)
+                if (plr->m_lookingForGroup.roles & LEADER)
                 {
                     ChangeLeader(plr->GetGUID());
                     break;
                 }
             }
-            if(m_leaderGuid == 0)
+            if (m_leaderGuid == 0)
                 ChangeLeader(GetFirstMember()->getSource()->GetGUID());            
         }
 
@@ -1068,7 +1068,7 @@ bool LfgGroup::UpdateVoteToKick(uint32 diff)
 
 void LfgGroup::SendBootPlayer(Player *plr)
 {
-    if(plr->GetGUID() == m_voteToKick.victim)
+    if (plr->GetGUID() == m_voteToKick.victim)
         return;
 
     WorldPacket data(SMSG_LFG_BOOT_PLAYER, 27 + m_voteToKick.reason.length());

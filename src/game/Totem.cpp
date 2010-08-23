@@ -54,7 +54,7 @@ void Totem::Update( uint32 time )
 void Totem::Summon(Unit* owner)
 {
     // Mana Tide Totem should have 10% of caster's health
-    if(GetSpell() == 16191)
+    if (GetSpell() == 16191)
     {
         SetMaxHealth(owner->GetMaxHealth()*10/100);
         SetHealth(GetMaxHealth());
@@ -64,7 +64,7 @@ void Totem::Summon(Unit* owner)
 
     // select totem model in dependent from owner team
     CreatureInfo const *cinfo = GetCreatureInfo();
-    if(owner->GetTypeId() == TYPEID_PLAYER && cinfo)
+    if (owner->GetTypeId() == TYPEID_PLAYER && cinfo)
     {
         uint32 display_id = sObjectMgr.ChooseDisplayId(((Player*)owner)->GetTeam(), cinfo);
         CreatureModelInfo const *minfo = sObjectMgr.GetCreatureModelRandomGender(display_id);
@@ -115,7 +115,7 @@ void Totem::UnSummon()
                 for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
                 {
                     Player* Target = itr->getSource();
-                    if(Target && pGroup->SameSubGroup((Player*)owner, Target))
+                    if (Target && pGroup->SameSubGroup((Player*)owner, Target))
                         Target->RemoveAurasDueToSpell(GetSpell());
                 }
             }
@@ -142,7 +142,7 @@ void Totem::SetOwner(uint64 guid)
 Unit *Totem::GetOwner()
 {
     uint64 ownerid = GetOwnerGUID();
-    if(!ownerid)
+    if (!ownerid)
         return NULL;
     return ObjectAccessor::GetUnit(*this, ownerid);
 }
@@ -157,7 +157,7 @@ void Totem::SetTypeBySummonSpell(SpellEntry const * spellProto)
         if (GetSpellCastTime(totemSpell))
             m_type = TOTEM_ACTIVE;
     }
-    if(spellProto->SpellIconID == 2056)
+    if (spellProto->SpellIconID == 2056)
         m_type = TOTEM_STATUE;                              //Jewelery statue
 }
 

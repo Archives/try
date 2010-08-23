@@ -108,20 +108,20 @@ bool dynamic_link( const char* library, const dynamic_link_descriptor descriptor
 #else
     dynamic_link_handle module = dlopen( library, RTLD_LAZY ); 
 #endif /* _WIN32||_WIN64 */
-    if( module ) {
-        if( !dynamic_link( module, descriptors, n, required ) ) {
+    if ( module ) {
+        if ( !dynamic_link( module, descriptors, n, required ) ) {
             // Return true if the library is there and it contains all the expected entry points.
             dynamic_unlink(module);
             module = NULL;
         }
     }
-    if( handle ) 
+    if ( handle ) 
         *handle = module;
     return module!=NULL;
 }
 
 void dynamic_unlink( dynamic_link_handle handle ) {
-    if( handle ) {
+    if ( handle ) {
 #if _WIN32||_WIN64
         FreeLibrary( handle );
 #else

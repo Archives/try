@@ -188,7 +188,7 @@ inline MTRand::uint32 MTRand::randInt()
 	// Pull a 32-bit integer from the generator state
 	// Every other access function simply transforms the numbers extracted here
 	
-	if( left == 0 ) reload();
+	if ( left == 0 ) reload();
 	--left;
 		
 	register uint32 s1;
@@ -246,8 +246,8 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 		state[i] += ( bigSeed[j] & 0xffffffffUL ) + j;
 		state[i] &= 0xffffffffUL;
 		++i;  ++j;
-		if( i >= N ) { state[0] = state[N-1];  i = 1; }
-		if( j >= seedLength ) j = 0;
+		if ( i >= N ) { state[0] = state[N-1];  i = 1; }
+		if ( j >= seedLength ) j = 0;
 	}
 	for( k = N - 1; k; --k )
 	{
@@ -256,7 +256,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
 		state[i] -= i;
 		state[i] &= 0xffffffffUL;
 		++i;
-		if( i >= N ) { state[0] = state[N-1];  i = 1; }
+		if ( i >= N ) { state[0] = state[N-1];  i = 1; }
 	}
 	state[0] = 0x80000000UL;  // MSB is 1, assuring non-zero initial array
 	reload();

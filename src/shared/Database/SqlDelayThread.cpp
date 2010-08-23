@@ -48,7 +48,7 @@ void SqlDelayThread::run()
             s->Execute(m_dbEngine);
             delete s;
         }
-        if((loopCounter++) >= pingEveryLoop)
+        if ((loopCounter++) >= pingEveryLoop)
         {
             loopCounter = 0;
             delete m_dbEngine->Query("SELECT 1");

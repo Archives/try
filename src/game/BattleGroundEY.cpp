@@ -95,8 +95,8 @@ void BattleGroundEY::Update(uint32 diff)
         
         // areatrigger for Fel Reaver was removed? so:
         if (m_FlagState)
-            if(Player* plr = sObjectMgr.GetPlayer(GetFlagPickerGUID()))
-                if(plr->GetDistance2d(2043.99f, 1729.91f) < 2)
+            if (Player* plr = sObjectMgr.GetPlayer(GetFlagPickerGUID()))
+                if (plr->GetDistance2d(2043.99f, 1729.91f) < 2)
                     if (m_PointState[BG_EY_NODE_FEL_REAVER] == EY_POINT_UNDER_CONTROL && m_PointOwnedByTeam[BG_EY_NODE_FEL_REAVER] == plr->GetTeam())
                         EventPlayerCapturedFlag(plr, BG_EY_NODE_FEL_REAVER);
     }
@@ -366,7 +366,7 @@ void BattleGroundEY::HandleAreaTrigger(Player *Source, uint32 Trigger)
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    if(!Source->isAlive())                                  //hack code, must be removed later
+    if (!Source->isAlive())                                  //hack code, must be removed later
         return;
 
     switch(Trigger)
@@ -678,7 +678,7 @@ void BattleGroundEY::EventPlayerCapturedFlag(Player *Source, BG_EY_Nodes node)
 void BattleGroundEY::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
 {
     BattleGroundScoreMap::iterator itr = m_PlayerScores.find(Source->GetGUID());
-    if(itr == m_PlayerScores.end())                         // player not found
+    if (itr == m_PlayerScores.end())                         // player not found
         return;
 
     switch(type)

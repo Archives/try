@@ -135,7 +135,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     }
 
     // check also  BIND_WHEN_PICKED_UP and BIND_QUEST_ITEM for .additem or .additemset case by GM (not binded at adding to inventory)
-    if( pItem->GetProto()->Bonding == BIND_WHEN_USE || pItem->GetProto()->Bonding == BIND_WHEN_PICKED_UP || pItem->GetProto()->Bonding == BIND_QUEST_ITEM )
+    if ( pItem->GetProto()->Bonding == BIND_WHEN_USE || pItem->GetProto()->Bonding == BIND_WHEN_PICKED_UP || pItem->GetProto()->Bonding == BIND_QUEST_ITEM )
     {
         if (!pItem->IsSoulBound())
         {
@@ -170,7 +170,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     }
 
     //Note: If script stop casting it must send appropriate data to client to prevent stuck item in gray state.
-    if(!Script->ItemUse(pUser,pItem,targets))
+    if (!Script->ItemUse(pUser,pItem,targets))
     {
         // no script or script not process request by self
         pUser->CastItemUseSpell(pItem,targets,cast_count,glyphIndex);
@@ -200,14 +200,14 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
         return;
 
     Item *pItem = pUser->GetItemByPos(bagIndex, slot);
-    if(!pItem)
+    if (!pItem)
     {
         pUser->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL );
         return;
     }
 
     ItemPrototype const *proto = pItem->GetProto();
-    if(!proto)
+    if (!proto)
     {
         pUser->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, pItem, NULL );
         return;
@@ -215,7 +215,7 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
 
     // locked item
     uint32 lockId = proto->LockID;
-    if(lockId)
+    if (lockId)
     {
         LockEntry const *lockInfo = sLockStore.LookupEntry(lockId);
 
@@ -227,14 +227,14 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
         }
 
         // required picklocking
-        if(lockInfo->Skill[1] || lockInfo->Skill[0])
+        if (lockInfo->Skill[1] || lockInfo->Skill[0])
         {
             pUser->SendEquipError(EQUIP_ERR_ITEM_LOCKED, pItem, NULL );
             return;
         }
     }
 
-    if(pItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED))// wrapped?
+    if (pItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED))// wrapped?
     {
         QueryResult *result = CharacterDatabase.PQuery("SELECT entry, flags FROM character_gifts WHERE item_guid = '%u'", pItem->GetGUIDLow());
         if (result)
@@ -275,7 +275,7 @@ void WorldSession::HandleGameObjectUseOpcode( WorldPacket & recv_data )
 
     GameObject *obj = GetPlayer()->GetMap()->GetGameObject(guid);
 
-    if(!obj)
+    if (!obj)
         return;
 
     obj->Use(_player);
@@ -293,10 +293,10 @@ void WorldSession::HandleGameobjectReportUse(WorldPacket& recvPacket)
         return;
 
     GameObject* go = GetPlayer()->GetMap()->GetGameObject(guid);
-    if(!go)
+    if (!go)
         return;
 
-    if(!go->IsWithinDistInMap(_player,INTERACTION_DISTANCE))
+    if (!go->IsWithinDistInMap(_player,INTERACTION_DISTANCE))
         return;
 
     _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_USE_GAMEOBJECT, go->GetEntry());
@@ -320,7 +320,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
     // vehicle spells are handled by CMSG_PET_CAST_SPELL,
     // but player is still able to cast own spells
-    if(_player->GetCharmGUID() && _player->GetCharmGUID() == _player->GetVehicleGUID())
+    if (_player->GetCharmGUID() && _player->GetCharmGUID() == _player->GetVehicleGUID())
         mover = _player;
 
     DEBUG_LOG("WORLD: got cast spell packet, spellId - %u, cast_count: %u, unk_flags %u, data length = %i",
@@ -328,7 +328,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId );
 
-    if(!spellInfo)
+    if (!spellInfo)
     {
         sLog.outError("WORLD: unknown spell id %u", spellId);
         recvPacket.rpos(recvPacket.wpos());                 // prevent spam at ignore packet
@@ -370,7 +370,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         recvPacket >> Unused<float>();                      // unk1, coords?
         recvPacket >> Unused<float>();                      // unk1, coords?
         recvPacket >> unk1;                                 // >> 1 or 0
-        if(unk1)
+        if (unk1)
         {
             ObjectGuid guid;                                // guid - unused
             MovementInfo movementInfo;
@@ -407,10 +407,10 @@ void WorldSession::HandleCancelCastOpcode(WorldPacket& recvPacket)
         return;
 
     //FIXME: hack, ignore unexpected client cancel Deadly Throw cast
-    if(spellId==26679)
+    if (spellId==26679)
         return;
 
-    if(mover->IsNonMeleeSpellCasted(false))
+    if (mover->IsNonMeleeSpellCasted(false))
         mover->InterruptNonMeleeSpells(false,spellId);
 }
 
@@ -447,7 +447,7 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
             }
 
             // this also include case when aura not found
-            if(!allow)
+            if (!allow)
                 return;
         }
         else
@@ -480,7 +480,7 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
         return;
 
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId );
-    if(!spellInfo)
+    if (!spellInfo)
     {
         sLog.outError("WORLD: unknown PET spell id %u", spellId);
         return;
@@ -488,19 +488,19 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
 
     Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player,guid);
 
-    if(!pet)
+    if (!pet)
     {
         sLog.outError( "Pet %u not exist.", uint32(GUID_LOPART(guid)) );
         return;
     }
 
-    if(pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
+    if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
     {
         sLog.outError( "HandlePetCancelAura.Pet %u isn't pet of player %s", uint32(GUID_LOPART(guid)),GetPlayer()->GetName() );
         return;
     }
 
-    if(!pet->isAlive())
+    if (!pet->isAlive())
     {
         pet->SendPetActionFeedback(FEEDBACK_PET_DEAD);
         return;
@@ -556,10 +556,10 @@ void WorldSession::HandleSelfResOpcode( WorldPacket & /*recv_data*/ )
 {
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: CMSG_SELF_RES");                  // empty opcode
 
-    if(_player->GetUInt32Value(PLAYER_SELF_RES_SPELL))
+    if (_player->GetUInt32Value(PLAYER_SELF_RES_SPELL))
     {
         SpellEntry const *spellInfo = sSpellStore.LookupEntry(_player->GetUInt32Value(PLAYER_SELF_RES_SPELL));
-        if(spellInfo)
+        if (spellInfo)
             _player->CastSpell(_player, spellInfo, false);
 
         _player->SetUInt32Value(PLAYER_SELF_RES_SPELL, 0);
@@ -577,37 +577,37 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
 
     uint32 vehicleId = 0;
     CreatureDataAddon const *cainfo = unit->GetCreatureAddon();
-    if(cainfo)
+    if (cainfo)
         vehicleId = cainfo->vehicle_id;
 
     // na pycu check, nefici s nim nic :P hlavne Lightwell a vehicly
   /* if (_player->isInCombat() && !unit->isVehicle() && !vehicleId)                              // client prevent click and set different icon at combat state
             return; */
     
-    if(!_player->IsWithinDistInMap(unit, 10))
+    if (!_player->IsWithinDistInMap(unit, 10))
         return;
 
     // cheater?
-    if(!unit->HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_SPELLCLICK))
+    if (!unit->HasFlag(UNIT_NPC_FLAGS,UNIT_NPC_FLAG_SPELLCLICK))
         return;
 
     // handled other (hacky) way to avoid overwriting auras
-    if(vehicleId || unit->isVehicle())
+    if (vehicleId || unit->isVehicle())
     {
-        if(!unit->isAlive())
+        if (!unit->isAlive())
             return;
 
-        if(_player->GetVehicleGUID())
+        if (_player->GetVehicleGUID())
             return;
 
         // create vehicle if no one present and kill the original creature to avoid double, triple etc spawns
-        if(!unit->isVehicle())
+        if (!unit->isVehicle())
         {
             Vehicle *v = _player->SummonVehicle(unit->GetEntry(), unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation(), vehicleId);
-            if(!v)
+            if (!v)
                 return;
 
-            if(v->GetVehicleFlags() & VF_DESPAWN_NPC)
+            if (v->GetVehicleFlags() & VF_DESPAWN_NPC)
             {
                 v->SetSpawnDuration(unit->GetRespawnDelay()*IN_MILLISECONDS);
                 unit->setDeathState(JUST_DIED);
@@ -619,9 +619,9 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
 
         unit->SetHealth(unit->GetMaxHealth());
 
-        if(((Vehicle*)unit)->GetVehicleData())
-            if(uint32 r_aura = ((Vehicle*)unit)->GetVehicleData()->req_aura)
-                if(!_player->HasAura(r_aura))
+        if (((Vehicle*)unit)->GetVehicleData())
+            if (uint32 r_aura = ((Vehicle*)unit)->GetVehicleData()->req_aura)
+                if (!_player->HasAura(r_aura))
                     return;
 
         _player->EnterVehicle((Vehicle*)unit, 0);

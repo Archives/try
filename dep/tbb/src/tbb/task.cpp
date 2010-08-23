@@ -347,7 +347,7 @@ class mail_outbox: unpadded_mail_outbox {
         for(;;) {
             // No fence on load, because subsequent compare-and-swap has the necessary fence.
             intptr last = (intptr)my_last;
-            if( (last&1)==0 && __TBB_CompareAndSwapW(&my_last,last|1,last)==last) {
+            if ( (last&1)==0 && __TBB_CompareAndSwapW(&my_last,last|1,last)==last) {
                 __TBB_ASSERT( (my_first==NULL)==((intptr(my_last)&~1)==0), NULL );
                 return (task_proxy*)last;
             }
@@ -357,15 +357,15 @@ class mail_outbox: unpadded_mail_outbox {
     task_proxy* internal_pop() {
         //! No fence on load of my_first, because if it is NULL, there's nothing further to read from another thread.
         task_proxy* result = my_first;
-        if( result ) {
-            if( task_proxy* f = __TBB_load_with_acquire(result->next_in_mailbox) ) {
+        if ( result ) {
+            if ( task_proxy* f = __TBB_load_with_acquire(result->next_in_mailbox) ) {
                 // No lock required
                 __TBB_store_with_release( my_first, f );
             } else {
                 // acquire() has the necessary fence.
                 task_proxy* l = acquire();
                 __TBB_ASSERT(result==my_first,NULL); 
-                if( !(my_first = result->next_in_mailbox) ) 
+                if ( !(my_first = result->next_in_mailbox) ) 
                     l=0;
                 __TBB_store_with_release( my_last, l );
             }
@@ -379,7 +379,7 @@ public:
     void push( task_proxy& t ) {
         __TBB_ASSERT(&t!=NULL, NULL);
         t.next_in_mailbox = NULL; 
-        if( task_proxy* l = acquire() ) {
+        if ( task_proxy* l = acquire() ) {
             l->next_in_mailbox = &t;
         } else {
             my_first=&t;
@@ -442,7 +442,7 @@ public:
     //! Indicate whether thread that reads this mailbox is idle.
     /** Raises assertion failure if mailbox is redundantly marked as not idle. */
     void set_is_idle( bool value ) {
-        if( my_putter ) {
+        if ( my_putter ) {
             __TBB_ASSERT( my_putter->my_is_idle || value, "attempt to redundantly mark mailbox as not idle" );
             my_putter->my_is_idle = value;
         }
@@ -660,7 +660,7 @@ class Arena {
 #if COUNT_TASK_NODES
         prefix().task_node_count -= drain_count;
 #if !TEST_ASSEMBLY_ROUTINES
-        if( prefix().task_node_count ) {
+        if ( prefix().task_node_count ) {
             fprintf(stderr,"warning: leaked %ld task objects\n", long(prefix().task_node_count));
         }
 #endif /* !TEST_ASSEMBLY_ROUTINES */
@@ -775,14 +775,14 @@ public:
 
     //! Add reference to resources.  If first reference added, acquire the resources.
     static void add_ref() {
-        if( ++count==1 )
+        if ( ++count==1 )
             acquire_resources();
     }
     //! Remove reference to resources.  If last reference removed, release the resources.
     static void remove_ref() {
         int k = --count;
         __TBB_ASSERT(k>=0,"removed __TBB_InitOnce ref that was not added?"); 
-        if( k==0 ) 
+        if ( k==0 ) 
             release_resources();
     }
 }; // class __TBB_InitOnce
@@ -809,18 +809,18 @@ class Governor {
 #else
         int status = theTLS.create();
 #endif
-        if( status )
+        if ( status )
             handle_perror(status, "TBB failed to initialize TLS storage\n");
     }
 
     //! Destroy the thread-local storage key.
     static void destroy_tls() {
 #if TBB_USE_ASSERT
-        if( __TBB_InitOnce::initialization_done() && theTLS.get() ) 
+        if ( __TBB_InitOnce::initialization_done() && theTLS.get() ) 
             fprintf(stderr, "TBB is unloaded while tbb::task_scheduler_init object is alive?");
 #endif
         int status = theTLS.destroy();
-        if( status )
+        if ( status )
             handle_perror(status, "TBB failed to destroy TLS storage");
     }
     
@@ -830,10 +830,10 @@ class Governor {
     {
         mutex::scoped_lock lock( theArenaMutex );
         Arena* a = theArena;
-        if( a ) {
+        if ( a ) {
             a->prefix().number_of_masters += 1;
         } else {
-            if( number_of_threads==task_scheduler_init::automatic )
+            if ( number_of_threads==task_scheduler_init::automatic )
                 number_of_threads = task_scheduler_init::default_num_threads();
             a = Arena::allocate_arena( 2*number_of_threads, number_of_threads-1,
                                        thread_stack_size?thread_stack_size:ThreadStackSize );
@@ -869,7 +869,7 @@ public:
         mutex::scoped_lock lock( theArenaMutex );
         Arena* a = theArena;
         __TBB_ASSERT( a, "theArena is missing" );
-        if( --(a->prefix().number_of_masters) )
+        if ( --(a->prefix().number_of_masters) )
             a = NULL;
         else {
             theArena = NULL;
@@ -987,7 +987,7 @@ static class statistics {
 public:
     statistics() {
         my_file = fopen("statistics.txt","w");
-        if( !my_file ) {
+        if ( !my_file ) {
             perror("fopen(\"statistics.txt\"\")");
             exit(1);
         }
@@ -1089,9 +1089,9 @@ void ITT_DoOneTimeInitialization() {
 void DoOneTimeInitializations() {
     __TBB_InitOnce::lock();
     // No fence required for load of InitializationDone, because we are inside a critical section.
-    if( !__TBB_InitOnce::InitializationDone ) {
+    if ( !__TBB_InitOnce::InitializationDone ) {
         __TBB_InitOnce::add_ref();
-        if( GetBoolEnvironmentVariable("TBB_VERSION") )
+        if ( GetBoolEnvironmentVariable("TBB_VERSION") )
             PrintVersion();
         bool have_itt = false;
 #if DO_ITT_NOTIFY
@@ -1100,14 +1100,14 @@ void DoOneTimeInitializations() {
 #endif /* DO_ITT_NOTIFY */
         initialize_cache_aligned_allocator();
         ::rml::factory::status_type status = rml_server_factory.open(); 
-        if( status!=::rml::factory::st_success ) {
+        if ( status!=::rml::factory::st_success ) {
             use_private_rml = true;
             PrintExtraVersionInfo( "RML", "private" );
         } else {
             PrintExtraVersionInfo( "RML", "shared" );
             rml_server_factory.call_with_server_info( PrintRMLVersionInfo, (void*)"" );
         }
-        if( !have_itt )
+        if ( !have_itt )
             SchedulerTraitsId = IntelSchedulerTraits::id;
 #if __TBB_EXCEPTIONS
         else {
@@ -1133,7 +1133,7 @@ __TBB_InitOnce::~__TBB_InitOnce() {
     remove_ref();
     // It is assumed that InitializationDone is not set after file-scope destructors start running,
     // and thus no race on InitializationDone is possible.
-    if( initialization_done() ) {
+    if ( initialization_done() ) {
         // Remove reference that we added in DoOneTimeInitializations.
         remove_ref();  
     }
@@ -1159,7 +1159,7 @@ extern "C" bool WINAPI DllMain( HANDLE /*hinstDLL*/, DWORD reason, LPVOID /*lpvR
             __TBB_InitOnce::remove_ref();
             // It is assumed that InitializationDone is not set after DLL_PROCESS_DETACH,
             // and thus no race on InitializationDone is possible.
-            if( __TBB_InitOnce::initialization_done() ) {
+            if ( __TBB_InitOnce::initialization_done() ) {
                 // Remove reference that we added in DoOneTimeInitializations.
                 __TBB_InitOnce::remove_ref();
             }
@@ -1626,7 +1626,7 @@ void Governor::sign_on(GenericScheduler* s) {
 }
 
 void Governor::sign_off(GenericScheduler* s) {
-    if( s->is_registered ) {
+    if ( s->is_registered ) {
 #if USE_PTHREAD
         __TBB_ASSERT( theTLS.get()==s || (!s->is_worker() && !theTLS.get()), "attempt to unregister a wrong scheduler instance" );
 #else
@@ -1639,10 +1639,10 @@ void Governor::sign_off(GenericScheduler* s) {
 }
 
 GenericScheduler* Governor::init_scheduler( int num_threads, stack_size_type stack_size, bool auto_init ) {
-    if( !__TBB_InitOnce::initialization_done() )
+    if ( !__TBB_InitOnce::initialization_done() )
         DoOneTimeInitializations();
     GenericScheduler* s = theTLS.get();
-    if( s ) {
+    if ( s ) {
         s->ref_count += 1;
         return s;
     }
@@ -1654,14 +1654,14 @@ GenericScheduler* Governor::init_scheduler( int num_threads, stack_size_type sta
 
 void Governor::terminate_scheduler( GenericScheduler* s ) {
     __TBB_ASSERT( s == theTLS.get(), "Attempt to terminate non-local scheduler instance" );
-    if( !--(s->ref_count) )
+    if ( !--(s->ref_count) )
         s->cleanup_master();
 }
 
 void Governor::auto_terminate(void* arg){
     GenericScheduler* s = static_cast<GenericScheduler*>(arg);
-    if( s && s->is_auto_initialized ) {
-        if( !--(s->ref_count) ) {
+    if ( s && s->is_auto_initialized ) {
+        if ( !--(s->ref_count) ) {
             if ( !theTLS.get() && !s->is_local_task_pool_empty() ) {
                 // This thread's TLS slot is already cleared. But in order to execute
                 // remaining tasks cleanup_master() will need TLS correctly set.
@@ -1684,12 +1684,12 @@ inline task& GenericScheduler::allocate_task( size_t number_of_bytes,
                                             __TBB_CONTEXT_ARG(task* parent, task_group_context* context) ) {
     GATHER_STATISTIC(current_active+=1);
     task* t = free_list;
-    if( number_of_bytes<=quick_task_size ) {
-        if( t ) {
+    if ( number_of_bytes<=quick_task_size ) {
+        if ( t ) {
             GATHER_STATISTIC(current_length-=1);
             __TBB_ASSERT( t->state()==task::freed, "free list of tasks is corrupted" );
             free_list = t->prefix().next;
-        } else if( return_list ) {
+        } else if ( return_list ) {
             // No fence required for read of return_list above, because __TBB_FetchAndStoreW has a fence.
             t = (task*)__TBB_FetchAndStoreW( &return_list, 0 );
             __TBB_ASSERT( t, "another thread emptied the return_list" );
@@ -1743,11 +1743,11 @@ inline void GenericScheduler::free_task( task& t ) {
 #endif /* TBB_USE_ASSERT */
     __TBB_ASSERT( 1L<<t.state() & (1L<<task::executing|1L<<task::allocated), NULL );
     p.state = task::freed;
-    if( h==is_small_local || p.origin==this ) {
+    if ( h==is_small_local || p.origin==this ) {
         GATHER_STATISTIC(current_length+=1);
         p.next = free_list;
         free_list = &t;
-    } else if( !(h&is_local) && p.origin ) {
+    } else if ( !(h&is_local) && p.origin ) {
         free_nonlocal_small_task(t);
     } else {
         deallocate_task(t);
@@ -1760,16 +1760,16 @@ void GenericScheduler::free_nonlocal_small_task( task& t ) {
     __TBB_ASSERT( &s!=this, NULL );
     for(;;) {
         task* old = s.return_list;
-        if( old==plugged_return_list() ) 
+        if ( old==plugged_return_list() ) 
             break;
         // Atomically insert t at head of s.return_list
         t.prefix().next = old; 
         ITT_NOTIFY( sync_releasing, &s.return_list );
-        if( __TBB_CompareAndSwapW( &s.return_list, (intptr)&t, (intptr)old )==(intptr)old ) 
+        if ( __TBB_CompareAndSwapW( &s.return_list, (intptr)&t, (intptr)old )==(intptr)old ) 
             return;
     }
     deallocate_task(t);
-    if( __TBB_FetchAndDecrementWrelease( &s.small_task_count )==1 ) {
+    if ( __TBB_FetchAndDecrementWrelease( &s.small_task_count )==1 ) {
         // We freed the last task allocated by scheduler s, so it's our responsibility
         // to free the scheduler.
         NFS_Free( &s );
@@ -1801,17 +1801,17 @@ class CustomScheduler: private GenericScheduler {
 
     static bool tally_completion_of_one_predecessor( task& s ) {
         task_prefix& p = s.prefix();
-        if( SchedulerTraits::itt_possible )
+        if ( SchedulerTraits::itt_possible )
             ITT_NOTIFY(sync_releasing, &p.ref_count);
-        if( SchedulerTraits::has_slow_atomic && p.ref_count==1 ) {
+        if ( SchedulerTraits::has_slow_atomic && p.ref_count==1 ) {
             p.ref_count=0;
         } else {
             reference_count k = __TBB_FetchAndDecrementWrelease(&p.ref_count);
             __TBB_ASSERT( k>0, "completion of task caused parent's reference count to underflow" );
-            if( k!=1 ) 
+            if ( k!=1 ) 
                 return false;
         }
-        if( SchedulerTraits::itt_possible )
+        if ( SchedulerTraits::itt_possible )
             ITT_NOTIFY(sync_acquired, &p.ref_count);
         return true;
     }
@@ -1894,15 +1894,15 @@ inline void Arena::mark_pool_full() {
     // on every task pool release, even when stealing does not occur.  Since TBB allows parallelism, 
     // but never promises parallelism, the missed wakeup is not a correctness problem.
     pool_state_t snapshot = prefix().pool_state;
-    if( is_busy_or_empty(snapshot) ) {
+    if ( is_busy_or_empty(snapshot) ) {
         // Attempt to mark as full.  The compare_and_swap below is a little unusual because the 
         // result is compared to a value that can be different than the comparand argument.
-        if( prefix().pool_state.compare_and_swap( SNAPSHOT_FULL, snapshot )==SNAPSHOT_EMPTY ) {
-            if( snapshot!=SNAPSHOT_EMPTY ) {
+        if ( prefix().pool_state.compare_and_swap( SNAPSHOT_FULL, snapshot )==SNAPSHOT_EMPTY ) {
+            if ( snapshot!=SNAPSHOT_EMPTY ) {
                 // This thread initialized s1 to "busy" and then another thread transitioned 
                 // pool_state to "empty" in the meantime, which caused the compare_and_swap above 
                 // to fail.  Attempt to transition pool_state from "empty" to "full".
-                if( prefix().pool_state.compare_and_swap( SNAPSHOT_FULL, SNAPSHOT_EMPTY )!=SNAPSHOT_EMPTY ) {
+                if ( prefix().pool_state.compare_and_swap( SNAPSHOT_FULL, SNAPSHOT_EMPTY )!=SNAPSHOT_EMPTY ) {
                     // Some other thread transitioned pool_state from "empty", and hence became
                     // responsible for waking up workers.
                     return;
@@ -1927,17 +1927,17 @@ bool Arena::check_if_pool_is_empty()
                 // Use unique id for "busy" in order to avoid ABA problems.
                 const pool_state_t busy = pool_state_t(this);
                 // Request permission to take snapshot
-                if( prefix().pool_state.compare_and_swap( busy, SNAPSHOT_FULL )==SNAPSHOT_FULL ) {
+                if ( prefix().pool_state.compare_and_swap( busy, SNAPSHOT_FULL )==SNAPSHOT_FULL ) {
                     // Got permission.  Take the snapshot.
                     size_t n = prefix().limit;
                     size_t k; 
                     for( k=0; k<n; ++k ) 
-                        if( slot[k].task_pool != EmptyTaskPool && slot[k].head < slot[k].tail )
+                        if ( slot[k].task_pool != EmptyTaskPool && slot[k].head < slot[k].tail )
                             break;
                     // Test and test-and-set.
-                    if( prefix().pool_state==busy ) {
-                        if( k>=n ) {
-                            if( prefix().pool_state.compare_and_swap( SNAPSHOT_EMPTY, busy )==busy ) {
+                    if ( prefix().pool_state==busy ) {
+                        if ( k>=n ) {
+                            if ( prefix().pool_state.compare_and_swap( SNAPSHOT_EMPTY, busy )==busy ) {
                                 // This thread transitioned pool to empty state, and thus is responsible for
                                 // telling RML that there is no other work to do.
                                 prefix().server->adjust_job_count_estimate( -int(prefix().number_of_workers) );
@@ -1961,10 +1961,10 @@ bool Arena::check_if_pool_is_empty()
 void Arena::terminate_workers() {
     for(;;) {
         pool_state_t snapshot = prefix().pool_state;
-        if( snapshot==SNAPSHOT_SERVER_GOING_AWAY ) 
+        if ( snapshot==SNAPSHOT_SERVER_GOING_AWAY ) 
             break;
-        if( prefix().pool_state.compare_and_swap( SNAPSHOT_SERVER_GOING_AWAY, snapshot )==snapshot ) {
-            if( snapshot!=SNAPSHOT_EMPTY )
+        if ( prefix().pool_state.compare_and_swap( SNAPSHOT_SERVER_GOING_AWAY, snapshot )==snapshot ) {
+            if ( snapshot!=SNAPSHOT_EMPTY )
                 prefix().server->adjust_job_count_estimate( -int(prefix().number_of_workers) );
             break;
         }
@@ -1978,7 +1978,7 @@ intptr Arena::workers_task_node_count() {
     intptr result = 0;
     for( unsigned i=0; i<prefix().number_of_workers; ++i ) {
         GenericScheduler* s = prefix().worker_list[i].scheduler;
-        if( s )
+        if ( s )
             result += s->task_node_count;
     }
     return result;
@@ -2164,7 +2164,7 @@ void GenericScheduler::init_stack_info () {
     size_t  np_stack_size = 0;
     void    *stack_limit = NULL;
     pthread_attr_t  attr_stack, np_attr_stack;
-    if( 0 == pthread_getattr_np(pthread_self(), &np_attr_stack) ) {
+    if ( 0 == pthread_getattr_np(pthread_self(), &np_attr_stack) ) {
         if ( 0 == pthread_attr_getstack(&np_attr_stack, &stack_limit, &np_stack_size) ) {
             if ( 0 == pthread_attr_init(&attr_stack) ) {
                 if ( 0 == pthread_attr_getstacksize(&attr_stack, &stack_size) )
@@ -2245,7 +2245,7 @@ GenericScheduler* GenericScheduler::allocate_scheduler( Arena* arena ) {
 }
 
 void GenericScheduler::free_scheduler() {
-    if( in_arena() ) {
+    if ( in_arena() ) {
         acquire_task_pool();
         leave_arena();
     }
@@ -2273,7 +2273,7 @@ void GenericScheduler::free_scheduler() {
             deallocate_task(*t);
             ++k;
         }
-        if( return_list==plugged_return_list() ) 
+        if ( return_list==plugged_return_list() ) 
             break;
         free_list = (task*)__TBB_FetchAndStoreW( &return_list, (intptr)plugged_return_list() );
     }
@@ -2290,7 +2290,7 @@ void GenericScheduler::free_scheduler() {
     // Update small_task_count last.  Doing so sooner might cause another thread to free *this.
     __TBB_ASSERT( small_task_count>=k, "small_task_count corrupted" );
     Governor::sign_off(this);
-    if( __TBB_FetchAndAddW( &small_task_count, -k )==k ) 
+    if ( __TBB_FetchAndAddW( &small_task_count, -k )==k ) 
         NFS_Free( this );
 }
 
@@ -2312,7 +2312,7 @@ inline void GenericScheduler::acquire_task_pool() const {
         task** tp = arena_slot->task_pool;
         __TBB_ASSERT( tp == LockedTaskPool || tp == dummy_slot.task_pool, "slot ownership corrupt?" );
 #endif
-        if( arena_slot->task_pool != LockedTaskPool && 
+        if ( arena_slot->task_pool != LockedTaskPool && 
             __TBB_CompareAndSwapW( &arena_slot->task_pool, (intptr_t)LockedTaskPool, 
                                    (intptr_t)dummy_slot.task_pool ) == (intptr_t)dummy_slot.task_pool )
         {
@@ -2320,7 +2320,7 @@ inline void GenericScheduler::acquire_task_pool() const {
             ITT_NOTIFY(sync_acquired, arena_slot);
             break;
         } 
-        else if( !sync_prepare_done ) {
+        else if ( !sync_prepare_done ) {
             // Start waiting
             ITT_NOTIFY(sync_prepare, arena_slot);
             sync_prepare_done = true;
@@ -2360,11 +2360,11 @@ inline task** GenericScheduler::lock_task_pool( ArenaSlot* victim_arena_slot ) c
         //       When doing this update assertion in the end of the method.
         if ( victim_task_pool == EmptyTaskPool ) {
             // The victim thread emptied its task pool - nothing to lock
-            if( sync_prepare_done )
+            if ( sync_prepare_done )
                 ITT_NOTIFY(sync_cancel, victim_arena_slot);
             break;
         }
-        if( victim_task_pool != LockedTaskPool && 
+        if ( victim_task_pool != LockedTaskPool && 
             __TBB_CompareAndSwapW( &victim_arena_slot->task_pool, 
                 (intptr_t)LockedTaskPool, (intptr_t)victim_task_pool ) == (intptr_t)victim_task_pool )
         {
@@ -2372,7 +2372,7 @@ inline task** GenericScheduler::lock_task_pool( ArenaSlot* victim_arena_slot ) c
             ITT_NOTIFY(sync_acquired, victim_arena_slot);
             break;
         }
-        else if( !sync_prepare_done ) {
+        else if ( !sync_prepare_done ) {
             // Start waiting
             ITT_NOTIFY(sync_prepare, victim_arena_slot);
             sync_prepare_done = true;
@@ -2400,7 +2400,7 @@ inline task* GenericScheduler::prepare_for_spawning( task* t ) {
     t->prefix().owner = this;
     t->prefix().state = task::ready;
 #if TBB_USE_ASSERT
-    if( task* parent = t->parent() ) {
+    if ( task* parent = t->parent() ) {
         internal::reference_count ref_count = parent->prefix().ref_count;
         __TBB_ASSERT( ref_count>=0, "attempt to spawn task whose parent has a ref_count<0" );
         __TBB_ASSERT( ref_count!=0, "attempt to spawn task whose parent has a ref_count==0 (forgot to set_ref_count?)" );
@@ -2409,7 +2409,7 @@ inline task* GenericScheduler::prepare_for_spawning( task* t ) {
 #endif /* TBB_USE_ASSERT */
     affinity_id dst_thread = t->prefix().affinity;
     __TBB_ASSERT( dst_thread == 0 || is_version_3_task(*t), "backwards compatibility to TBB 2.0 tasks is broken" );
-    if( dst_thread != 0 && dst_thread != my_affinity_id ) {
+    if ( dst_thread != 0 && dst_thread != my_affinity_id ) {
         task_proxy& proxy = (task_proxy&)allocate_task( sizeof(task_proxy), 
                                                       __TBB_CONTEXT_ARG(NULL, NULL) );
         // Mark as a proxy
@@ -2465,7 +2465,7 @@ void GenericScheduler::local_spawn( task& first, task*& next ) {
             bool end = &t->prefix().next == &next;
             t_next = t->prefix().next;
             tasks.push_back( prepare_for_spawning(t) );
-            if( end )
+            if ( end )
                 break;
         }
         size_t num_tasks = tasks.size();
@@ -2519,14 +2519,14 @@ void GenericScheduler::local_spawn_root_and_wait( task& first, task*& next ) {
         ++n;
         __TBB_ASSERT( !t->prefix().parent, "not a root task, or already running" );
         t->prefix().parent = &dummy;
-        if( &t->prefix().next==&next ) break;
+        if ( &t->prefix().next==&next ) break;
 #if __TBB_EXCEPTIONS
         __TBB_ASSERT( t->prefix().context == t->prefix().next->prefix().context, 
                     "all the root tasks in list must share the same context");
 #endif /* __TBB_EXCEPTIONS */
     }
     dummy.prefix().ref_count = n+1;
-    if( n>1 )
+    if ( n>1 )
         LocalSpawn( *first.prefix().next, next );
     TBB_TRACE(("spawn_root_and_wait((task_list*)%p): calling %p.loop\n",&first,this));
     wait_for_all( dummy, &first );
@@ -2539,7 +2539,7 @@ inline task* GenericScheduler::get_mailbox_task() {
     while( task_proxy* t = inbox.pop() ) {
         intptr tat = __TBB_load_with_acquire(t->task_and_tag);
         __TBB_ASSERT( tat==task_proxy::mailbox_bit || (tat==(tat|3)&&tat!=3), NULL );
-        if( tat!=task_proxy::mailbox_bit && __TBB_CompareAndSwapW( &t->task_and_tag, task_proxy::pool_bit, tat )==tat ) {
+        if ( tat!=task_proxy::mailbox_bit && __TBB_CompareAndSwapW( &t->task_and_tag, task_proxy::pool_bit, tat )==tat ) {
             // Successfully grabbed the task, and left pool seeker with job of freeing the proxy.
             ITT_NOTIFY( sync_acquired, inbox.outbox() );
             result = (task*)(tat & ~3);
@@ -2554,10 +2554,10 @@ inline task* GenericScheduler::get_mailbox_task() {
 inline task* GenericScheduler::strip_proxy( task_proxy* tp ) {
     __TBB_ASSERT( tp->prefix().extra_state==es_task_proxy, NULL );
     intptr tat = __TBB_load_with_acquire(tp->task_and_tag);
-    if( (tat&3)==3 ) {
+    if ( (tat&3)==3 ) {
         // proxy is shared by a pool and a mailbox.
         // Attempt to transition it to "empty proxy in mailbox" state.
-        if( __TBB_CompareAndSwapW( &tp->task_and_tag, task_proxy::mailbox_bit, tat )==tat ) {
+        if ( __TBB_CompareAndSwapW( &tp->task_and_tag, task_proxy::mailbox_bit, tat )==tat ) {
             // Successfully grabbed the task, and left the mailbox with the job of freeing the proxy.
             return (task*)(tat&~3);
         }
@@ -2606,9 +2606,9 @@ retry:
         result = dummy_slot.task_pool[arena_slot->tail];
         __TBB_POISON_TASK_PTR( dummy_slot.task_pool[arena_slot->tail] );
     }
-    if( result && is_proxy(*result) ) {
+    if ( result && is_proxy(*result) ) {
         result = strip_proxy((task_proxy*)result);
-        if( !result ) {
+        if ( !result ) {
             goto retry;
         }
         GATHER_STATISTIC( ++proxy_execute_count );
@@ -2637,10 +2637,10 @@ retry:
     else {
         __TBB_ASSERT_VALID_TASK_PTR( victim_pool[victim_slot.head - 1]);
         result = victim_pool[victim_slot.head - 1];
-        if( is_proxy(*result) ) {
+        if ( is_proxy(*result) ) {
             task_proxy& tp = *static_cast<task_proxy*>(result);
             // If task will likely be grabbed by whom it was mailed to, skip it.
-            if( (tp.task_and_tag & 3) == 3 && tp.outbox->recipient_is_idle() ) {
+            if ( (tp.task_and_tag & 3) == 3 && tp.outbox->recipient_is_idle() ) {
                 if ( first_skipped_proxy == none )
                     first_skipped_proxy = victim_slot.head - 1;
                 result = NULL;
@@ -2696,14 +2696,14 @@ retry:
 template<typename SchedulerTraits>
 void CustomScheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* child ) {
     __TBB_ASSERT( Governor::is_set(this), NULL );
-    if( child ) {
+    if ( child ) {
         child->prefix().owner = this;
     }
     __TBB_ASSERT( parent.ref_count() >= (child && child->parent() == &parent ? 2 : 1), "ref_count is too small" );
     __TBB_ASSERT( assert_okay(), NULL );
     // Using parent's refcount in sync_prepare (in the stealing loop below) is 
     // a workaround for TP. We need to name it here to display correctly in Ampl.
-    if( SchedulerTraits::itt_possible )
+    if ( SchedulerTraits::itt_possible )
         ITT_SYNC_CREATE(&parent.prefix().ref_count, SyncType_Scheduler, SyncObj_TaskStealingLoop);
 #if __TBB_EXCEPTIONS
     __TBB_ASSERT( parent.prefix().context || (is_worker() && &parent == dummy_task), "parent task does not have context" );
@@ -2721,7 +2721,7 @@ void CustomScheduler<SchedulerTraits>::local_wait_for_all( task& parent, task* c
         // For termination dispatch loops in masters
         all_local_work_done = all_work_done + 1;
     reference_count quit_point;
-    if( innermost_running_task == dummy_task ) {
+    if ( innermost_running_task == dummy_task ) {
         // We are in the outermost task dispatch loop of a master thread,
         __TBB_ASSERT( !is_worker(), NULL );
         quit_point = &parent == dummy_task ? all_local_work_done : all_work_done;
@@ -2767,7 +2767,7 @@ exception_was_caught:
                     }
 #endif
                 }
-                if( t_next ) {
+                if ( t_next ) {
                     __TBB_ASSERT( t_next->state()==task::allocated,
                                 "if task::execute() returns task, it must be marked as allocated" );
                     // The store here has a subtle secondary effect - it fetches *t_next into cache.
@@ -2782,14 +2782,14 @@ exception_was_caught:
                         __TBB_ASSERT( innermost_running_task==t, NULL );
                         __TBB_ASSERT( t->prefix().ref_count==0, "Task still has children after it has been executed" );
                         t->~task();
-                        if( s ) {
-                            if( tally_completion_of_one_predecessor(*s) ) {
+                        if ( s ) {
+                            if ( tally_completion_of_one_predecessor(*s) ) {
 #if TBB_USE_ASSERT
                                 s->prefix().extra_state &= ~es_ref_count_active;
 #endif /* TBB_USE_ASSERT */
                                 s->prefix().owner = this;
 
-                                if( !t_next ) {
+                                if ( !t_next ) {
                                     t_next = s;
                                 } else {
                                     LocalSpawn( *s, s->prefix().next );
@@ -2807,13 +2807,13 @@ exception_was_caught:
                         // the block was copied from above case task::executing, and changed.
                         // Use "s" here as name for t, so that code resembles case task::executing more closely.
                         task* const& s = t;
-                        if( tally_completion_of_one_predecessor(*s) ) {
+                        if ( tally_completion_of_one_predecessor(*s) ) {
                             // Unused load is put here for sake of inserting an "acquire" fence.
 #if TBB_USE_ASSERT
                             s->prefix().extra_state &= ~es_ref_count_active;
                             __TBB_ASSERT( s->prefix().owner==this, "ownership corrupt?" );
 #endif /* TBB_USE_ASSERT */
-                            if( !t_next ) {
+                            if ( !t_next ) {
                                 t_next = s;
                             } else {
                                 LocalSpawn( *s, s->prefix().next );
@@ -2862,7 +2862,7 @@ exception_was_caught:
             __TBB_ASSERT(!t || !is_proxy(*t),"unexpected proxy");
 #if TBB_USE_ASSERT
             __TBB_ASSERT(assert_okay(),NULL);
-            if(t) {
+            if (t) {
                 AssertOkay(*t);
                 __TBB_ASSERT( t->prefix().owner==this, "thread got task that it does not own" );
             }
@@ -2879,9 +2879,9 @@ exception_was_caught:
         // The state "failure_count==-1" is used only when itt_possible is true,
         // and denotes that a sync_prepare has not yet been issued.
         for( int failure_count = -static_cast<int>(SchedulerTraits::itt_possible);; ++failure_count) {
-            if( parent.prefix().ref_count==1 ) {
-                if( SchedulerTraits::itt_possible ) {
-                    if( failure_count!=-1 ) {
+            if ( parent.prefix().ref_count==1 ) {
+                if ( SchedulerTraits::itt_possible ) {
+                    if ( failure_count!=-1 ) {
                         ITT_NOTIFY(sync_prepare, &parent.prefix().ref_count);
                         // Notify Intel(R) Thread Profiler that thread has stopped spinning.
                         ITT_NOTIFY(sync_acquired, this);
@@ -2893,8 +2893,8 @@ exception_was_caught:
             }
             // Try to steal a task from a random victim.
             size_t n = arena->prefix().limit;
-            if( n>1 ) {
-                if( !my_affinity_id || !(t=get_mailbox_task()) ) {
+            if ( n>1 ) {
+                if ( !my_affinity_id || !(t=get_mailbox_task()) ) {
                     if ( !can_steal() )
                         goto fail;
                     size_t k = random.get() % (n-1);
@@ -2904,17 +2904,17 @@ exception_was_caught:
                     // of potential victims. But since such a situation can take 
                     // place only in case of significant oversubscription, keeping
                     // the checks simple seems to be preferable to complicating the code.
-                    if( k >= arena_index )
+                    if ( k >= arena_index )
                         ++victim;               // Adjusts random distribution to exclude self
                     t = steal_task( *victim );
-                    if( !t ) goto fail;
-                    if( is_proxy(*t) ) {
+                    if ( !t ) goto fail;
+                    if ( is_proxy(*t) ) {
                         t = strip_proxy((task_proxy*)t);
-                        if( !t ) goto fail;
+                        if ( !t ) goto fail;
                         GATHER_STATISTIC( ++proxy_steal_count );
                     }
                     GATHER_STATISTIC( ++steal_count );
-                    if( is_version_3_task(*t) ) {
+                    if ( is_version_3_task(*t) ) {
                         innermost_running_task = t;
                         t->note_affinity( my_affinity_id );
                     }
@@ -2924,13 +2924,13 @@ exception_was_caught:
                 __TBB_ASSERT(t,NULL);
 #if __TBB_SCHEDULER_OBSERVER
                 // No memory fence required for read of global_last_observer_proxy, because prior fence on steal/mailbox suffices.
-                if( local_last_observer_proxy!=global_last_observer_proxy ) {
+                if ( local_last_observer_proxy!=global_last_observer_proxy ) {
                     notify_entry_observers();
                 }
 #endif /* __TBB_SCHEDULER_OBSERVER */
                 {
-                    if( SchedulerTraits::itt_possible ) {
-                        if( failure_count!=-1 ) {
+                    if ( SchedulerTraits::itt_possible ) {
+                        if ( failure_count!=-1 ) {
                             // FIXME - might be victim, or might be selected from a mailbox
                             // Notify Intel(R) Thread Profiler that thread has stopped spinning.
                             ITT_NOTIFY(sync_acquired, this);
@@ -2943,7 +2943,7 @@ exception_was_caught:
                 }
             }
 fail:
-            if( SchedulerTraits::itt_possible && failure_count==-1 ) {
+            if ( SchedulerTraits::itt_possible && failure_count==-1 ) {
                 // The first attempt to steal work failed, so notify Intel(R) Thread Profiler that
                 // the thread has started spinning.  Ideally, we would do this notification
                 // *before* the first failed attempt to steal, but at that point we do not
@@ -2954,10 +2954,10 @@ fail:
             // Pause, even if we are going to yield, because the yield might return immediately.
             __TBB_Pause(PauseTime);
             int yield_threshold = 2*int(n);
-            if( failure_count>=yield_threshold ) {
+            if ( failure_count>=yield_threshold ) {
                 __TBB_Yield();
-                if( failure_count>=yield_threshold+100 ) {
-                    if( !old_innermost_running_task && arena->check_if_pool_is_empty() ) {
+                if ( failure_count>=yield_threshold+100 ) {
+                    if ( !old_innermost_running_task && arena->check_if_pool_is_empty() ) {
                         // Current thread was created by RML and has nothing to do, so return it to the RML.
                         // For purposes of affinity support, the thread is considered idle while it is in RML.
                         // Restore innermost_running_task to its original value.
@@ -2975,13 +2975,13 @@ fail:
 #if __TBB_EXCEPTIONS
     } TbbCatchAll( t->prefix().context );
 
-    if( task::state_type(t->prefix().state) == task::recycle ) { // state set by recycle_as_safe_continuation()
+    if ( task::state_type(t->prefix().state) == task::recycle ) { // state set by recycle_as_safe_continuation()
         t->prefix().state = task::allocated;
         // for safe continuation, need to atomically decrement ref_count;
-        if( SchedulerTraits::itt_possible )
+        if ( SchedulerTraits::itt_possible )
             ITT_NOTIFY(sync_releasing, &t->prefix().ref_count);
-        if( __TBB_FetchAndDecrementWrelease(&t->prefix().ref_count)==1 ) {
-            if( SchedulerTraits::itt_possible )
+        if ( __TBB_FetchAndDecrementWrelease(&t->prefix().ref_count)==1 ) {
+            if ( SchedulerTraits::itt_possible )
                 ITT_NOTIFY(sync_acquired, &t->prefix().ref_count);
         }else{
             t = NULL;
@@ -3053,7 +3053,7 @@ void GenericScheduler::try_enter_arena() {
 
     size_t h = arena_index;
     // We do not lock task pool upon successful entering arena
-    if( arena->slot[h].task_pool != EmptyTaskPool || 
+    if ( arena->slot[h].task_pool != EmptyTaskPool || 
         __TBB_CompareAndSwapW( &arena->slot[h].task_pool, (intptr_t)LockedTaskPool, 
                                                           (intptr_t)EmptyTaskPool ) != (intptr_t)EmptyTaskPool )
     {
@@ -3065,10 +3065,10 @@ void GenericScheduler::try_enter_arena() {
         size_t max_attempts = last - first;
         for (;;) {
             size_t k = first + random.get() % n;
-            if( k >= h )
+            if ( k >= h )
                 ++k;    // Adjusts random distribution to exclude previously tried slot
             h = k;
-            if( arena->slot[h].task_pool == EmptyTaskPool && 
+            if ( arena->slot[h].task_pool == EmptyTaskPool && 
                 __TBB_CompareAndSwapW( &arena->slot[h].task_pool, (intptr_t)LockedTaskPool, 
                                                                   (intptr_t)EmptyTaskPool ) == (intptr_t)EmptyTaskPool )
             {
@@ -3228,9 +3228,9 @@ void UnpaddedArenaPrefix::cleanup( job& j ) {
 void UnpaddedArenaPrefix::open_connection_to_rml() {
     __TBB_ASSERT( !server, NULL );
     __TBB_ASSERT( stack_size>0, NULL );
-    if( !use_private_rml ) {
+    if ( !use_private_rml ) {
         ::rml::factory::status_type status = rml_server_factory.make_server( server, *this );
-        if( status==::rml::factory::st_success ) {
+        if ( status==::rml::factory::st_success ) {
             __TBB_ASSERT( server, NULL );
             return;
         }
@@ -3394,14 +3394,14 @@ size_t get_initial_auto_partitioner_divisor() {
 void affinity_partitioner_base_v3::resize( unsigned factor ) {
     // Check factor to avoid asking for number of workers while there might be no arena.
     size_t new_size = factor ? factor*(Governor::number_of_workers_in_arena()+1) : 0;
-    if( new_size!=my_size ) {
-        if( my_array ) {
+    if ( new_size!=my_size ) {
+        if ( my_array ) {
             NFS_Free( my_array );
             // Following two assignments must be done here for sake of exception safety.
             my_array = NULL;
             my_size = 0;
         } 
-        if( new_size ) {
+        if ( new_size ) {
             my_array = static_cast<affinity_id*>(NFS_Allocate(new_size,sizeof(affinity_id), NULL ));
             memset( my_array, 0, sizeof(affinity_id)*new_size );
             my_size = new_size;
@@ -3635,7 +3635,7 @@ internal::reference_count task::internal_decrement_ref_count() {
     ITT_NOTIFY( sync_releasing, &prefix().ref_count );
     internal::reference_count k = __TBB_FetchAndDecrementWrelease( &prefix().ref_count );
     __TBB_ASSERT( k>=1, "task's reference count underflowed" );
-    if( k==1 )
+    if ( k==1 )
         ITT_NOTIFY( sync_acquired, &prefix().ref_count );
     return k-1;
 }
@@ -3656,7 +3656,7 @@ void task::destroy( task& victim ) {
     __TBB_ASSERT( victim.state()==task::allocated, "illegal state for victim task" );
     task* parent = victim.parent();
     victim.~task();
-    if( parent ) {
+    if ( parent ) {
         __TBB_ASSERT( parent->state()==task::allocated, "attempt to destroy child of running or corrupted parent?" );
         parent->internal_decrement_ref_count();
     }
@@ -3666,8 +3666,8 @@ void task::destroy( task& victim ) {
 void task::spawn_and_wait_for_all( task_list& list ) {
     scheduler* s = Governor::local_scheduler();
     task* t = list.first;
-    if( t ) {
-        if( &t->prefix().next!=list.next_ptr )
+    if ( t ) {
+        if ( &t->prefix().next!=list.next_ptr )
             s->spawn( *t->prefix().next, *list.next_ptr );
         list.clear();
     }
@@ -3690,7 +3690,7 @@ void task_scheduler_init::initialize( int number_of_threads ) {
 }
 
 void task_scheduler_init::initialize( int number_of_threads, stack_size_type thread_stack_size ) {
-    if( number_of_threads!=deferred ) {
+    if ( number_of_threads!=deferred ) {
         __TBB_ASSERT( !my_scheduler, "task_scheduler_init already initialized" );
         __TBB_ASSERT( number_of_threads==-1 || number_of_threads>=1,
                     "number_of_threads for task_scheduler_init must be -1 or positive" );
@@ -3710,7 +3710,7 @@ void task_scheduler_init::terminate() {
 int task_scheduler_init::default_num_threads() {
     // No memory fence required, because at worst each invoking thread calls NumberOfHardwareThreads.
     int n = DefaultNumberOfThreads;
-    if( !n ) {
+    if ( !n ) {
         DefaultNumberOfThreads = n = DetectNumberOfWorkers();
     }
     return n;
@@ -3727,7 +3727,7 @@ static atomic<int> observer_proxy_count;
 
 struct check_observer_proxy_count {
     ~check_observer_proxy_count() {
-        if( observer_proxy_count!=0 ) {
+        if ( observer_proxy_count!=0 ) {
             fprintf(stderr,"warning: leaked %ld observer_proxy objects\n", long(observer_proxy_count));
         }
     }
@@ -3747,7 +3747,7 @@ observer_proxy::observer_proxy( task_scheduler_observer_v3& tso ) : next(NULL), 
         task_scheduler_observer_mutex_scoped_lock lock(the_task_scheduler_observer_mutex.begin()[0],/*is_writer=*/true);
         observer_proxy* p = global_last_observer_proxy;
         prev = p;
-        if( p ) 
+        if ( p ) 
             p->next=this;
         else 
             global_first_observer_proxy = this;
@@ -3757,11 +3757,11 @@ observer_proxy::observer_proxy( task_scheduler_observer_v3& tso ) : next(NULL), 
 
 void observer_proxy::remove_from_list() {
     // Take myself off the global list.  
-    if( next ) 
+    if ( next ) 
         next->prev = prev;
     else 
         global_last_observer_proxy = prev;
-    if( prev )
+    if ( prev )
         prev->next = next;
     else 
         global_first_observer_proxy = next;
@@ -3777,7 +3777,7 @@ void observer_proxy::remove_ref_slow() {
     while(r>1) {
         __TBB_ASSERT( r!=0, NULL );
         int r_old = gc_ref_count.compare_and_swap(r-1,r);
-        if( r_old==r ) {
+        if ( r_old==r ) {
             // Successfully decremented count.
             return;
         } 
@@ -3788,11 +3788,11 @@ void observer_proxy::remove_ref_slow() {
     {
         task_scheduler_observer_mutex_scoped_lock lock(the_task_scheduler_observer_mutex.begin()[0],/*is_writer=*/true);
         r = --gc_ref_count;
-        if( !r ) {
+        if ( !r ) {
             remove_from_list();
         } 
     }
-    if( !r ) {
+    if ( !r ) {
         __TBB_ASSERT( gc_ref_count == -666, NULL );
 #if TBB_USE_ASSERT
         --observer_proxy_count;
@@ -3811,7 +3811,7 @@ observer_proxy* observer_proxy::process_list( observer_proxy* local_last, bool i
         { 
             task_scheduler_observer_mutex_scoped_lock lock(the_task_scheduler_observer_mutex.begin()[0],/*is_writer=*/false);
             do {
-                if( local_last && local_last->observer ) {
+                if ( local_last && local_last->observer ) {
                     // 2 = 1 for observer and 1 for local_last
                     __TBB_ASSERT( local_last->gc_ref_count>=2, NULL );  
                     // Can decrement count quickly, because it cannot become zero here.
@@ -3820,14 +3820,14 @@ observer_proxy* observer_proxy::process_list( observer_proxy* local_last, bool i
                 } else {
                     // Use slow form of decrementing the reference count, after lock is released.
                 }  
-                if( p ) {
+                if ( p ) {
                     // We were already processing the list.
-                    if( observer_proxy* q = p->next ) {
+                    if ( observer_proxy* q = p->next ) {
                         // Step to next item in list.
                         p=q;
                     } else {
                         // At end of list.
-                        if( is_entry ) {  
+                        if ( is_entry ) {  
                             // Remember current position in the list, so we can start at on the next call.
                             ++p->gc_ref_count;
                         } else {
@@ -3839,7 +3839,7 @@ observer_proxy* observer_proxy::process_list( observer_proxy* local_last, bool i
                 } else {
                     // Starting pass through the list
                     p = global_first_observer_proxy;
-                    if( !p ) 
+                    if ( !p ) 
                         goto done;
                 } 
                 tso = p->observer;
@@ -3848,11 +3848,11 @@ observer_proxy* observer_proxy::process_list( observer_proxy* local_last, bool i
             ++tso->my_busy_count;
         }
         __TBB_ASSERT( !local_last || p!=local_last, NULL );
-        if( local_last )
+        if ( local_last )
             local_last->remove_ref_slow();
         // Do not hold any locks on the list while calling user's code.
         try {    
-            if( is_entry )
+            if ( is_entry )
                 tso->on_scheduler_entry( is_worker );
             else
                 tso->on_scheduler_exit( is_worker );
@@ -3869,27 +3869,27 @@ observer_proxy* observer_proxy::process_list( observer_proxy* local_last, bool i
     }
 done:
     // Return new value to be used as local_last next time.
-    if( local_last )
+    if ( local_last )
         local_last->remove_ref_slow();
     __TBB_ASSERT( !p || is_entry, NULL );
     return p;
 }
 
 void task_scheduler_observer_v3::observe( bool state ) {
-    if( state ) {
-        if( !my_proxy ) {
-            if( !__TBB_InitOnce::initialization_done() )
+    if ( state ) {
+        if ( !my_proxy ) {
+            if ( !__TBB_InitOnce::initialization_done() )
                 DoOneTimeInitializations();
             my_busy_count = 0;
             my_proxy = new observer_proxy(*this);
-            if( GenericScheduler* s = Governor::local_scheduler() ) {
+            if ( GenericScheduler* s = Governor::local_scheduler() ) {
                 // Notify newly created observer of its own thread.
                 // Any other pending observers are notified too.
                 s->notify_entry_observers();
             }
         } 
     } else {
-        if( observer_proxy* proxy = my_proxy ) {
+        if ( observer_proxy* proxy = my_proxy ) {
             my_proxy = NULL;
             __TBB_ASSERT( proxy->gc_ref_count>=1, "reference for observer missing" );
             {

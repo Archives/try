@@ -552,13 +552,13 @@ void Guild::BroadcastToGuild(WorldSession *session, const std::string& msg, uint
             if (pl && pl->GetSession() && HasRankRight(pl->GetRank(),GR_RIGHT_GCHATLISTEN) && !pl->GetSocial()->HasIgnore(session->GetPlayer()->GetGUIDLow()) )
                 pl->GetSession()->SendPacket(&data);
         }
-        if(m_friendlyGuildId && !m_friendlyGuild)
+        if (m_friendlyGuildId && !m_friendlyGuild)
         {
             m_friendlyGuild = sObjectMgr.GetGuildById(m_friendlyGuildId);
-            if(!m_friendlyGuild)
+            if (!m_friendlyGuild)
                 DeleteFriendlyGuildId();
         }
-        if(m_friendlyGuild)
+        if (m_friendlyGuild)
         {
             for(MemberList::const_iterator itr = m_friendlyGuild->GetMembers()->begin(); itr != m_friendlyGuild->GetMembers()->end(); ++itr)
             {
@@ -1715,7 +1715,7 @@ void Guild::AppendDisplayGuildBankSlot( WorldPacket& data, GuildBankTab const *t
         data << uint8(enchCount);                           // number of enchantments
         for(uint32 i = PERM_ENCHANTMENT_SLOT; i < MAX_ENCHANTMENT_SLOT; ++i)
         {
-            if(uint32 enchId = pItem->GetEnchantmentId(EnchantmentSlot(i)))
+            if (uint32 enchId = pItem->GetEnchantmentId(EnchantmentSlot(i)))
             {
                 data << uint8(i);
                 data << uint32(enchId);
@@ -2424,7 +2424,7 @@ void Guild::BroadcastEvent(GuildEvents event, uint64 guid, uint8 strCount, std::
             break;
     }
 
-    if(guid)
+    if (guid)
         data << uint64(guid);
 
     BroadcastPacket(&data);

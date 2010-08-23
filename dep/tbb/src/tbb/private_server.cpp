@@ -156,7 +156,7 @@ class private_server: public tbb_server, no_copy {
     virtual ~private_server();
     
     void remove_server_ref() {
-        if( --my_ref_count==0 ) {
+        if ( --my_ref_count==0 ) {
             my_client.acknowledge_close_connection();
             this->~private_server();
             tbb::cache_aligned_allocator<private_server>().deallocate( this, 1 );
@@ -211,7 +211,7 @@ void private_worker::start_shutdown() {
         s = my_state;
         __TBB_ASSERT( s==st_init||s==st_normal, NULL );
     } while( my_state.compare_and_swap( s==st_init? st_plugged : st_quit, s )!=s );
-    if( s==st_normal ) {
+    if ( s==st_normal ) {
         // May have invalidated invariant for sleeping, so wake up the thread.
         // Note that the notify() here occurs without maintaining invariants for my_slack.
         // It does not matter, because my_state==st_quit overrides checking of my_slack.
@@ -220,21 +220,21 @@ void private_worker::start_shutdown() {
 }
 
 void private_worker::run() {
-    if( my_state.compare_and_swap( st_normal, st_init )==st_init ) {
+    if ( my_state.compare_and_swap( st_normal, st_init )==st_init ) {
         ::rml::job& j = *my_client.create_one_job();
         --my_server.my_slack;
         while( my_state==st_normal ) {
-            if( my_server.my_slack>=0 ) {
+            if ( my_server.my_slack>=0 ) {
                 my_client.process(j);
             } else {
                 thread_monitor::cookie c;
                 // Prepare to wait
                 my_thread_monitor.prepare_wait(c);
                 // Check/set the invariant for sleeping
-                if( my_state==st_normal && my_server.try_insert_in_asleep_list(*this) ) {
+                if ( my_state==st_normal && my_server.try_insert_in_asleep_list(*this) ) {
                     my_thread_monitor.commit_wait(c);
                     // Propagate chain reaction
-                    if( my_server.has_sleepers() )
+                    if ( my_server.has_sleepers() )
                         my_server.wake_some(0);
                 } else {
                     // Invariant broken
@@ -285,7 +285,7 @@ inline bool private_server::try_insert_in_asleep_list( private_worker& t ) {
     // Contribute to slack under lock so that if another takes that unit of slack,
     // it sees us sleeping on the list and wakes us up.
     int k = ++my_slack;
-    if( k<=0 ) {
+    if ( k<=0 ) {
         t.my_next = my_asleep_list_root;
         my_asleep_list_root = &t;
         return true;
@@ -302,20 +302,20 @@ void private_server::wake_some( int additional_slack ) {
     {
         tbb::spin_mutex::scoped_lock lock(my_asleep_list_mutex);
         while( my_asleep_list_root && w<wakee+2 ) {
-            if( additional_slack>0 ) {
+            if ( additional_slack>0 ) {
                 --additional_slack;
             } else {
                 // Try to claim unit of slack
                 int old;
                 do {
                     old = my_slack;
-                    if( old<=0 ) goto done;
+                    if ( old<=0 ) goto done;
                 } while( my_slack.compare_and_swap(old-1,old)!=old );
             }
             // Pop sleeping worker to combine with claimed unit of slack
             my_asleep_list_root = (*w++ = my_asleep_list_root)->my_next;
         }
-        if( additional_slack ) {
+        if ( additional_slack ) {
             // Contribute our unused slack to my_slack.
             my_slack += additional_slack;
         }
@@ -329,9 +329,9 @@ void private_server::adjust_job_count_estimate( int delta ) {
 #if TBB_USE_ASSERT
     my_net_slack_requests+=delta;
 #endif /* TBB_USE_ASSERT */
-    if( delta<0 ) {
+    if ( delta<0 ) {
         my_slack+=delta;
-    } else if( delta>0 ) {
+    } else if ( delta>0 ) {
         wake_some( delta );
     }
 }

@@ -47,7 +47,7 @@ void concurrent_vector_base::internal_grow_to_at_least( size_type new_size, size
     size_type e = my_early_size;
     while( e<new_size ) {
         size_type f = my_early_size.compare_and_swap(new_size,e);
-        if( f==e ) {
+        if ( f==e ) {
             internal_grow( e, new_size, element_size, init );
             return;
         }
@@ -70,7 +70,7 @@ public:
     }
     static void extend_segment_if_necessary( concurrent_vector_base& v, size_t k ) {
         const size_t pointers_per_short_segment = 2;
-        if( k>=pointers_per_short_segment && v.my_segment==v.my_storage ) {
+        if ( k>=pointers_per_short_segment && v.my_segment==v.my_storage ) {
             extend_segment(v);
         }
     }
@@ -88,7 +88,7 @@ void concurrent_vector_base::helper::extend_segment( concurrent_vector_base& v )
     }
     s[0] = v.my_storage[0]; 
     s[1] = v.my_storage[1]; 
-    if( v.my_segment.compare_and_swap( s, v.my_storage )!=v.my_storage ) 
+    if ( v.my_segment.compare_and_swap( s, v.my_storage )!=v.my_storage ) 
         NFS_Free(s);
 }
 
@@ -97,7 +97,7 @@ concurrent_vector_base::size_type concurrent_vector_base::internal_capacity() co
 }
 
 void concurrent_vector_base::internal_reserve( size_type n, size_type element_size, size_type max_size ) {
-    if( n>max_size ) {
+    if ( n>max_size ) {
         throw std::length_error("argument to ConcurrentVector::reserve exceeds ConcurrentVector::max_size()");
     }
     for( segment_index_t k = helper::find_segment_end(*this); segment_base(k)<n; ++k ) {
@@ -112,14 +112,14 @@ void concurrent_vector_base::internal_copy( const concurrent_vector_base& src, s
     size_type n = src.my_early_size;
     my_early_size = n;
     my_segment = my_storage;
-    if( n ) {
+    if ( n ) {
         size_type b;
         for( segment_index_t k=0; (b=segment_base(k))<n; ++k ) {
             helper::extend_segment_if_necessary(*this,k);
             size_t m = segment_size(k);
             __TBB_ASSERT( !my_segment[k].array, "concurrent operation during copy construction?" );
             my_segment[k].array = NFS_Allocate( m, element_size, NULL );
-            if( m>n-b ) m = n-b; 
+            if ( m>n-b ) m = n-b; 
             copy( my_segment[k].array, src.my_segment[k].array, m );
         }
     }
@@ -141,18 +141,18 @@ void concurrent_vector_base::internal_assign( const concurrent_vector_base& src,
     for( segment_index_t k=0; (b=segment_base(k))<n; ++k ) {
         helper::extend_segment_if_necessary(*this,k);
         size_t m = segment_size(k);
-        if( !my_segment[k].array )
+        if ( !my_segment[k].array )
             my_segment[k].array = NFS_Allocate( m, element_size, NULL );
-        if( m>n-b ) m = n-b; 
+        if ( m>n-b ) m = n-b; 
         size_type a = 0;
-        if( dst_initialized_size>b ) {
+        if ( dst_initialized_size>b ) {
             a = dst_initialized_size-b;
-            if( a>m ) a = m;
+            if ( a>m ) a = m;
             assign( my_segment[k].array, src.my_segment[k].array, a );
             m -= a; 
             a *= element_size; 
         }
-        if( m>0 ) 
+        if ( m>0 ) 
             copy( (char*)my_segment[k].array+a, (char*)src.my_segment[k].array+a, m );
     }
     __TBB_ASSERT( src.my_early_size==n, "detected use of ConcurrentVector::operator= with right side that was concurrently modified" );
@@ -168,9 +168,9 @@ void* concurrent_vector_base::internal_push_back( size_type element_size, size_t
     helper::extend_segment_if_necessary(*this,k_old);
     segment_t& s = my_segment[k_old];
     void* array = s.array;
-    if( !array ) {
+    if ( !array ) {
         // FIXME - consider factoring this out and share with internal_grow_by
-	if( base==tmp ) {
+	if ( base==tmp ) {
 	    __TBB_ASSERT( !s.array, NULL );
             size_t n = segment_size(k_old);
 	    array = NFS_Allocate( n, element_size, NULL );
@@ -203,8 +203,8 @@ void concurrent_vector_base::internal_grow( const size_type start, size_type fin
         helper::extend_segment_if_necessary(*this,k_old);
         segment_t& s = my_segment[k_old];
         void* array = s.array;
-        if( !array ) {
-            if( base==tmp ) {
+        if ( !array ) {
+            if ( base==tmp ) {
                 __TBB_ASSERT( !s.array, NULL );
                 array = NFS_Allocate( n, element_size, NULL );
                 ITT_NOTIFY( sync_releasing, &s.array );
@@ -241,7 +241,7 @@ void concurrent_vector_base::internal_clear( internal_array_op1 destroy, bool re
     }
 
     // Free the arrays
-    if( reclaim_storage ) {
+    if ( reclaim_storage ) {
         size_t k = helper::find_segment_end(*this);
         while( k>0 ) {
             --k;
@@ -254,7 +254,7 @@ void concurrent_vector_base::internal_clear( internal_array_op1 destroy, bool re
         my_storage[0].array = NULL;
         my_storage[1].array = NULL;
         segment_t* s = my_segment;
-        if( s!=my_storage ) {
+        if ( s!=my_storage ) {
             my_segment = my_storage;
             NFS_Free( s );
         } 

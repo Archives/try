@@ -28,7 +28,7 @@
 int
 ReactorAI::Permissible(const Creature *creature)
 {
-    if( creature->isCivilian() || creature->IsNeutralToAll() )
+    if ( creature->isCivilian() || creature->IsNeutralToAll() )
         return PERMIT_BASE_REACTIVE;
 
     return PERMIT_BASE_NO;
@@ -42,10 +42,10 @@ ReactorAI::MoveInLineOfSight(Unit *)
 void
 ReactorAI::AttackStart(Unit *p)
 {
-    if(!p)
+    if (!p)
         return;
 
-    if(m_creature->Attack(p,true))
+    if (m_creature->Attack(p,true))
     {
         DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Tag unit GUID: %u (TypeId: %u) as a victim", p->GetGUIDLow(), p->GetTypeId());
         i_victimGuid = p->GetGUID();
@@ -68,14 +68,14 @@ void
 ReactorAI::UpdateAI(const uint32 /*time_diff*/)
 {
     // update i_victimGuid if i_creature.getVictim() !=0 and changed
-    if(!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+    if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
         return;
 
     i_victimGuid = m_creature->getVictim()->GetGUID();
 
-    if( m_creature->isAttackReady() )
+    if ( m_creature->isAttackReady() )
     {
-        if( m_creature->IsWithinDistInMap(m_creature->getVictim(), ATTACK_DISTANCE))
+        if ( m_creature->IsWithinDistInMap(m_creature->getVictim(), ATTACK_DISTANCE))
         {
             m_creature->AttackerStateUpdate(m_creature->getVictim());
             m_creature->resetAttackTimer();

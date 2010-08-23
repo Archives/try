@@ -232,16 +232,16 @@ struct Glyph
 
     void SetId(uint32 newId)
     {
-        if(newId == id)
+        if (newId == id)
             return;
 
-        if(id == 0 && uState == GLYPH_UNCHANGED)            // not exist yet in db and already saved
+        if (id == 0 && uState == GLYPH_UNCHANGED)            // not exist yet in db and already saved
         {
             uState = GLYPH_NEW;
         }
         else if (newId == 0)
         {
-            if(uState == GLYPH_NEW)                         // delete before add new -> no change
+            if (uState == GLYPH_NEW)                         // delete before add new -> no change
                 uState = GLYPH_UNCHANGED;
             else                                            // delete existing data
                 uState = GLYPH_DELETED;
@@ -376,7 +376,7 @@ struct Runes
 
     void SetRuneState(uint8 index, bool set = true)
     {
-        if(set)
+        if (set)
             runeState |= (1 << index);                      // usable
         else
             runeState &= ~(1 << index);                     // on cooldown
@@ -587,17 +587,18 @@ enum PlayerExtraFlags
 // 2^n values
 enum AtLoginFlags
 {
-    AT_LOGIN_NONE              = 0x00,
-    AT_LOGIN_RENAME            = 0x01,
-    AT_LOGIN_RESET_SPELLS      = 0x02,
-    AT_LOGIN_RESET_TALENTS     = 0x04,
-    AT_LOGIN_CUSTOMIZE         = 0x08,
-    AT_LOGIN_RESET_PET_TALENTS = 0x10,
-    AT_LOGIN_FIRST             = 0x20,
-    AT_LOGIN_ADD_EQUIP         = 0x40,
-    AT_LOGIN_LEARN_CLASS_SPELLS= 0x80,
-    AT_LOGIN_LEARN_SKILL_RECIPES=0x100,
-    AT_LOGIN_LEARN_TAXI_NODES  = 0x200,
+    AT_LOGIN_NONE                   = 0x000,
+    AT_LOGIN_RENAME                 = 0x001,
+    AT_LOGIN_RESET_SPELLS           = 0x002,
+    AT_LOGIN_RESET_TALENTS          = 0x004,
+    AT_LOGIN_CUSTOMIZE              = 0x008,
+    AT_LOGIN_RESET_PET_TALENTS      = 0x010,
+    AT_LOGIN_FIRST                  = 0x020,
+    AT_LOGIN_ADD_EQUIP              = 0x040,
+    AT_LOGIN_LEARN_CLASS_SPELLS     = 0x080,
+    AT_LOGIN_LEARN_SKILL_RECIPES    = 0x100,
+    AT_LOGIN_LEARN_TAXI_NODES       = 0x200,
+    AT_LOGIN_DELAY_ONE_LOGIN        = 0x400
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -1116,18 +1117,18 @@ class MANGOS_DLL_SPEC Player : public Unit
                                                             // mount_id can be used in scripting calls
         void ContinueTaxiFlight();
         bool isAcceptTickets() const { return GetSession()->GetSecurity() >= SEC_GAMEMASTER && (m_ExtraFlags & PLAYER_EXTRA_GM_ACCEPT_TICKETS); }
-        void SetAcceptTicket(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_GM_ACCEPT_TICKETS; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_ACCEPT_TICKETS; }
+        void SetAcceptTicket(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_GM_ACCEPT_TICKETS; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_ACCEPT_TICKETS; }
         bool isAcceptWhispers() const { return m_ExtraFlags & PLAYER_EXTRA_ACCEPT_WHISPERS; }
-        void SetAcceptWhispers(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
+        void SetAcceptWhispers(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
         bool isGameMaster() const { return m_ExtraFlags & PLAYER_EXTRA_GM_ON; }
         void SetGameMaster(bool on);
         bool isGMChat() const { return GetSession()->GetSecurity() >= SEC_MODERATOR && (m_ExtraFlags & PLAYER_EXTRA_GM_CHAT); }
-        void SetGMChat(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_GM_CHAT; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_CHAT; }
+        void SetGMChat(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_GM_CHAT; else m_ExtraFlags &= ~PLAYER_EXTRA_GM_CHAT; }
         bool isTaxiCheater() const { return m_ExtraFlags & PLAYER_EXTRA_TAXICHEAT; }
-        void SetTaxiCheater(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_TAXICHEAT; else m_ExtraFlags &= ~PLAYER_EXTRA_TAXICHEAT; }
+        void SetTaxiCheater(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_TAXICHEAT; else m_ExtraFlags &= ~PLAYER_EXTRA_TAXICHEAT; }
         bool isGMVisible() const { return !(m_ExtraFlags & PLAYER_EXTRA_GM_INVISIBLE); }
         void SetGMVisible(bool on);
-        void SetPvPDeath(bool on) { if(on) m_ExtraFlags |= PLAYER_EXTRA_PVP_DEATH; else m_ExtraFlags &= ~PLAYER_EXTRA_PVP_DEATH; }
+        void SetPvPDeath(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_PVP_DEATH; else m_ExtraFlags &= ~PLAYER_EXTRA_PVP_DEATH; }
 
         void GiveXP(uint32 xp, Unit* victim);
         void GiveLevel(uint32 level);
@@ -1217,7 +1218,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         }
         uint8 CanStoreItem( uint8 bag, uint8 slot, ItemPosCountVec& dest, Item *pItem, bool swap = false ) const
         {
-            if(!pItem)
+            if (!pItem)
                 return EQUIP_ERR_ITEM_NOT_FOUND;
             uint32 count = pItem->GetCount();
             return _CanStoreItem( bag, slot, dest, pItem->GetEntry(), count, pItem, swap, NULL );
@@ -1517,13 +1518,13 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetMoney() const { return GetUInt32Value (PLAYER_FIELD_COINAGE); }
         void ModifyMoney( int32 d )
         {
-            if(d < 0)
+            if (d < 0)
                 SetMoney (GetMoney() > uint32(-d) ? GetMoney() + d : 0);
             else
                 SetMoney (GetMoney() < uint32(MAX_MONEY_AMOUNT - d) ? GetMoney() + d : MAX_MONEY_AMOUNT);
 
             // "At Gold Limit"
-            if(GetMoney() >= MAX_MONEY_AMOUNT)
+            if (GetMoney() >= MAX_MONEY_AMOUNT)
                 SendEquipError(EQUIP_ERR_TOO_MUCH_GOLD,NULL,NULL);
         }
         void SetMoney( uint32 value )
@@ -1948,7 +1949,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ProcessDelayedOperations();
         void ScheduleDelayedOperation(uint32 operation)
         {
-            if(operation < DELAYED_END)
+            if (operation < DELAYED_END)
                 m_DelayedOperations |= operation;
         }
 
@@ -2703,18 +2704,18 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     {
         SpellModifier *mod = *itr;
 
-        if(!IsAffectedBySpellmod(spellInfo,mod,spell))
+        if (!IsAffectedBySpellmod(spellInfo,mod,spell))
             continue;
         if (mod->type == SPELLMOD_FLAT)
             totalflat += mod->value;
         else if (mod->type == SPELLMOD_PCT)
         {
             // skip percent mods for null basevalue (most important for spell mods with charges )
-            if(basevalue == T(0))
+            if (basevalue == T(0))
                 continue;
 
             // special case (skip >10sec spell casts for instant cast setting)
-            if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
+            if ( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10*IN_MILLISECONDS) && mod->value <= -100)
                 continue;
 
             totalpct += mod->value;
@@ -2727,7 +2728,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
             {
                 mod->charges = -1;
                 mod->lastAffected = spell;
-                if(!mod->lastAffected)
+                if (!mod->lastAffected)
                     mod->lastAffected = FindCurrentSpellBySpellId(spellId);
                 ++m_SpellModRemoveCount;
             }
@@ -2737,7 +2738,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     //float diff = (float)basevalue*(float)totalpct/100.0f + (float)totalflat;
     //Flat modifiers should be first?
     float diff = 0;
-    if(totalpct)
+    if (totalpct)
         diff = ((float(basevalue) + float(totalflat))*float(totalpct)/100.0f) + float(totalflat);
     else
         diff = float(totalflat);
@@ -2749,7 +2750,7 @@ template<typename Func>
 void Player::CallForAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms, bool withMiniPet)
 {
     if (withMiniPet)
-        if(Unit* mini = GetMiniPet())
+        if (Unit* mini = GetMiniPet())
             func(mini);
 
     Unit::CallForAllControlledUnits(func,withTotems,withGuardians,withCharms);
@@ -2759,7 +2760,7 @@ template<typename Func>
 bool Player::CheckAllControlledUnits(Func const& func, bool withTotems, bool withGuardians, bool withCharms, bool withMiniPet) const
 {
     if (withMiniPet)
-        if(Unit const* mini = GetMiniPet())
+        if (Unit const* mini = GetMiniPet())
             if (func(mini))
                 return true;
 
