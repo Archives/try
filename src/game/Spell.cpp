@@ -1369,7 +1369,13 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
      // Get mask of effects for target
     uint32 mask = target->effectMask;
 
+    SpellMissInfo missInfo = target->missCondition;
+
+    if (missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE)
+        target->targetGUID = m_caster->GetObjectGuid();
+
     Unit* unit = m_caster->GetObjectGuid() == target->targetGUID ? m_caster : ObjectAccessor::GetUnit(*m_caster, target->targetGUID);
+
     if (!unit)
         return;
 
@@ -1378,7 +1384,6 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
     // FIXME: in case wild GO heal/damage spells will be used target bonuses
     Unit *caster = real_caster ? real_caster : m_caster;
 
-    SpellMissInfo missInfo = target->missCondition;
     // Need init unitTarget by default unit (can changed in code on reflect)
     // Or on missInfo!=SPELL_MISS_NONE unitTarget undefined (but need in trigger subsystem)
     unitTarget = unit;
