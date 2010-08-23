@@ -345,12 +345,6 @@ void Creature::Update(uint32 diff)
     else
         m_GlobalCooldown -= diff;
 
-    //Need to update objects even if they cant be seen by any player, need to know what will this do
-    if (!m_isActiveObject && isInCombat())
-        m_isActiveObject = true;
-    else if (m_isActiveObject && !isInCombat())
-        m_isActiveObject = false;
-
     switch( m_deathState )
     {
         case JUST_ALIVED:
