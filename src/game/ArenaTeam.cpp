@@ -813,7 +813,7 @@ void ArenaTeam::UpdateTeamRank(bool update_packet, bool save_to_db)
     if (update_packet)
         NotifyStatsChanged();
     if (save_to_db)
-        CharacterDatabase.PExecute("UPDATE arena_team SET rank = '%u' WHERE arenateamid = '%u'", m_stats.rank, m_TeamId);
+        CharacterDatabase.PExecute("UPDATE arena_team_stats SET rank = '%u' WHERE arenateamid = '%u'", m_stats.rank, m_TeamId);
 }
 
 void ArenaTeam::UpdateAllRanks()
