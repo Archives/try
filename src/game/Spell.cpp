@@ -1395,11 +1395,7 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
         {
             if (mask & (1 << effectNumber) && IsEffectHandledOnDelayedSpellLaunch(m_spellInfo, SpellEffectIndex(effectNumber)))
             {
-                //for reflected spells do it on caster
-                if(missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE)
-                    HandleEffects(caster, NULL, NULL, SpellEffectIndex(effectNumber), m_damageMultipliers[effectNumber]);
-                else
-                    HandleEffects(unit, NULL, NULL, SpellEffectIndex(effectNumber), m_damageMultipliers[effectNumber]);
+                HandleEffects(unit, NULL, NULL, SpellEffectIndex(effectNumber), m_damageMultipliers[effectNumber]);
                 if ( m_applyMultiplierMask & (1 << effectNumber) )
                 {
                     // Get multiplier
