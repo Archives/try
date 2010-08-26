@@ -2376,6 +2376,46 @@ void Aura::TriggerSpell()
         }
     }
 
+    // some triggered spells require specific equipment
+    if (triggeredSpellInfo->EquippedItemClass >=0 && triggerTarget->GetTypeId()==TYPEID_PLAYER)
+    {
+        // main hand weapon required
+        if (triggeredSpellInfo && spellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
+        {
+            Item* item = ((Player*)triggerTarget)->GetWeaponForAttack(BASE_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!item)
+                return;
+
+            // skip spell if weapon not fit to triggered spell
+            if (!item->IsFitToSpellRequirements(triggeredSpellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!triggerTarget->IsUseEquipedWeapon(BASE_ATTACK))
+               return;
+        }
+
+        // offhand hand weapon required
+        if (triggeredSpellInfo->AttributesEx3 & SPELL_ATTR_EX3_REQ_OFFHAND)
+        {
+            Item* item = ((Player*)triggerTarget)->GetWeaponForAttack(OFF_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!item)
+                return;
+
+            // skip spell if weapon not fit to triggered spell
+            if (!item->IsFitToSpellRequirements(triggeredSpellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!triggerTarget->IsUseEquipedWeapon(OFF_ATTACK))
+               return;
+        }
+    }
+
     // All ok cast by default case
     if (triggeredSpellInfo)
         triggerTarget->CastSpell(triggerTarget, triggeredSpellInfo, true, NULL, this, casterGUID);

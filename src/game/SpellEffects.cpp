@@ -2822,6 +2822,10 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
             // skip spell if weapon not fit to triggered spell
             if (!item->IsFitToSpellRequirements(spellInfo))
                 return;
+
+            // skip spell if weapon is disarmed
+            if(!m_caster->IsUseEquipedWeapon(BASE_ATTACK))
+               return;
         }
 
         // offhand hand weapon required
@@ -2836,6 +2840,10 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
             // skip spell if weapon not fit to triggered spell
             if (!item->IsFitToSpellRequirements(spellInfo))
                 return;
+
+            // skip spell if weapon is disarmed
+            if(!m_caster->IsUseEquipedWeapon(OFF_ATTACK))
+               return;
         }
     }
     else
@@ -5247,10 +5255,46 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
         return;
     if (!unitTarget->isAlive())
         return;
-    // some triggered spells need this check (f.e. Whirlwind...)
-    if (m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->GetWeaponForAttack(m_attackType,true,true))
-        return;
 
+    // some checks for proper weapon requierements
+    if (m_spellInfo->EquippedItemClass >=0 && m_caster->GetTypeId()==TYPEID_PLAYER)
+    {
+        // main hand weapon required
+        if (m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
+        {
+            Item* weaponItem = ((Player*)m_caster)->GetWeaponForAttack(BASE_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!weaponItem)
+                return;
+
+            // skip spell if weapon not fit to spell
+            if (!weaponItem->IsFitToSpellRequirements(m_spellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!m_caster->IsUseEquipedWeapon(BASE_ATTACK))
+               return;
+        }
+
+        // offhand hand weapon required
+        if (m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_REQ_OFFHAND)
+        {
+            Item* weaponItem = ((Player*)m_caster)->GetWeaponForAttack(OFF_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!weaponItem)
+                return;
+
+            // skip spell if weapon not fit to spell
+            if (!weaponItem->IsFitToSpellRequirements(m_spellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!m_caster->IsUseEquipedWeapon(OFF_ATTACK))
+               return;
+        }
+    }
     // multiple weapon dmg effect workaround
     // execute only the last weapon damage
     // and handle all effects at once
