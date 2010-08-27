@@ -242,6 +242,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>, public MaNGOS::Obj
         // must called with RemoveFromWorld
         void RemoveFromActive(WorldObject* obj);
 
+        template<class NOTIFIER> void VisitGrid(const float &x, const float &y, float radius, NOTIFIER &notifier);
+
         Creature* GetCreature(ObjectGuid guid);
         Vehicle* GetVehicle(ObjectGuid guid);
         Pet* GetPet(ObjectGuid guid);
@@ -437,4 +439,18 @@ Map::Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor)
         getNGrid(x, y)->Visit(cell_x, cell_y, visitor);
     }
 }
+
+template<class NOTIFIER>
+inline void
+Map::VisitGrid(const float &x, const float &y, float radius, NOTIFIER &notifier)
+{
+    CellPair p(MaNGOS::ComputeCellPair(x, y));
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+
+    TypeContainerVisitor<NOTIFIER, GridTypeMapContainer >  grid_object_notifier(notifier);
+    cell.Visit(p, grid_object_notifier, *this, radius, x, y);
+}
+
 #endif
