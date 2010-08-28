@@ -30,7 +30,7 @@
 
 LfgGroup::LfgGroup(bool premade) : Group()
 {
-    dps = new PlayerList();
+    dps.clear();
     premadePlayers.clear();
     m_answers.clear();
     m_rolesProposal.clear();
@@ -51,7 +51,6 @@ LfgGroup::LfgGroup(bool premade) : Group()
 LfgGroup::~LfgGroup()
 {
     sObjectMgr.RemoveGroup(this);
-    delete dps;
 }
 
 void LfgGroup::ResetGroup()
@@ -121,8 +120,8 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
         m_tank = 0;
     else if (m_heal == guid)
         m_heal = 0;
-    else if (dps->find(guid) != dps->end())
-        dps->erase(guid);
+    else if (dps.find(guid) != dps.end())
+        dps.erase(guid);
     CharacterDatabase.PExecute("DELETE FROM group_member WHERE memberGuid='%u'", GUID_LOPART(guid));
     return 0;
 }
@@ -145,7 +144,7 @@ uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
         roles |= TANK;
     else if (m_heal == guid)
         roles |= HEALER;
-    else if (dps->find(guid) != dps->end())
+    else if (dps.find(guid) != dps.end())
         roles |= DAMAGE;
     return roles;        
 }
@@ -234,6 +233,7 @@ void LfgGroup::TeleportToDungeon()
             if (!plr || !plr->GetSession())
                 continue;
 
+            plr->m_lookingForGroup.queuedDungeons.clear();
             if (plr->GetMapId() == m_dungeonInfo->map)
             {
                 sLfgMgr.SendLfgUpdatePlayer(plr, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
@@ -328,8 +328,8 @@ void LfgGroup::TeleportToDungeon()
     }
     if (m_leaderGuid == 0)
     {
-        m_leaderGuid = GetFirstMember()->getSource()->GetGUID();
-        m_leaderName = GetFirstMember()->getSource()->GetName();
+        m_leaderGuid = m_memberSlots.begin()->guid;
+        m_leaderName = m_memberSlots.begin()->name;
     }
     m_lootMethod = GROUP_LOOT;
     m_lootThreshold = ITEM_QUALITY_UNCOMMON;
@@ -373,6 +373,8 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                 return;
             }
         }
+        plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
+            dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
     }
     else
     {
@@ -396,7 +398,6 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
             }
             plr->SetGroup(NULL);
         }
-
         plr->m_lookingForGroup.groups.clear();
         plr->UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
         plr->ResetInstances(INSTANCE_RESET_GROUP_JOIN,false);
@@ -411,6 +412,7 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
         }
         plr->SetGroup(this, 1);
         plr->SetGroupInvite(NULL);
+        UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
     }
 
     uint32 taxi_start = 0;
@@ -493,6 +495,8 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
                 return;
             }
         }
+        plr->TeleportTo(dungeonInfo->start_map, dungeonInfo->start_x,
+            dungeonInfo->start_y, dungeonInfo->start_z, dungeonInfo->start_o);
     }
 }
 
@@ -638,7 +642,7 @@ void LfgGroup::SendLfgQueueStatus()
         data << uint32(sLfgMgr.GetAvgWaitTime(m_dungeonInfo->ID, LFG_WAIT_TIME_DPS, role)); // Wait Dps
         data << uint8(m_tank ? 0 : 1);                                  // Tanks needed
         data << uint8(m_heal ? 0 : 1);                                  // Healers needed
-        data << uint8(LFG_DPS_COUNT - dps->size());                     // Dps needed
+        data << uint8(LFG_DPS_COUNT - dps.size());                     // Dps needed
         data << uint32(getMSTimeDiff(plr->m_lookingForGroup.joinTime, getMSTime())/1000);   // Player wait time in queue
         plr->GetSession()->SendPacket(&data);
     }
@@ -795,7 +799,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
 
     uint64 TankOnly = 0;
     uint64 HealOnly = 0;
-    PlayerList *dpsOnly = new PlayerList();
+    PlayerList dpsOnly;
     ProposalAnswersMap *others = new ProposalAnswersMap();
     uint8 error = 0;
     for(ProposalAnswersMap::iterator itr = m_rolesProposal.begin(); itr != m_rolesProposal.end(); ++itr)
@@ -807,7 +811,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
             break;
         }
         
-        if ((role == TANK && TankOnly != 0) || (role == HEALER && HealOnly != 0) || (role == DAMAGE && dpsOnly->size() == 3))
+        if ((role == TANK && TankOnly != 0) || (role == HEALER && HealOnly != 0) || (role == DAMAGE && dpsOnly.size() == 3))
         {
             error = LFG_ROLECHECK_WRONG_ROLES;
             break;
@@ -817,7 +821,7 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
         else if (role == HEALER)
             HealOnly = itr->first;
         else if (role == DAMAGE)
-            dpsOnly->insert(itr->first);
+            dpsOnly.insert(itr->first);
         else
             others->insert(std::make_pair<uint64, uint8>(itr->first, itr->second));
     }
@@ -835,9 +839,9 @@ void LfgGroup::UpdateRoleCheck(uint32 diff)
                 HealOnly = itr->first;
                 others->erase(itr);
             }
-            else if ((itr->second & DAMAGE) && dpsOnly->size() != 3)
+            else if ((itr->second & DAMAGE) && dpsOnly.size() != 3)
             {
-                dpsOnly->insert(itr->first);
+                dpsOnly.insert(itr->first);
                 others->erase(itr);
             }
         }
@@ -964,16 +968,19 @@ void LfgGroup::InitVoteKick(uint64 who, Player *initiator, std::string reason)
         error = ERR_PARTY_LFG_BOOT_DUNGEON_COMPLETE;
     else if (m_voteToKick.isInProggres)
         error = ERR_PARTY_LFG_BOOT_IN_PROGRESS;
-
-    initiator->GetSession()->SendPartyResult(PARTY_OP_LEAVE, "", error);
+    
     if (error != ERR_PARTY_RESULT_OK)
+    {
+        initiator->GetSession()->SendPartyResult(PARTY_OP_LEAVE, "", error);
         return;
+    }
 
     m_voteToKick.Reset();
     m_voteToKick.isInProggres = true;
     m_voteToKick.victim = who;
     m_voteToKick.beginTime = getMSTime();
     m_voteToKick.reason = reason;
+    m_voteToKick.votes.insert(std::make_pair<uint64, uint8>(initiator->GetGUID(), 1));  // initiator agrees automatically
     m_voteKickTimer = 0;
 
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
