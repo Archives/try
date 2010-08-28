@@ -4323,7 +4323,7 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
         pet->AttackStop();
-        pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, pet->GetPetFollowAngle());
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
     }
 }
