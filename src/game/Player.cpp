@@ -20308,7 +20308,7 @@ void Player::SendInitialPacketsAfterAddToMap()
         aura_update << uint8(255);
         if (HasAura(64976))
             aura_update << uint32(64976);
-        if (HasAura(57499))
+        else if (HasAura(57499))
             aura_update << uint32(57499);
         aura_update << uint8(19);
         aura_update << uint8(getLevel());

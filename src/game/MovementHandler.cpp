@@ -73,6 +73,10 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     GetPlayer()->SetMap(sMapMgr.CreateMap(loc.mapid, GetPlayer()));
     GetPlayer()->Relocate(loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation);
 
+    // mount allow check, must be before SendInitialPacketsBeforeAddToMap()
+    if (!mEntry->IsMountAllowed())
+        _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+
     GetPlayer()->SendInitialPacketsBeforeAddToMap();
     // the CanEnter checks are done in TeleporTo but conditions may change
     // while the player is in transit, for example the map may get full
@@ -152,10 +156,6 @@ void WorldSession::HandleMoveWorldportAckOpcode()
             }
         }
     }
-
-    // mount allow check
-    if (!mEntry->IsMountAllowed())
-        _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
 
     // honorless target
     if (GetPlayer()->pvpInfo.inHostileArea)
