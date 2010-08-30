@@ -787,6 +787,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
             if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
                 player_tap = recipient;
+
+            RewardCurrenciesAtKillCreature((Creature*)pVictim, player_tap, group_tap);
         }
         // in player kill case group tap selected by player_tap (killer-player itself, or charmer, or owner, etc)
         else
@@ -828,7 +830,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             else if (player_tap)
                 player_tap->RewardSinglePlayerAtKill(pVictim);
         }
-
+        
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageAttackStop");
 
         // stop combat
@@ -15830,4 +15832,43 @@ void Unit::SheduleAINotify(uint32 delay)
 
     RelocationNotifyEvent *notify = new RelocationNotifyEvent(*this);
     m_Events.AddEvent(notify, m_Events.CalculateTime(delay));
+}
+
+void Unit::RewardCurrenciesAtKillCreature(Creature* creature, Player* player, Group* group)
+{
+    uint32 lootid = creature->GetCreatureInfo()->lootid;
+    if (!lootid)
+        return;
+    
+    AutoLootTemplate const* tab = LootTemplates_Creature.GetAutoLootFor(lootid);
+    
+    for (LootStoreItemList::const_iterator i = tab->GetEntries().begin(); i != tab->GetEntries().end(); ++i )
+    {
+        uint32 item_id = i->itemid;
+        ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(item_id);
+        if (!pProto || pProto->Class != ITEM_CLASS_MONEY)
+            continue;
+
+        if (!roll_chance_i(i->chance))
+            continue;
+
+        uint8 count = urand(i->mincountOrRef, i->maxcount);
+                
+        if (group)
+        {
+            for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
+            {
+                Player* plr = itr->getSource();
+                if (!plr)
+                    continue;
+
+                if (!plr->IsAtGroupRewardDistance(creature))
+                    continue;
+
+                plr->RewardCurrency(item_id, count);
+            }
+        }
+        else if (player)
+            player->RewardCurrency(item_id, count);
+    }
 }

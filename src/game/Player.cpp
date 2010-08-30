@@ -21048,6 +21048,7 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
         if (pVictim->GetTypeId()==TYPEID_UNIT)
             KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
     }
+    //...
 }
 
 void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource)
@@ -23072,11 +23073,34 @@ uint32 Player::GetBGWinExtraHonor()
 {
     return MaNGOS::Honor::hk_honor_at_level(getLevel(), RandomBGDone() ? 15 : 30);
 }
+
 uint32 Player::GetBGWinExtraAP()
 {
     return getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL) && !RandomBGDone() ? 25 : 0;
 }
+
 uint32 Player::GetBGLoseExtraHonor()
 {
     return MaNGOS::Honor::hk_honor_at_level(getLevel(), 5);
+}
+
+bool Player::RewardCurrency(uint32 itemid, uint8 count)
+{
+    //Adding items
+    uint32 noSpaceForCount = 0;
+
+    // check space and find places
+    ItemPosCountVec dest;
+    uint8 msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, itemid, count, &noSpaceForCount );
+    if ( msg != EQUIP_ERR_OK )
+        count -= noSpaceForCount;
+    
+    if ( count <= 0 || dest.empty())
+        return false;
+    
+    Item* item = StoreNewItem( dest, itemid, true, Item::GenerateItemRandomPropertyId(itemid));
+    
+    if (count > 0 && item)
+        SendNewItem(item,count,false,true);
+    return true;
 }

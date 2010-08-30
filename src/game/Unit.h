@@ -36,6 +36,7 @@
 #include "WorldPacket.h"
 #include "Timer.h"
 #include "SpellMgr.h"
+#include "Group.h"
 #include <list>
 
 enum SpellInterruptFlags
@@ -1908,6 +1909,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             float x, y, z;
         } m_last_notified_position;
 
+        void RewardCurrenciesAtKillCreature(Creature* creature, Player* player, Group* group);
     protected:
         explicit Unit ();
 

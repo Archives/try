@@ -89,7 +89,8 @@ void LootStore::Verify() const
 // All checks of the loaded template are called from here, no error reports at loot generation required
 void LootStore::LoadLootTable()
 {
-    LootTemplateMap::const_iterator tab;
+    LootTemplateMap::const_iterator     tab;
+    AutoLootTemplateMap::const_iterator autotab;
     uint32 count = 0;
 
     // Clearing store (for reloading case)
@@ -140,6 +141,7 @@ void LootStore::LoadLootTable()
             if (!storeitem.IsValid(*this,entry))            // Validity checks
                 continue;
 
+            ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(item);
             // Looking for the template of the entry
                                                             // often entries are put together
             if (m_LootTemplates.empty() || tab->first != entry)
@@ -155,8 +157,11 @@ void LootStore::LoadLootTable()
             // else is empty - template Id and iter are the same
             // finally iter refers to already existed or just created <entry, LootTemplate>
 
-            // Adds current row to the template
-            tab->second->AddEntry(storeitem);
+            // Adds current row to the proper proper template
+            if (pProto && pProto->Class == ITEM_CLASS_MONEY)
+                autotab->second->AddEntry(storeitem);
+            else
+                tab->second->AddEntry(storeitem);
             ++count;
 
         } while (result->NextRow());
@@ -200,6 +205,16 @@ LootTemplate const* LootStore::GetLootFor(uint32 loot_id) const
     LootTemplateMap::const_iterator tab = m_LootTemplates.find(loot_id);
 
     if (tab == m_LootTemplates.end())
+        return NULL;
+
+    return tab->second;
+}
+
+AutoLootTemplate const* LootStore::GetAutoLootFor(uint32 loot_id) const
+{
+    AutoLootTemplateMap::const_iterator tab = m_AutoLootTemplates.find(loot_id);
+
+    if (tab == m_AutoLootTemplates.end())
         return NULL;
 
     return tab->second;
@@ -1072,6 +1087,23 @@ void LootTemplate::CheckLootRefs(LootIdSet* ref_set) const
 
     for(LootGroups::const_iterator grItr = Groups.begin(); grItr != Groups.end(); ++grItr)
         grItr->CheckLootRefs(ref_set);
+}
+
+//
+// --------- AutoLootTemplate ---------
+//
+
+// Adds an entry to the group (at loading stage)
+void AutoLootTemplate::AddEntry(LootStoreItem& item)
+{
+    /*if (item.group > 0 && item.mincountOrRef > 0)           // Group
+    {
+        if (item.group >= Groups.size())
+            Groups.resize(item.group);                      // Adds new group the the loot template if needed
+        Groups[item.group-1].AddEntry(item);                // Adds new entry to the group
+    }
+    else*/                                                    // Non-grouped entries and references are stored together
+        Entries.push_back(item);
 }
 
 void LoadLootTemplates_Creature()
