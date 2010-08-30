@@ -4281,7 +4281,7 @@ void Spell::DoSummon(SpellEffectIndex eff_idx)
             z = m_targets.m_destZ;
         }
         else
-            summoner->GetClosePoint(x, y, z, creature->GetObjectSize(), PET_FOLLOW_DIST, creature->GetPetFollowAngle());
+            summoner->GetClosePoint(x, y, z, creature->GetObjectBoundingRadius(), PET_FOLLOW_DIST, creature->GetPetFollowAngle());
 
         creature->Relocate(x, y, z, -m_caster->GetOrientation());
         creature->SetSummonPoint(x, y, z, -m_caster->GetOrientation());
@@ -4333,6 +4333,8 @@ void Spell::DoSummon(SpellEffectIndex eff_idx)
 
         summoner->SetPet(creature);
 
+        // toto si voprav
+        uint32 count = COJAKURVAVIMKOLIK/*?*/;
         if (m_caster->GetTypeId() == TYPEID_PLAYER && damage == amount && count == 0)
         {
             creature->GetCharmInfo()->SetReactState( REACT_DEFENSIVE );

@@ -32,6 +32,9 @@
 
 #define MAX_SPELL_ID  100000
 
+// ja to opravovat nebudu kua
+#define COJAKURVAVIMKOLIK 1
+
 class WorldSession;
 class WorldPacket;
 class DynamicObj;

@@ -2337,8 +2337,6 @@ void Aura::TriggerSpell()
 
                         if (roll_chance_f(chance))
                             caster->CastSpell( caster, 59566, true );
-
-                        
                     }
                 }
                 break;
@@ -2380,7 +2378,7 @@ void Aura::TriggerSpell()
     if (triggeredSpellInfo->EquippedItemClass >=0 && triggerTarget->GetTypeId()==TYPEID_PLAYER)
     {
         // main hand weapon required
-        if (triggeredSpellInfo && spellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
+        if (triggeredSpellInfo && triggeredSpellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
         {
             Item* item = ((Player*)triggerTarget)->GetWeaponForAttack(BASE_ATTACK, true, false);
 
@@ -4323,7 +4321,8 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
         pet->AttackStop();
-        pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, pet->GetPetFollowAngle());
+        if (pet->isPet())
+            pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, ((Pet*)pet)->GetPetFollowAngle());
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
     }
 }
