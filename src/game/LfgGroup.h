@@ -99,7 +99,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
 
         uint64 GetTank() const { return m_tank; };
         uint64 GetHeal() const { return m_heal; };
-        PlayerList *GetDps() { return dps; };
+        PlayerList *GetDps() { return &dps; };
         ProposalAnswersMap *GetProposalAnswers() { return &m_answers; }
         ProposalAnswersMap *GetRoleAnswers() { return &m_rolesProposal; }
         void UpdateRoleCheck(uint32 diff = 0);
@@ -135,7 +135,7 @@ class MANGOS_DLL_SPEC LfgGroup : public Group
 
         uint64 m_tank;
         uint64 m_heal;
-        PlayerList *dps;
+        PlayerList dps;
         LFGDungeonEntry const *m_dungeonInfo;
         PlayerList premadePlayers;
         ProposalAnswersMap m_answers;

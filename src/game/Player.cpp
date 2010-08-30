@@ -18322,7 +18322,8 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
 
     pet->CombatStop();
 
-    pet->SavePetToDB(mode);
+    if (pet->GetNeedSave())
+        pet->SavePetToDB(mode);
 
     pet->AddObjectToRemoveList();
     pet->m_removed = true;
@@ -20308,7 +20309,7 @@ void Player::SendInitialPacketsAfterAddToMap()
         aura_update << uint8(255);
         if (HasAura(64976))
             aura_update << uint32(64976);
-        if (HasAura(57499))
+        else if (HasAura(57499))
             aura_update << uint32(57499);
         aura_update << uint8(19);
         aura_update << uint8(getLevel());
@@ -21677,7 +21678,7 @@ void Player::ConvertRune(uint8 index, RuneType newType)
 void Player::ResyncRunes(uint8 count)
 {
     WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
-    data << uint32(count + 1);
+    data << uint32(count);
     for(uint32 i = 0; i < count; ++i)
     {
         data << uint8(GetCurrentRune(i));                   // rune type

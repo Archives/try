@@ -845,7 +845,6 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
     {
         // calculate spell incoming interval
         float dist = m_caster->GetDistance(pVictim->GetPositionX(), pVictim->GetPositionY(), pVictim->GetPositionZ());
-        if (dist < 5.0f) dist = 5.0f;
         target.timeDelay = (uint64) floor(dist / m_spellInfo->speed * 1000.0f);
 
         // Calculate minimum incoming time
@@ -912,8 +911,6 @@ void Spell::AddGOTarget(GameObject* pVictim, SpellEffectIndex effIndex)
     {
         // calculate spell incoming interval
         float dist = m_caster->GetDistance(pVictim->GetPositionX(), pVictim->GetPositionY(), pVictim->GetPositionZ());
-        if (dist < 5.0f)
-            dist = 5.0f;
         target.timeDelay = (uint64) floor(dist / m_spellInfo->speed * 1000.0f);
         if (m_delayMoment == 0 || m_delayMoment > target.timeDelay)
             m_delayMoment = target.timeDelay;
@@ -1986,6 +1983,34 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         ++itr;
                 }
             }
+            //GObjects 
+            float x, y, z;
+            if(targetMode == TARGET_OBJECT_AREA_SRC)
+            {
+                if(m_targets.HasSrc())
+                {
+                    x = m_targets.m_srcX;
+                    y = m_targets.m_srcY;
+                    z = m_targets.m_srcZ;
+                }
+                else
+                    break;
+            }
+            else if(m_targets.HasDst())
+            {
+                x = m_targets.m_destX;
+                y = m_targets.m_destY;
+                z = m_targets.m_destZ;
+            }
+            else
+                break;
+
+            MaNGOS::GameObjectInRangeCheck check(x, y, z, radius + 15);
+            std::list<GameObject*> goList;
+            MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(m_caster, goList, check);
+            m_caster->GetMap()->VisitGrid(x, y, radius, searcher);
+            for(std::list<GameObject*>::iterator itr = goList.begin(); itr != goList.end(); ++itr)
+                AddGOTarget(*itr, effIndex);
             break;
         }
         case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
@@ -6528,7 +6553,8 @@ void Spell::DelayedChannel()
         return;
 
     // check pushback reduce
-    int32 delaytime = GetSpellDuration(m_spellInfo) * 25 / 100;// channeling delay is normally 25% of its time per hit
+    int32 duration = ApplyHasteToChannelSpell(GetSpellDuration(m_spellInfo), m_spellInfo, this);
+    int32 delaytime = duration * 25 / 100;// channeling delay is normally 25% of its time per hit
     int32 delayReduce = 100;                                // must be initialized to 100 for percent modifiers
     ((Player*)m_caster)->ApplySpellMod(m_spellInfo->Id, SPELLMOD_NOT_LOSE_CASTING_TIME, delayReduce, this);
     delayReduce += m_caster->GetTotalAuraModifier(SPELL_AURA_REDUCE_PUSHBACK) - 100;

@@ -457,6 +457,32 @@ void LfgMgr::UpdateQueues()
                         itr->second->groups.erase(grpitr2);
                     }
                 }
+                //Now lets check if theres dmg which can be tank or healer...
+                Group::member_citerator citr, citr_next;
+                for(citr = (*grpitr1)->GetMemberSlots().begin(); citr != (*grpitr1)->GetMemberSlots().end() && (!(*grpitr1)->GetTank() || !(*grpitr1)->GetHeal()); citr = citr_next)
+                {
+                    citr_next = citr;
+                    ++citr_next;
+                    Player *plr = sObjectMgr.GetPlayer(citr->guid);
+                    if (!plr || !plr->GetSession() || !plr->IsInWorld())
+                        continue;
+
+                    //We want only damage which can be tank or healer
+                    uint8 role = (*grpitr1)->GetPlayerRole(citr->guid, false, true);
+                    if((*grpitr1)->GetPlayerRole(citr->guid, false) != DAMAGE || role == DAMAGE)
+                        continue;                  
+
+                    if(role & TANK && !(*grpitr1)->GetTank())
+                    {
+                        (*grpitr1)->GetDps()->erase(citr->guid);
+                        (*grpitr1)->SetTank(citr->guid);
+                    }
+                    else if(role & HEALER && !(*grpitr1)->GetHeal())
+                    {
+                        (*grpitr1)->GetDps()->erase(citr->guid);
+                        (*grpitr1)->SetHeal(citr->guid);
+                    }
+                }
             }
             //Players in queue for that dungeon...
             for(PlayerList::iterator plritr = itr->second->players.begin(); plritr != itr->second->players.end(); ++plritr)

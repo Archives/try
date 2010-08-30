@@ -48,14 +48,29 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
     recv_data.read_skip<uint8>();                           // unk - always 0
     recv_data.read_skip<uint8>();                           // unk - always 0
     recv_data >> count;
+
+    Player *player = _player; // If in dungeon group, then set to leader
     
     //Some first checks
     if (_player->InBattleGround() || _player->InBattleGroundQueue() || _player->InArena())
         error = LFG_JOIN_USING_BG_SYSTEM;
     else if (_player->HasAura(LFG_DESERTER))
         error = LFG_JOIN_PARTY_DESERTER;
-    else if (_player->GetGroup() && _player->GetGroup()->GetLeaderGUID() != _player->GetGUID())
-            error = LFG_JOIN_NOT_MEET_REQS;
+    else if (Group *group = _player->GetGroup())
+    {
+        if(group->GetLeaderGUID() != _player->GetGUID())
+        {
+            if(group->isLfgGroup())
+            {
+                Player *leader = sObjectMgr.GetPlayer(group->GetLeaderGUID());
+                if(!leader || !leader->GetSession() || !leader->IsInWorld())
+                    error = LFG_JOIN_DISCONNECTED;
+                player = leader;
+            }
+            else
+                error = LFG_JOIN_NOT_MEET_REQS;
+        }    
+    }
     //TODO: Implement this
     else if (count > 1 && _player->GetGroup())
         error = LFG_JOIN_DUNGEON_INVALID;
@@ -85,7 +100,7 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
         else if (dungeonInfo->type == LFG_TYPE_RANDOM && _player->HasAura(LFG_RANDOM_COOLDOWN))
             error = LFG_JOIN_RANDOM_COOLDOWN;
         //Now the group
-        else if (Group *group = _player->GetGroup())
+        else if (Group *group = player->GetGroup())
         {
             if (group->isRaidGroup())
                 error = LFG_JOIN_MIXED_RAID_DUNGEON;
@@ -122,9 +137,9 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
             return;
         }
         //Already queued for this dungeon, dunno how this can happen, but it happens
-        if (_player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != _player->m_lookingForGroup.queuedDungeons.end())
+        if (player->m_lookingForGroup.queuedDungeons.find(dungeonInfo) != player->m_lookingForGroup.queuedDungeons.end())
             continue;
-        _player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
+        player->m_lookingForGroup.queuedDungeons.insert(dungeonInfo);
     } 
     recv_data >> unk; // looks like unk from LFGDungeons.dbc, so 0 = raid or zone, 3 = dungeon, 15 = world event. Possibly count of next data? anyway seems unused
     for (int8 i = 0 ; i < unk; ++i)
@@ -132,11 +147,11 @@ void WorldSession::HandleLfgJoinOpcode(WorldPacket& recv_data)
 
     recv_data >> comment;
 
-    _player->m_lookingForGroup.roles = uint8(roles);
-    _player->m_lookingForGroup.comment = comment;
-    _player->m_lookingForGroup.joinTime = getMSTime();
+    player->m_lookingForGroup.roles = uint8(roles);
+    player->m_lookingForGroup.comment = comment;
+    player->m_lookingForGroup.joinTime = getMSTime();
 
-    sLfgMgr.AddToQueue(_player);
+    sLfgMgr.AddToQueue(player);
 }
 
 void WorldSession::HandleLfgLeaveOpcode(WorldPacket & /*recv_data*/)

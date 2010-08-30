@@ -128,7 +128,7 @@ typedef std::vector<uint32> AutoSpellList;
 #define ACTIVE_SPELLS_MAX           4
 
 #define PET_FOLLOW_DIST  1.0f
-#define PET_FOLLOW_ANGLE M_PI_F/2
+#define PET_DEFAULT_FOLLOW_ANGLE M_PI_F/2
 
 class Player;
 
@@ -177,8 +177,14 @@ class Pet : public Creature
         uint32 GetCurrentFoodBenefitLevel(uint32 itemlevel);
         void SetDuration(int32 dur) { m_duration = dur; }
 
+        float GetPetFollowAngle() const { return m_petFollowAngle; }
+        void SetPetFollowAngle(float angle) { m_petFollowAngle = angle; }
+
         int32 GetBonusDamage() { return m_bonusdamage; }
         void SetBonusDamage(int32 damage) { m_bonusdamage = damage; }
+
+        bool GetNeedSave() const { return m_needSave; }
+        void SetNeedSave(bool needSave) { m_needSave = needSave; }
 
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
@@ -247,6 +253,8 @@ class Pet : public Creature
         int32   m_duration;                                 // time until unsummon (used mostly for summoned guardians and not used for controlled pets)
         int32   m_bonusdamage;
         bool    m_loading;
+        bool    m_needSave;                                 // is pet needed to be saved in DB (for chained - only originally first in chain)
+        float   m_petFollowAngle;                           // follow angle for the pet
 
         DeclinedName *m_declinedname;
 
