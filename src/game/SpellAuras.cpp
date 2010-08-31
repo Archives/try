@@ -2858,6 +2858,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             }
             case 58600:                                     // Restricted Flight Area
             {
+                if (m_removeMode != AURA_REMOVE_BY_EXPIRE)
+                    return;
+
                 // Remove Flight Auras
                 target->CastSpell(target, 58601, true);
                 // Parachute
