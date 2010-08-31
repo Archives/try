@@ -18322,7 +18322,8 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
 
     pet->CombatStop();
 
-    pet->SavePetToDB(mode);
+    if (pet->GetNeedSave())
+        pet->SavePetToDB(mode);
 
     pet->AddObjectToRemoveList();
     pet->m_removed = true;
@@ -20308,7 +20309,7 @@ void Player::SendInitialPacketsAfterAddToMap()
         aura_update << uint8(255);
         if (HasAura(64976))
             aura_update << uint32(64976);
-        if (HasAura(57499))
+        else if (HasAura(57499))
             aura_update << uint32(57499);
         aura_update << uint8(19);
         aura_update << uint8(getLevel());
@@ -21047,6 +21048,7 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
         if (pVictim->GetTypeId()==TYPEID_UNIT)
             KilledMonster(((Creature*)pVictim)->GetCreatureInfo(), pVictim->GetObjectGuid());
     }
+    //...
 }
 
 void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource)
@@ -21677,7 +21679,7 @@ void Player::ConvertRune(uint8 index, RuneType newType)
 void Player::ResyncRunes(uint8 count)
 {
     WorldPacket data(SMSG_RESYNC_RUNES, 4 + count * 2);
-    data << uint32(count + 1);
+    data << uint32(count);
     for(uint32 i = 0; i < count; ++i)
     {
         data << uint8(GetCurrentRune(i));                   // rune type
@@ -23071,11 +23073,34 @@ uint32 Player::GetBGWinExtraHonor()
 {
     return MaNGOS::Honor::hk_honor_at_level(getLevel(), RandomBGDone() ? 15 : 30);
 }
+
 uint32 Player::GetBGWinExtraAP()
 {
     return getLevel() >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL) && !RandomBGDone() ? 25 : 0;
 }
+
 uint32 Player::GetBGLoseExtraHonor()
 {
     return MaNGOS::Honor::hk_honor_at_level(getLevel(), 5);
+}
+
+bool Player::RewardCurrency(uint32 itemid, uint8 count)
+{
+    //Adding items
+    uint32 noSpaceForCount = 0;
+
+    // check space and find places
+    ItemPosCountVec dest;
+    uint8 msg = CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, itemid, count, &noSpaceForCount );
+    if ( msg != EQUIP_ERR_OK )
+        count -= noSpaceForCount;
+    
+    if ( count <= 0 || dest.empty())
+        return false;
+    
+    Item* item = StoreNewItem( dest, itemid, true, Item::GenerateItemRandomPropertyId(itemid));
+    
+    if (count > 0 && item)
+        SendNewItem(item,count,false,true);
+    return true;
 }

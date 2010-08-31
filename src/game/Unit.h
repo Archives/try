@@ -36,6 +36,7 @@
 #include "WorldPacket.h"
 #include "Timer.h"
 #include "SpellMgr.h"
+#include "Group.h"
 #include <list>
 
 enum SpellInterruptFlags
@@ -298,6 +299,7 @@ struct SpellEntryExt;
 class Aura;
 class Creature;
 class Spell;
+class SpellCastTargets;
 class DynamicObject;
 class GameObject;
 class Item;
@@ -1080,10 +1082,7 @@ struct CharmInfo
         void LoadPetActionBar(const std::string& data);
         void BuildActionBar(WorldPacket* data);
         void SetSpellAutocast(uint32 spell_id, bool state);
-        void SetActionBar(uint8 index, uint32 spellOrAction,ActiveStates type)
-        {
-            PetActionBar[index].SetActionAndType(spellOrAction,type);
-        }
+        void SetActionBar( uint8 index, uint32 spellOrAction, ActiveStates type );
         UnitActionBarEntry const* GetActionBarEntry(uint8 index) const { return &(PetActionBar[index]); }
 
         void ToggleCreatureAutocast(uint32 spellid, bool apply);
@@ -1521,6 +1520,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
             return (Unit*)this;
         }
+        Unit* GetCreator() const;
         bool IsCharmerOrOwnerPlayerOrPlayerItself() const;
         Player* GetCharmerOrOwnerPlayerOrPlayerItself();
         float GetCombatDistance( const Unit* target ) const;
@@ -1911,6 +1911,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendPetTalk (uint32 pettalk);
         void SendPetAIReaction(uint64 guid);
         ///----------End of Pet responses methods----------
+        void DoPetAction (Player* owner, uint8 flag, uint32 spellid, uint64 guid1, uint64 guid2);
+        void DoPetCastSpell (Player *owner, uint8 cast_count, SpellCastTargets targets, SpellEntry const* spellInfo);
 
         void propagateSpeedChange() { GetMotionMaster()->propagateSpeedChange(); }
 
@@ -1946,6 +1948,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             float x, y, z;
         } m_last_notified_position;
 
+        void RewardCurrenciesAtKillCreature(Creature* creature, Player* player, Group* group);
     protected:
         explicit Unit ();
 

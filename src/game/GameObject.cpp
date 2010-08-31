@@ -149,6 +149,12 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     SetGoArtKit(0);                                         // unknown what this is
     SetGoAnimProgress(animprogress);
 
+    if(goinfo->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+    {
+        m_health = goinfo->destructibleBuilding.intactNumHits + goinfo->destructibleBuilding.damagedDisplayId;
+        SetGoAnimProgress(255);
+    }
+
     //Notify the map's instance data.
     //Only works if you create the object in it, not if it is moves to that map.
     //Normally non-players do not teleport to other maps.
@@ -208,7 +214,7 @@ void GameObject::Update(uint32 p_time)
                             udata.BuildPacket(&packet);
                             ((Player*)caster)->GetSession()->SendPacket(&packet);
 
-                            SendGameObjectCustomAnim(GetGUID());
+                            SendGameObjectCustomAnim(GetGUID(), GetGoAnimProgress());
                         }
 
                         m_lootState = GO_READY;                 // can be successfully open with some chance
@@ -1088,7 +1094,7 @@ void GameObject::Use(Unit* user)
 
             // this appear to be ok, however others exist in addition to this that should have custom (ex: 190510, 188692, 187389)
             if (time_to_restore && info->goober.customAnim)
-                SendGameObjectCustomAnim(GetGUID());
+                SendGameObjectCustomAnim(GetGUID(), GetGoAnimProgress());
             else
                 SetGoState(GO_STATE_ACTIVE);
 
@@ -1424,6 +1430,77 @@ void GameObject::Use(Unit* user)
     spell->prepare(&targets);
 }
 
+bool GameObject::IsInRange(float x, float y, float z, float radius) const
+{
+    GameObjectDisplayInfoEntry const * info = sGameObjectDisplayInfoStore.LookupEntry(GetUInt32Value(GAMEOBJECT_DISPLAYID));
+    if(!info)
+        return IsWithinDist3d(x, y, z, radius);
+
+    float sinA = sin(GetOrientation());
+    float cosA = cos(GetOrientation());
+    float dx = x - GetPositionX();
+    float dy = y - GetPositionY();
+    float dz = z - GetPositionZ();
+    float dist = sqrt(dx*dx + dy*dy);
+    float sinB = dx / dist;
+    float cosB = dy / dist;
+    dx = dist * (cosA * cosB + sinA * sinB);
+    dy = dist * (cosA * sinB - sinA * cosB);
+    return dx < info->maxX + radius && dx > info->minX - radius
+        && dy < info->maxY + radius && dy > info->minY - radius
+        && dz < info->maxZ + radius && dz > info->minZ - radius;
+}
+
+void GameObject::TakenDamage(uint32 damage, Unit* pKiller)
+{
+    if(!m_health)
+        return;
+
+       if (m_health > damage)
+               m_health -= damage;
+       else
+               m_health = 0;
+
+       if (HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DAMAGED) && !HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DESTROYED)) // from damaged to destroyed
+       {
+               RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+               SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
+               SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->destructibleBuilding.destroyedDisplayId);
+               m_health = 0;
+       }
+    else if(!HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DAMAGED) && !HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DESTROYED))
+    {
+        SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+        SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->destructibleBuilding.damagedDisplayId);
+        if(m_goInfo->destructibleBuilding.destroyedDisplayId)
+        {
+            m_health = m_goInfo->destructibleBuilding.destroyedHealth;
+            if(!m_health)
+                m_health = 1;
+        }
+        else
+            m_health = 0;
+    }
+       
+       SetGoAnimProgress(m_health*255/(m_goInfo->destructibleBuilding.intactNumHits + m_goInfo->destructibleBuilding.damagedDisplayId));
+}
+
+void GameObject::Rebuild(Unit* pKiller)
+{
+       RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED + GO_FLAG_DESTROYED);
+       SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->displayId);
+       m_health = m_goInfo->destructibleBuilding.damagedHealth;
+       if (!pKiller)
+               return;
+       Player* unitPlayer;
+       if(pKiller->GetTypeId() == TYPEID_PLAYER)
+               unitPlayer = (Player*)pKiller;
+       else if(((Creature*)pKiller)->isVehicle())
+               unitPlayer = (Player*)pKiller->GetCharmerOrOwnerOrSelf();
+       else
+               unitPlayer = NULL;
+}
+
 // overwrite WorldObject function for proper name localization
 const char* GameObject::GetNameForLocaleIdx(int32 loc_idx) const
 {
@@ -1562,7 +1639,7 @@ float GameObject::GetObjectBoundingRadius() const
     // 1. This is clearly hack way because GameObjectDisplayInfoEntry have 6 floats related to GO sizes, but better that use DEFAULT_WORLD_OBJECT_SIZE
     // 2. In some cases this must be only interactive size, not GO size, current way can affect creature target point auto-selection in strange ways for big underground/virtual GOs
     if (GameObjectDisplayInfoEntry const* dispEntry = sGameObjectDisplayInfoStore.LookupEntry(GetGOInfo()->displayId))
-        return fabs(dispEntry->unknown12) * GetObjectScale();
+        return fabs(dispEntry->minX) * GetObjectScale();
 
     return DEFAULT_WORLD_OBJECT_SIZE;
 }
@@ -1588,7 +1665,7 @@ void GameObject::DealSiegeDamage(uint32 damage)
     }
     else // from intact to damaged
     {
-        if (uint32(m_actualHealth) <= GetGOInfo()->destructibleBuilding.damagedNumHits)
+        if (uint32(m_actualHealth) <= GetGOInfo()->destructibleBuilding.destroyedHealth)
         {
             if (!GetGOInfo()->destructibleBuilding.destroyedDisplayId)
                 m_actualHealth = 0;

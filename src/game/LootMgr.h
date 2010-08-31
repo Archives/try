@@ -117,11 +117,13 @@ struct QuestItem
 
 struct Loot;
 class LootTemplate;
+class AutoLootTemplate;
 
 typedef std::vector<QuestItem> QuestItemList;
 typedef std::map<uint32, QuestItemList *> QuestItemMap;
 typedef std::vector<LootStoreItem> LootStoreItemList;
 typedef UNORDERED_MAP<uint32, LootTemplate*> LootTemplateMap;
+typedef UNORDERED_MAP<uint32, AutoLootTemplate*> AutoLootTemplateMap;
 
 typedef std::set<uint32> LootIdSet;
 
@@ -144,6 +146,7 @@ class LootStore
         bool HaveQuestLootForPlayer(uint32 loot_id,Player* player) const;
 
         LootTemplate const* GetLootFor(uint32 loot_id) const;
+        AutoLootTemplate const* GetAutoLootFor(uint32 loot_id) const;
 
         char const* GetName() const { return m_name; }
         char const* GetEntryName() const { return m_entryName; }
@@ -153,6 +156,7 @@ class LootStore
         void Clear();
     private:
         LootTemplateMap m_LootTemplates;
+        AutoLootTemplateMap m_AutoLootTemplates;
         char const* m_name;
         char const* m_entryName;
         bool m_ratesAllowed;
@@ -177,11 +181,25 @@ class LootTemplate
         // Checks integrity of the template
         void Verify(LootStore const& store, uint32 Id) const;
         void CheckLootRefs(LootIdSet* ref_set) const;
+        LootStoreItemList GetEntries() const { return Entries; }
     private:
         LootStoreItemList Entries;                          // not grouped only
         LootGroups        Groups;                           // groups have own (optimised) processing, grouped entries go there
 };
 
+class AutoLootTemplate
+{
+    /*class  LootGroup;                                       // A set of loot definitions for items (refs are not allowed inside)
+    typedef std::vector<LootGroup> LootGroups;*/
+
+    public:
+        // Adds an entry to the group (at loading stage)
+        void AddEntry(LootStoreItem& item);
+        LootStoreItemList GetEntries() const { return Entries; }
+    private:
+        LootStoreItemList Entries;                          // not grouped only
+        //LootGroups        Groups;                           // groups have own (optimised) processing, grouped entries go there
+};
 //=====================================================
 
 class LootValidatorRef :  public Reference<Loot, LootValidatorRef>

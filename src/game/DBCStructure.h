@@ -901,10 +901,14 @@ struct GameObjectDisplayInfoEntry
 {
     uint32      Displayid;                                  // 0        m_ID
     // char* filename;                                      // 1
-    // uint32 unknown2[10];                                 // 2-11     unknown data
-    float  unknown12;                                       // 12-17    unknown size data, use first value as interact dist, mostly in hacks way
-    // float  unknown13[5];                                 // 12-17    unknown size data
-    // uint32 unknown18;                                    // 18       unknown data
+    //uint32  unk1[10];                                     // 2-11
+    float   minX;                                           // 12
+    float   minY;                                           // 13
+    float   minZ;                                           // 14
+    float   maxX;                                           // 15
+    float   maxY;                                           // 16
+    float   maxZ;                                           // 17
+    //uint32  transport;                                    // 18
 };
 
 struct GemPropertiesEntry

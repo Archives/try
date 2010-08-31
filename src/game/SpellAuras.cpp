@@ -2337,8 +2337,6 @@ void Aura::TriggerSpell()
 
                         if (roll_chance_f(chance))
                             caster->CastSpell( caster, 59566, true );
-
-                        
                     }
                 }
                 break;
@@ -2373,6 +2371,46 @@ void Aura::TriggerSpell()
                 triggerTarget->CastCustomSpell(triggerTarget, trigger_spell_id, &mana, NULL, NULL, true, NULL, this);
                 return;
             }
+        }
+    }
+
+    // some triggered spells require specific equipment
+    if (triggeredSpellInfo->EquippedItemClass >=0 && triggerTarget->GetTypeId()==TYPEID_PLAYER)
+    {
+        // main hand weapon required
+        if (triggeredSpellInfo && triggeredSpellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
+        {
+            Item* item = ((Player*)triggerTarget)->GetWeaponForAttack(BASE_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!item)
+                return;
+
+            // skip spell if weapon not fit to triggered spell
+            if (!item->IsFitToSpellRequirements(triggeredSpellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!triggerTarget->IsUseEquipedWeapon(BASE_ATTACK))
+               return;
+        }
+
+        // offhand hand weapon required
+        if (triggeredSpellInfo->AttributesEx3 & SPELL_ATTR_EX3_REQ_OFFHAND)
+        {
+            Item* item = ((Player*)triggerTarget)->GetWeaponForAttack(OFF_ATTACK, true, false);
+
+            // skip spell if no weapon in slot or broken
+            if (!item)
+                return;
+
+            // skip spell if weapon not fit to triggered spell
+            if (!item->IsFitToSpellRequirements(triggeredSpellInfo))
+                return;
+
+            // skip spell if weapon is disarmed
+            if(!triggerTarget->IsUseEquipedWeapon(OFF_ATTACK))
+               return;
         }
     }
 
@@ -2820,6 +2858,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             }
             case 58600:                                     // Restricted Flight Area
             {
+                if (m_removeMode != AURA_REMOVE_BY_EXPIRE)
+                    return;
+
                 // Remove Flight Auras
                 target->CastSpell(target, 58601, true);
                 // Parachute
@@ -4283,7 +4324,8 @@ void Aura::HandleModPossessPet(bool apply, bool Real)
         pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
         pet->AttackStop();
-        pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        if (pet->isPet())
+            pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, ((Pet*)pet)->GetPetFollowAngle());
         pet->AddSplineFlag(SPLINEFLAG_WALKMODE);
     }
 }
@@ -5503,6 +5545,30 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
     SpellEntry const*spell = GetSpellProto();
     switch( spell->SpellFamilyName)
     {
+        case SPELLFAMILY_GENERIC:
+        {
+            if (spell->Id == 62717 ||                       // Slag Pot
+                spell->Id == 63477)                         // Slag Pot(h)
+            {
+                Unit *target = GetTarget();
+                if (!target)
+                    return;
+                
+                // leaving vehicle
+                if (!apply)
+                {
+                    target->ExitVehicle();
+                    if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    {
+                        // cast Slag Imbued on target
+                        target->CastSpell(target, 63536, true);
+                        // TODO: complete achievement part
+                    }
+                 }
+
+            }
+            break;
+        }
         case SPELLFAMILY_ROGUE:
         {
             switch(spell->Id)
@@ -8921,21 +8987,17 @@ void Aura::PeriodicDummyTick()
                     return;
                 }
                 case 62717:                                 // Slag Pot
-                {
-                    Unit* caster = GetCaster();
-                    if (!caster)
-                        return;
-
-                    caster->CastSpell(m_target, 65722, true);
-                    return;
-                }
                 case 63477:                                 // Slag Pot(h)
                 {
                     Unit* caster = GetCaster();
                     if (!caster)
                         return;
 
-                    caster->CastSpell(m_target, 65723, true);
+                    // placing Slag Pot dot
+                    if (spell->Id == 62717)
+                        caster->CastSpell(m_target, 65722, true);
+                    else 
+                        caster->CastSpell(m_target, 65723, true);
                     return;
                 }
 // Exist more after, need add later

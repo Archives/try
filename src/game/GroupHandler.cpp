@@ -216,13 +216,13 @@ void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
     if (!group->AddMember(GetPlayer()->GetGUID(), GetPlayer()->GetName()))
         return;
 
+    //Must send here...
+    if(group->isLfgGroup())
+        group->SendUpdate();
+
     //Re-check group if in Lfg
     if (!_player->m_lookingForGroup.queuedDungeons.empty())
-    {
         sLfgMgr.RemoveFromQueue(_player);
-		if (group->GetMembersCount() != 5)
-        	sLfgMgr.AddToQueue(_player);
-    }
 }
 
 void WorldSession::HandleGroupDeclineOpcode( WorldPacket & /*recv_data*/ )
@@ -279,10 +279,7 @@ void WorldSession::HandleGroupUninviteGuidOpcode(WorldPacket & recv_data)
         {
             Player::RemoveFromGroup(grp,guid);
             if (!_player->m_lookingForGroup.queuedDungeons.empty())
-            {
                 sLfgMgr.RemoveFromQueue(_player, false);
-                sLfgMgr.AddToQueue(_player);
-            }
         }
         return;
     }
@@ -331,10 +328,7 @@ void WorldSession::HandleGroupUninviteOpcode(WorldPacket & recv_data)
         {
             Player::RemoveFromGroup(grp,guid);
             if (!_player->m_lookingForGroup.queuedDungeons.empty())
-            {
                 sLfgMgr.RemoveFromQueue(_player, false);
-                sLfgMgr.AddToQueue(_player);
-            }
         }
         return;
     }
