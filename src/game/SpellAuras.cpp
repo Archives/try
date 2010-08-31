@@ -5542,6 +5542,30 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
     SpellEntry const*spell = GetSpellProto();
     switch( spell->SpellFamilyName)
     {
+        case SPELLFAMILY_GENERIC:
+        {
+            if (spell->Id == 62717 ||                       // Slag Pot
+                spell->Id == 63477)                         // Slag Pot(h)
+            {
+                Unit *target = GetTarget();
+                if (!target)
+                    return;
+                
+                // leaving vehicle
+                if (!apply)
+                {
+                    target->ExitVehicle();
+                    if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    {
+                        // cast Slag Imbued on target
+                        target->CastSpell(target, 63536, true);
+                        // TODO: complete achievement part
+                    }
+                 }
+
+            }
+            break;
+        }
         case SPELLFAMILY_ROGUE:
         {
             switch(spell->Id)
@@ -8960,21 +8984,17 @@ void Aura::PeriodicDummyTick()
                     return;
                 }
                 case 62717:                                 // Slag Pot
-                {
-                    Unit* caster = GetCaster();
-                    if (!caster)
-                        return;
-
-                    caster->CastSpell(m_target, 65722, true);
-                    return;
-                }
                 case 63477:                                 // Slag Pot(h)
                 {
                     Unit* caster = GetCaster();
                     if (!caster)
                         return;
 
-                    caster->CastSpell(m_target, 65723, true);
+                    // placing Slag Pot dot
+                    if (spell->Id == 62717)
+                        caster->CastSpell(m_target, 65722, true);
+                    else 
+                        caster->CastSpell(m_target, 65723, true);
                     return;
                 }
 // Exist more after, need add later
