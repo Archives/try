@@ -4073,9 +4073,15 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
              // Freezing Trap & Freezing Arrow & Wyvern Sting
             if  (spellproto->SpellIconID == 180 || (spellproto->SpellIconID == 1721 && spellproto->SpellFamilyFlags & UI64LIT(0x0000100000000000)))
                 return DIMINISHING_DISORIENT;
+            // Hunter's Mark
+            if (spellProto->SpellFamilyFlags & UI64LIT(0x400))
+                return DIMINISHING_LIMITONLY;
         }
         case SPELLFAMILY_WARLOCK:
         {
+            // Warlock Curses
+            if (spellProto->Dispel == DISPEL_CURSE)
+                return DIMINISHING_LIMITONLY;
             // Curses/etc
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00080000000))
                 return DIMINISHING_LIMITONLY;
