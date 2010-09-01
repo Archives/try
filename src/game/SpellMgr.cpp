@@ -4175,6 +4175,9 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             // Banish
             if (spellproto->SpellFamilyFlags & UI64LIT(0x0800000000000000))
                 return 6000;
+            // Warlock Curses
+            if (spellProto->Dispel == DISPEL_CURSE)
+                return 120000;
             break;
         }
         case SPELLFAMILY_HUNTER:
@@ -4182,6 +4185,9 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             // Wyvern Sting
             if (spellproto->SpellFamilyFlags & UI64LIT(0x0000100000000000))
                 return 6000;
+            // Hunter's Mark
+            if (spellProto->SpellFamilyFlags & UI64LIT(0x400))
+                return 120000;
             break;
         }
         case SPELLFAMILY_PALADIN:
