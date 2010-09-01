@@ -626,7 +626,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                                     unitTarget->RemoveSingleSpellAurasByCasterSpell(spellId, m_caster->GetGUID());
 
                             damage *= doses;
-                            damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * doses);
+                            // based on comments, attack power bonus is calculated by number of combo points, not by number of consumed stacks of poison...
+                            damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * combo);
                         }
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if (m_caster->GetDummyAura(37169))
