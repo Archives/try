@@ -1552,6 +1552,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 38794:                                 // Murmur's Touch (h)
                 case 50988:                                 // Glare of the Tribunal (Halls of Stone)
                 case 59870:                                 // Glare of the Tribunal (h) (Halls of Stone)
+                case 63018:                                 // Searing Light (XT-002)
+                case 65121:                                 // Searing Light (h) (XT-002)
+                case 63024:                                 // Gravity Bomb (XT-002)
+                case 64234:                                 // Gravity Bomb (h) (XT-002)
                     unMaxTargets = 1;
                     break;
                 case 28542:                                 // Life Drain
@@ -2096,7 +2100,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         {
             // Check original caster is GO - set its coordinates as dst cast
             if (WorldObject *caster = GetCastingObject())
+            {
                 m_targets.setDestination(caster->GetPositionX(), caster->GetPositionY(), caster->GetPositionZ());
+                if (m_spellInfo->EffectImplicitTargetB[effIndex] == TARGET_AREAEFFECT_INSTANT)
+                    FillAreaTargets(targetUnitMap, caster->GetPositionX(), caster->GetPositionY(), radius, PUSH_TARGET_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            }
             break;
         }
         case TARGET_ALL_HOSTILE_UNITS_AROUND_CASTER:
