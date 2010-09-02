@@ -1289,8 +1289,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetWeaponProficiency() const { return m_WeaponProficiency; }
         uint32 GetArmorProficiency() const { return m_ArmorProficiency; }
 
-        bool RewardCurrency(uint32 itemid, uint8 count);
-
         bool IsWeaponDisarmed(uint8 slot)
         {
             bool IsDisarmed = false;
