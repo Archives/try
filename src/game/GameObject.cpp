@@ -1457,16 +1457,16 @@ void GameObject::TakenDamage(uint32 damage, Unit* pKiller)
         return;
 
        if (m_health > damage)
-               m_health -= damage;
+           m_health -= damage;
        else
-               m_health = 0;
+           m_health = 0;
 
        if (HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DAMAGED) && !HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DESTROYED)) // from damaged to destroyed
        {
-               RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
-               SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
-               SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->destructibleBuilding.destroyedDisplayId);
-               m_health = 0;
+           RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
+           SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
+           SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->destructibleBuilding.destroyedDisplayId);
+           m_health = 0;
        }
     else if(!HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DAMAGED) && !HasFlag(GAMEOBJECT_FLAGS,GO_FLAG_DESTROYED))
     {
@@ -1490,15 +1490,17 @@ void GameObject::Rebuild(Unit* pKiller)
        RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED + GO_FLAG_DESTROYED);
        SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->displayId);
        m_health = m_goInfo->destructibleBuilding.damagedHealth;
-       if (!pKiller)
-               return;
+	   
+	   if (!pKiller)
+		   return;
+
        Player* unitPlayer;
-       if(pKiller->GetTypeId() == TYPEID_PLAYER)
-               unitPlayer = (Player*)pKiller;
+       if (pKiller->GetTypeId() == TYPEID_PLAYER)
+		   unitPlayer = (Player*)pKiller;
        else if(((Creature*)pKiller)->isVehicle())
-               unitPlayer = (Player*)pKiller->GetCharmerOrOwnerOrSelf();
+		   unitPlayer = (Player*)pKiller->GetCharmerOrOwnerOrSelf();
        else
-               unitPlayer = NULL;
+		   unitPlayer = NULL;
 }
 
 // overwrite WorldObject function for proper name localization
