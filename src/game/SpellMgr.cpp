@@ -4074,13 +4074,13 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             if  (spellproto->SpellIconID == 180 || (spellproto->SpellIconID == 1721 && spellproto->SpellFamilyFlags & UI64LIT(0x0000100000000000)))
                 return DIMINISHING_DISORIENT;
             // Hunter's Mark
-            if (spellProto->SpellFamilyFlags & UI64LIT(0x400))
+            if (spellproto->SpellFamilyFlags & UI64LIT(0x400))
                 return DIMINISHING_LIMITONLY;
         }
         case SPELLFAMILY_WARLOCK:
         {
             // Warlock Curses
-            if (spellProto->Dispel == DISPEL_CURSE)
+            if (spellproto->Dispel == DISPEL_CURSE)
                 return DIMINISHING_LIMITONLY;
             // Curses/etc
             if (spellproto->SpellFamilyFlags & UI64LIT(0x00080000000))
@@ -4182,7 +4182,7 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             if (spellproto->SpellFamilyFlags & UI64LIT(0x0800000000000000))
                 return 6000;
             // Warlock Curses
-            if (spellProto->Dispel == DISPEL_CURSE)
+            if (spellproto->Dispel == DISPEL_CURSE)
                 return 120000;
             break;
         }
@@ -4192,7 +4192,7 @@ int32 GetDiminishingReturnsLimitDuration(DiminishingGroup group, SpellEntry cons
             if (spellproto->SpellFamilyFlags & UI64LIT(0x0000100000000000))
                 return 6000;
             // Hunter's Mark
-            if (spellProto->SpellFamilyFlags & UI64LIT(0x400))
+            if (spellproto->SpellFamilyFlags & UI64LIT(0x400))
                 return 120000;
             break;
         }

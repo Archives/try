@@ -3567,18 +3567,18 @@ float Unit::GetUnitCriticalChance(WeaponAttackType attackType, const Unit *pVict
     crit += (int32(GetMaxSkillValueForLevel(pVictim)) - int32(pVictim->GetDefenseSkillValue(this))) * 0.04f;
 
     // freaky hack for Master Poisoner :P (applies aura SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE, but the triggered spell does not exist...)
-    Unit::AuraList const& auraList = GetAurasByType(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL);
-    for(Unit::AuraList::const_iterator iter = auraList.begin(); iter!=auraList.end(); ++iter)
+    AuraList const& auraList = GetAurasByType(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL);
+    for(AuraList::const_iterator iter = auraList.begin(); iter!=auraList.end(); ++iter)
     {
         if ((*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE && (*iter)->GetSpellProto()->SpellIconID == 1960)
         {
-            Unit::AuraMap& auras = pVictim->GetAuras();
-            for(Unit::AuraMap::iterator itr = auras.begin(); itr != auras.end(); ++itr)
+            AuraMap const& auras = pVictim->GetAuras();
+            for(AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
             {
                 if (itr->second->GetSpellProto()->Dispel == DISPEL_POISON && 
                     itr->second->GetCasterGUID() == GetGUID())
                 {
-                    crit += (*itr)->GetModifier()->m_amount;
+                    crit += itr->second->GetModifier()->m_amount;
                     break;
                 }
             }
