@@ -118,4 +118,38 @@ void SpellMgr::ApplySpellHacks()
     SpellEntry *sfix15 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(65045));
     sfix15->EffectImplicitTargetA[EFFECT_INDEX_0] = 8;
     sfix15->EffectImplicitTargetB[EFFECT_INDEX_0] = 0;
+
+    // Searing Light - implicit target change
+    SpellEntry *sfix16 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(63023));
+    sfix16->EffectImplicitTargetA[EFFECT_INDEX_0] = 53;
+    sfix16->EffectImplicitTargetB[EFFECT_INDEX_0] = 16;
+
+    // Searing Light (h) - implicit target change
+    SpellEntry *sfix17 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(65120));
+    sfix17->EffectImplicitTargetA[EFFECT_INDEX_0] = 53;
+    sfix17->EffectImplicitTargetB[EFFECT_INDEX_0] = 16;
+
+    // Gravity Bomb - implicit target change
+    SpellEntry *sfix18 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(63025));
+    sfix18->EffectImplicitTargetA[EFFECT_INDEX_0] = 53;
+    sfix18->EffectImplicitTargetB[EFFECT_INDEX_0] = 16;
+    sfix18->EffectImplicitTargetA[EFFECT_INDEX_1] = 53;
+    sfix18->EffectImplicitTargetB[EFFECT_INDEX_1] = 16;
+
+    // Gravity Bomb (h) - implicit target change
+    SpellEntry *sfix19 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(64233));
+    sfix19->EffectImplicitTargetA[EFFECT_INDEX_0] = 53;
+    sfix19->EffectImplicitTargetB[EFFECT_INDEX_0] = 16;
+    sfix19->EffectImplicitTargetA[EFFECT_INDEX_1] = 53;
+    sfix19->EffectImplicitTargetB[EFFECT_INDEX_1] = 16;
+
+    // Searing Flames - make it interruptable spell
+    SpellEntry *sfix20 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62661));
+    sfix20->InterruptFlags = 13;
+    
+    // Supercharge - should hit only allies
+    SpellEntry *sfix21 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(61920));
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_0] = 31;
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_1] = 31;
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_2] = 31;
 }

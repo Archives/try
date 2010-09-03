@@ -787,8 +787,6 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
             if (Player* recipient = ((Creature*)pVictim)->GetOriginalLootRecipient())
                 player_tap = recipient;
-
-            RewardCurrenciesAtKillCreature((Creature*)pVictim, player_tap, group_tap);
         }
         // in player kill case group tap selected by player_tap (killer-player itself, or charmer, or owner, etc)
         else
@@ -830,7 +828,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             else if (player_tap)
                 player_tap->RewardSinglePlayerAtKill(pVictim);
         }
-        
+
         DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageAttackStop");
 
         // stop combat
@@ -3568,6 +3566,25 @@ float Unit::GetUnitCriticalChance(WeaponAttackType attackType, const Unit *pVict
     // Apply crit chance from defence skill
     crit += (int32(GetMaxSkillValueForLevel(pVictim)) - int32(pVictim->GetDefenseSkillValue(this))) * 0.04f;
 
+    // freaky hack for Master Poisoner :P (applies aura SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE, but the triggered spell does not exist...)
+    AuraList const& auraList = GetAurasByType(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL);
+    for(AuraList::const_iterator iter = auraList.begin(); iter!=auraList.end(); ++iter)
+    {
+        if ((*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_ROGUE && (*iter)->GetSpellProto()->SpellIconID == 1960)
+        {
+            AuraMap const& auras = pVictim->GetAuras();
+            for(AuraMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+            {
+                if (itr->second->GetSpellProto()->Dispel == DISPEL_POISON && 
+                    itr->second->GetCasterGUID() == GetGUID())
+                {
+                    crit += itr->second->GetModifier()->m_amount;
+                    break;
+                }
+            }
+            break;
+        }
+    }
     // we need to keep this non-capped by null, because of further calculations in IsSpellCrit()
     return crit;
 }
@@ -6647,14 +6664,22 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
                 if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x00100000), NULL))
                     if (Aura *aur = GetAura(55692, EFFECT_INDEX_0))
                         DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f;
+                break;
             }
             // Glyph of Mind Flay 
-            else if (spellProto->Id == 58381) 
+            if (spellProto->Id == 58381) 
             { 
                 //Shadow Word Pain 
                 if (pVictim->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, UI64LIT(0x0008000), NULL)) 
                     if (Aura *aur = GetAura(55687, EFFECT_INDEX_0)) 
                         DoneTotalMod *= (aur->GetModifier()->m_amount+100.0f) / 100.0f; 
+                break;
+            }
+            // Improved Devouring Plague proc
+            if (spellProto->Id == 63675)
+            {
+                // no calculation for this
+                return pdamage;
             }
             break;
         }
@@ -12176,43 +12201,4 @@ void Unit::SheduleAINotify(uint32 delay)
 
     RelocationNotifyEvent *notify = new RelocationNotifyEvent(*this);
     m_Events.AddEvent(notify, m_Events.CalculateTime(delay));
-}
-
-void Unit::RewardCurrenciesAtKillCreature(Creature* creature, Player* player, Group* group)
-{
-    uint32 lootid = creature->GetCreatureInfo()->lootid;
-    if (!lootid)
-        return;
-    
-    AutoLootTemplate const* tab = LootTemplates_Creature.GetAutoLootFor(lootid);
-    
-    for (LootStoreItemList::const_iterator i = tab->GetEntries().begin(); i != tab->GetEntries().end(); ++i )
-    {
-        uint32 item_id = i->itemid;
-        ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(item_id);
-        if (!pProto || pProto->Class != ITEM_CLASS_MONEY)
-            continue;
-
-        if (!roll_chance_i(i->chance))
-            continue;
-
-        uint8 count = urand(i->mincountOrRef, i->maxcount);
-                
-        if (group)
-        {
-            for(GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
-            {
-                Player* plr = itr->getSource();
-                if (!plr)
-                    continue;
-
-                if (!plr->IsAtGroupRewardDistance(creature))
-                    continue;
-
-                plr->RewardCurrency(item_id, count);
-            }
-        }
-        else if (player)
-            player->RewardCurrency(item_id, count);
-    }
 }
