@@ -60,6 +60,7 @@ bool ChatHandler::HandleReloadAllCommand(const char*)
 
     HandleReloadAllAchievementCommand("");
     HandleReloadAllAreaCommand("");
+    HandleReloadBroadCastCommand("");
     HandleReloadAllEventAICommand("");
     HandleReloadAllLootCommand("");
     HandleReloadAllNpcCommand("");
@@ -248,6 +249,14 @@ bool ChatHandler::HandleReloadAreaTriggerTeleportCommand(const char*)
     sLog.outString( "Re-Loading AreaTrigger teleport definitions..." );
     sObjectMgr.LoadAreaTriggerTeleports();
     SendGlobalSysMessage("DB table `areatrigger_teleport` reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadBroadCastCommand(const char* args)
+{
+    sLog.outString( "Re-Loading BroadCast Messages..." );
+    sWorld.LoadBroadCastMessages();
+    SendGlobalSysMessage("DB table `broadcast_messages` reloaded.");
     return true;
 }
 
@@ -6562,5 +6571,56 @@ bool ChatHandler::HandleModifyGenderCommand(const char *args)
     if (needReportToTarget(player))
         ChatHandler(player).PSendSysMessage(LANG_YOUR_GENDER_CHANGED, gender_full, GetNameLink().c_str());
 
+    return true;
+}
+
+bool ChatHandler::HandleBroadCastListCommand(const char* args)
+{
+    if(sWorld.GetBroadCastMessages()->empty())
+    {
+        SendSysMessage("No broadcast messages.");
+        return true;
+    }
+    SendSysMessage("Found these broadcast messages: ");
+    for(BroadCastSet::iterator itr = sWorld.GetBroadCastMessages()->begin(); itr != sWorld.GetBroadCastMessages()->end(); ++itr)
+        PSendSysMessage("ID %u: %s (interval: %u min, %u left)", (*itr)->Id, (*itr)->text, (*itr)->RepeatMins, (*itr)->timeLeft); 
+    SendSysMessage("You can use \".broadcast send *ID*\" to send message");
+    return true;
+}
+
+bool ChatHandler::HandleBroadCastSendCommand(const char* args)
+{
+    if (!*args || !isNumeric(args))
+        return false;
+
+    uint32 id = atoi(args);
+    for(BroadCastSet::iterator itr = sWorld.GetBroadCastMessages()->begin(); itr != sWorld.GetBroadCastMessages()->end(); ++itr)
+    {
+        if((*itr)->Id != id)
+            continue;
+        sWorld.SendWorldText(LANG_SYSTEMMESSAGE,(*itr)->text);
+        PSendSysMessage("Message \"%s\" sent.", (*itr)->text);
+        return true;
+    }
+    PSendSysMessage("Message %u not found.", id);
+    return true;
+}
+
+bool ChatHandler::HandleBroadCastResetTimerCommand(const char* args)
+{
+    if (!*args || !isNumeric(args))
+        return false;
+
+    uint32 id = atoi(args);
+    for(BroadCastSet::iterator itr = sWorld.GetBroadCastMessages()->begin(); itr != sWorld.GetBroadCastMessages()->end(); ++itr)
+    {
+        if((*itr)->Id != id)
+            continue;
+        
+        PSendSysMessage("Timer for message \"%s\" has been reset from %u to %u minutes.", (*itr)->text, (*itr)->timeLeft, (*itr)->RepeatMins);
+        (*itr)->timeLeft = (*itr)->RepeatMins;
+        return true;
+    }
+    PSendSysMessage("Message %u not found.", id);
     return true;
 }

@@ -79,7 +79,8 @@ enum WorldTimers
     WUPDATE_CORPSES     = 5,
     WUPDATE_EVENTS      = 6,
     WUPDATE_DELETECHARS = 7,
-    WUPDATE_COUNT       = 8
+    WUPDATE_BROADCAST   = 8,
+    WUPDATE_COUNT       = 9
 };
 
 /// Configuration elements
@@ -474,6 +475,18 @@ struct CliCommandHolder
     ~CliCommandHolder() { delete[] m_command; }
 };
 
+/// Broadcast structure
+struct BroadCastMessage
+{
+    uint32 Id;
+    uint32 RepeatMins;
+    uint32 timeLeft;   // not in db
+    const char *text;
+    //bool enabled;    //in db only
+};
+
+typedef std::set<BroadCastMessage*> BroadCastSet;
+
 /// The World
 class World
 {
@@ -639,6 +652,10 @@ class World
         
         ACE_Thread_Mutex m_spellUpdateLock;
 
+        void LoadBroadCastMessages();
+        void UpdateBroadCast();
+        BroadCastSet *GetBroadCastMessages() { return &m_broadcastMessages; }
+
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -734,6 +751,8 @@ class World
         std::string m_DBVersion;
         std::string m_CreatureEventAIVersion;
         std::string m_ScriptsVersion;
+
+        BroadCastSet m_broadcastMessages;
 };
 
 extern uint32 realmID;

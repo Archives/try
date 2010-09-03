@@ -119,6 +119,10 @@ class ChatHandler
         bool HandleBanListCharacterCommand(const char* args);
         bool HandleBanListIPCommand(const char* args);
 
+        bool HandleBroadCastListCommand(const char* args);
+        bool HandleBroadCastSendCommand(const char* args);
+        bool HandleBroadCastResetTimerCommand(const char* args);
+
         bool HandleCastCommand(const char *args);
         bool HandleCastBackCommand(const char *args);
         bool HandleCastDistCommand(const char *args);
@@ -338,6 +342,7 @@ class ChatHandler
         bool HandleReloadAchievementRewardCommand(const char* args);
         bool HandleReloadAreaTriggerTavernCommand(const char* args);
         bool HandleReloadAreaTriggerTeleportCommand(const char* args);
+        bool HandleReloadBroadCastCommand(const char* args);
         bool HandleReloadEventScriptsCommand(const char* args);
         bool HandleReloadEventAITextsCommand(const char* args);
         bool HandleReloadEventAISummonsCommand(const char* args);

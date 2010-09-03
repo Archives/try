@@ -1305,6 +1305,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading CreatureEventAI Scripts...");
     sEventAIMgr.LoadCreatureEventAI_Scripts();
 
+    sLog.outString( "Loading BroadCast messages..." );
+    LoadBroadCastMessages();
+
     sLog.outString( "Initializing Scripts..." );
     if (!LoadScriptingModule())
     {
@@ -1336,6 +1339,7 @@ void World::SetInitialWorldSettings()
                                                             //Update "uptime" table based on configuration entry in minutes.
     m_timers[WUPDATE_CORPSES].SetInterval(3*HOUR*IN_MILLISECONDS);
     m_timers[WUPDATE_DELETECHARS].SetInterval(DAY*IN_MILLISECONDS); // check for chars to delete every day
+    m_timers[WUPDATE_BROADCAST].SetInterval(MINUTE*IN_MILLISECONDS);
 
     //to set mailtimer to return mails every day between 4 and 5 am
     //mailtimer is increased when updating auctions
@@ -1559,6 +1563,13 @@ void World::Update(uint32 diff)
         uint32 nextGameEvent = sGameEventMgr.Update();
         m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);
         m_timers[WUPDATE_EVENTS].Reset();
+    }
+
+    /// - Broadcast
+    if (m_timers[WUPDATE_BROADCAST].Passed())
+    {
+        m_timers[WUPDATE_BROADCAST].Reset();
+        UpdateBroadCast();
     }
 
     /// </ul>
@@ -2341,4 +2352,64 @@ bool World::configNoReload(bool reload, eConfigBoolValues index, char const* fie
         sLog.outError("%s option can't be changed at mangosd.conf reload, using current value (%s).", fieldname, getConfig(index) ? "'true'" : "'false'");
 
     return false;
+}
+
+void World::LoadBroadCastMessages()
+{
+    // In case of reload
+    for(BroadCastSet::iterator itr = m_broadcastMessages.begin(); itr != m_broadcastMessages.end(); +itr)
+        delete *itr;
+    m_broadcastMessages.clear();
+
+    uint32 count = 0;
+    //                                                0   1           2   
+    QueryResult *result = WorldDatabase.Query("SELECT ID, RepeatMins, text FROM broadcast_messages WHERE enabled = 1");
+
+    if ( !result )
+    {
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u automatic broadcast messages.", count );
+        return;
+    }
+
+    barGoLink bar( (int)result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+        
+        BroadCastMessage *message = new BroadCastMessage();
+        message->Id                   = fields[0].GetUInt32();
+        message->RepeatMins           = fields[1].GetUInt32();
+        message->timeLeft             = fields[1].GetUInt32();
+        message->text                 = fields[2].GetString();
+
+        m_broadcastMessages.insert(message);
+        ++count;
+    } while( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u automatic broadcast messages.", count );
+}
+
+void World::UpdateBroadCast()
+{
+    for(BroadCastSet::iterator itr = m_broadcastMessages.begin(); itr != m_broadcastMessages.end(); +itr)
+    {
+        --(*itr)->timeLeft;
+        if((*itr)->timeLeft)
+            continue;
+
+        (*itr)->timeLeft = (*itr)->RepeatMins;
+
+        SendWorldText(LANG_SYSTEMMESSAGE,(*itr)->text);
+    }
 }

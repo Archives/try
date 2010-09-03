@@ -93,6 +93,14 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand broadcastCommandTable[] =
+    {
+        { "list",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleBroadCastListCommand,       "", NULL },
+        { "send",           SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleBroadCastSendCommand,       "", NULL },
+        { "reset",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleBroadCastResetTimerCommand, "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    }
+
     static ChatCommand baninfoCommandTable[] =
     {
         { "account",        SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleBanInfoAccountCommand,      "", NULL },
@@ -428,6 +436,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "areatrigger_involvedrelation",SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadQuestAreaTriggersCommand,       "", NULL },
         { "areatrigger_tavern",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadAreaTriggerTavernCommand,       "", NULL },
         { "areatrigger_teleport",        SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadAreaTriggerTeleportCommand,     "", NULL },
+        { "broadcast_messages",          SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadBroadCastCommand,               "", NULL },
         { "command",                     SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadCommandCommand,                 "", NULL },
         { "creature_ai_scripts",         SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadEventAIScriptsCommand,          "", NULL },
         { "creature_ai_summons",         SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadEventAISummonsCommand,          "", NULL },
@@ -627,6 +636,7 @@ ChatCommand * ChatHandler::getCommandTable()
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
+        { "broadcast",      SEC_ADMINISTRATOR,  true,  NULL,                                           "", broadcastCommandTable},
         { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                           "", castCommandTable     },
         { "character",      SEC_GAMEMASTER,     true,  NULL,                                           "", characterCommandTable},
         { "debug",          SEC_MODERATOR,      true,  NULL,                                           "", debugCommandTable    },
