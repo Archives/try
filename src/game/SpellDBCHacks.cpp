@@ -146,4 +146,10 @@ void SpellMgr::ApplySpellHacks()
     // Searing Flames - make it interruptable spell
     SpellEntry *sfix20 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(62661));
     sfix20->InterruptFlags = 13;
+    
+    // Supercharge - should hit only allies
+    SpellEntry *sfix21 = const_cast<SpellEntry*>(sSpellStore.LookupEntry(61920));
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_0] = 31;
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_1] = 31;
+    sfix21->EffectImplicitTargetB[EFFECT_INDEX_2] = 31;
 }
