@@ -88,9 +88,11 @@ bool LfgGroup::AddMember(const uint64 &guid, const char* name)
     MemberSlot member;
     member.guid      = guid;
     member.name      = name;
-    member.group     = 1;
+    member.group     = 0;
     member.assistant = false;
     m_memberSlots.push_back(member);
+
+    SubGroupCounterIncrease(0);
    
     player->m_lookingForGroup.groups.insert(std::pair<uint32, LfgGroup*>(m_dungeonInfo->ID,this));
     return true;
@@ -151,12 +153,6 @@ uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
 
 bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after check
 {
-    //Hack wtf?
-    LfgGroup *tato2 = this;
-    LfgGroup **tato = &tato2;
-    uint64 adress = uint64(tato);
-    if (!this || adress == 0x1 ||  m_memberSlots.empty())
-
     if (m_memberSlots.empty())
     {
         sLfgMgr.AddGroupToDelete(this);
@@ -198,7 +194,7 @@ void LfgGroup::KilledCreature(Creature *creature)
         for (GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player *plr = itr->getSource();
-            if (!plr)
+            if (!plr || !plr->IsInWorld())
                 continue;
             WorldPacket data(SMSG_LFG_PLAYER_REWARD);
             data << uint32(randomDungeonEntry == 0 ? m_dungeonInfo->Entry() : randomDungeonEntry);

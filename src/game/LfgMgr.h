@@ -274,7 +274,12 @@ class MANGOS_DLL_SPEC LfgMgr
         uint32 GenerateLfgGroupId() { m_groupids++; return m_groupids; }
         LfgGroup *GetLfgGroupById(uint32 groupid);
      //   GroupsList *GetInDungeonGroups(uint8 faction) { return &inDungeonGroups[faction]; }
-        void AddGroupToDelete(LfgGroup *group);
+        void AddGroupToDelete(LfgGroup *group)
+        {  
+            //Add to erase list
+            groupsForDelete.insert(group);
+        }
+        void DeleteGroups();
         void AddCheckedGroup(LfgGroup *group, bool toQueue);
         void AddVoteKickGroup(LfgGroup *group) { voteKickGroups.insert(group); }
 

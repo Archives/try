@@ -88,7 +88,7 @@ void LfgMgr::Update(uint32 diff)
     else m_updateProposalTimer -= diff;
 
     //Delete invalid groups
-    if (m_deleteInvalidTimer <= diff)
+  /*  if (m_deleteInvalidTimer <= diff)
     {
         for(GroupsList::iterator itr = groupsForDelete.begin(); itr != groupsForDelete.end(); ++itr)
         {
@@ -97,7 +97,8 @@ void LfgMgr::Update(uint32 diff)
             groupsForDelete.erase(itr);
         }
         m_deleteInvalidTimer = LFG_TIMER_DELETE_INVALID_GROUPS;
-    }else m_deleteInvalidTimer -= diff;
+    }else m_deleteInvalidTimer -= diff;*/
+
 }
 
 void LfgMgr::AddToQueue(Player *player, bool updateQueue)
@@ -324,9 +325,10 @@ void LfgMgr::UpdateQueues()
         for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end(); ++itr)
         {
             //Remove somehow unaviable players
-            if (!itr->second->groups.empty())
-                for(GroupsList::iterator grpitr1 = itr->second->groups.begin(); grpitr1 != itr->second->groups.end(); ++grpitr1)
-                    (*grpitr1)->RemoveOfflinePlayers();
+            for(GroupsList::iterator offitr = itr->second->groups.begin(); offitr != itr->second->groups.end(); ++offitr)
+                (*offitr)->RemoveOfflinePlayers();
+            DeleteGroups();
+
             //First, try to merge groups
             for(GroupsList::iterator grpitr1 = itr->second->groups.begin(); grpitr1 != itr->second->groups.end(); ++grpitr1)
             {
@@ -628,6 +630,7 @@ void LfgMgr::UpdateQueues()
 }
 void LfgMgr::UpdateFormedGroups()
 {
+    GroupsList removeFromFormed;
     for(int i = 0; i < MAX_LFG_FACTION; ++i)
     {
         GroupsList::iterator grpitr, grpitr_next;
@@ -675,7 +678,7 @@ void LfgMgr::UpdateFormedGroups()
                     m_queuedDungeons[i].insert(std::pair<uint32, QueuedDungeonInfo*>(newInfo->dungeonInfo->ID, newInfo));
                 }
                 (*grpitr)->ResetGroup();
-                formedGroups[i].erase(*grpitr);
+                removeFromFormed.insert(*grpitr);
 
                 if (sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE))
                     UpdateQueues();
@@ -727,8 +730,7 @@ void LfgMgr::UpdateFormedGroups()
                     }
                     (*grpitr)->ResetGroup();
 
-                    //delete *grpitr;
-                    formedGroups[i].erase(*grpitr);
+                    removeFromFormed.insert(*grpitr);
                     if (sWorld.getConfig(CONFIG_BOOL_LFG_IMMIDIATE_QUEUE_UPDATE))
                         UpdateQueues();
                 }
@@ -747,11 +749,15 @@ void LfgMgr::UpdateFormedGroups()
                         SendLfgUpdateParty(member, LFG_UPDATETYPE_REMOVED_FROM_QUEUE);       
                     }
                     (*grpitr)->TeleportToDungeon();
-                    formedGroups[i].erase(*grpitr);
+                    removeFromFormed.insert(*grpitr);
                 }
             }
         }
+        for(GroupsList::iterator itr = removeFromFormed.begin(); itr != removeFromFormed.end(); ++itr)
+            formedGroups[i].erase(*itr);
+        removeFromFormed.clear();
     }
+    DeleteGroups();
 }
 
 void LfgMgr::SendLfgPlayerInfo(Player *plr)
@@ -1168,18 +1174,22 @@ uint32 LfgMgr::GetAvgWaitTime(uint32 dugeonId, uint8 slot, uint8 roles)
         }
     }
 }
-void LfgMgr::AddGroupToDelete(LfgGroup *group)
-{
-    //Remove from any other list
-    for(int i = 0; i < MAX_LFG_FACTION; ++i)
-    {
-        for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end(); ++itr)
-            itr->second->groups.erase(group);
 
-        formedGroups[i].erase(group);
+void LfgMgr::DeleteGroups()
+{
+    for(GroupsList::iterator group = groupsForDelete.begin(); group != groupsForDelete.end(); ++group)
+    {
+        for(int i = 0; i < MAX_LFG_FACTION; ++i)
+        {
+            for(QueuedDungeonsMap::iterator itr = m_queuedDungeons[i].begin(); itr != m_queuedDungeons[i].end(); ++itr)
+                itr->second->groups.erase(*group);
+
+            formedGroups[i].erase(*group);
+        }
+        (*group)->Disband(true);
+        delete *group;
     }
-    //Add to erase list
-    groupsForDelete.insert(group);
+    groupsForDelete.clear();
 }
 
 void LfgMgr::RemovePlayer(Player *player)
