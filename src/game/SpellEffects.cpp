@@ -4251,6 +4251,9 @@ void Spell::DoSummon(SpellEffectIndex eff_idx)
             return;
     }
     else
+        delete spawnCreature;
+
+    for (int32 count = 0; count < amount; ++count)
     {
         Pet* creature = new Pet(SUMMON_PET);
         Map *map = m_caster->GetMap();
@@ -4334,8 +4337,6 @@ void Spell::DoSummon(SpellEffectIndex eff_idx)
 
         summoner->SetPet(creature);
 
-        // toto si voprav
-        uint32 count = COJAKURVAVIMKOLIK/*?*/;
         if (m_caster->GetTypeId() == TYPEID_PLAYER && damage == amount && count == 0)
         {
             creature->GetCharmInfo()->SetReactState( REACT_DEFENSIVE );
