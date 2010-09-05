@@ -10962,14 +10962,21 @@ void Unit::UpdateModelData()
 {
     if (CreatureModelInfo const* modelInfo = sObjectMgr.GetCreatureModelInfo(GetDisplayId()))
     {
-        // we expect values in database to be relative to scale = 1.0
-        SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, GetObjectScale() * modelInfo->bounding_radius);
-
-        // never actually update combat_reach for player, it's always the same. Below player case is for initialization
+        float radius = GetObjectScale() * modelInfo->bounding_radius;
+        float combat_reach = (GetTypeId() == TYPEID_PLAYER) ? 1.5f : GetObjectScale() * modelInfo->combat_reach;
+        
         if (GetTypeId() == TYPEID_PLAYER)
+        {
+            SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, radius);
+            // never actually update combat_reach for player, it's always the same. Below player case is for initialization
             SetFloatValue(UNIT_FIELD_COMBATREACH, 1.5f);
+        }
         else
-            SetFloatValue(UNIT_FIELD_COMBATREACH, GetObjectScale() * modelInfo->combat_reach);
+        {
+            // we expect values in database to be relative to scale = 1.0
+            SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, (radius > combat_reach) ? combat_reach : radius;
+            SetFloatValue(UNIT_FIELD_COMBATREACH, combat_reach); 
+        }
     }
 }
 
