@@ -276,6 +276,10 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                     // (ok) most seem to have this
                     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_LEVITATING);
 
+                    // Add flying effect. This should be in db, but...
+                    if(!((Creature*)unit)->HasSplineFlag(SPLINEFLAG_UNKNOWN7))
+                        ((Creature*)unit)->AddSplineFlag(SPLINEFLAG_UNKNOWN7);
+
                     if (!((Creature*)unit)->hasUnitState(UNIT_STAT_MOVING))
                     {
                         // (ok) possibly some "hover" mode
