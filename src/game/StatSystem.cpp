@@ -960,6 +960,13 @@ bool Pet::UpdateStats(Stats stat)
                         }
                         break; 
                     }
+                    case CLASS_DRUID:
+                    {
+                        
+                        //For treants, use 70% of stamina / 3 treants, guessed
+                        scale_coeff = 0.7f / 3.0f; 
+                        break;
+                    }
                 }
                 break;
             }
@@ -1155,6 +1162,14 @@ void Pet::UpdateAttackPowerAndDamage(bool ranged)
                         coeff += glyph->GetModifier()->m_amount / 100.0f;
                     bonusAP += coeff * owner->GetTotalAttackPowerValue(BASE_ATTACK);
                     break;
+                }
+                case CLASS_DRUID:
+                {
+                    //Guessed
+                    float coeff = 0.55f;
+                    int32 sp = int32(owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS + SPELL_SCHOOL_NATURE)) - owner->GetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG + SPELL_SCHOOL_NATURE);
+                    bonusAp += coeff * sp;
+                    break;    
                 }
             }
         }
