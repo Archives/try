@@ -107,7 +107,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
         PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
         PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     }
-    PSendSysMessage("Revision [%s][%s] - MaNGOS modified for Valhalla Server", valhalla_rev_date, valhalla_rev);
+    PSendSysMessage("CatCore [%s][%s] - MaNGOS modified for Valhalla Server", valhalla_rev, valhalla_rev_date);
     SendSysMessage("Changelog: http://valhalla-team.com/web/changelog.php");
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
