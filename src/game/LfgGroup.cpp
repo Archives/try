@@ -85,6 +85,7 @@ bool LfgGroup::AddMember(const uint64 &guid, const char* name)
     
     if (GetMembersCount() == 0)
         m_baseLevel = player->getLevel();
+    error_log("Add member %u , guid %u", GetId(), guid);
     MemberSlot member;
     member.guid      = guid;
     member.name      = name;
@@ -107,7 +108,7 @@ uint32 LfgGroup::RemoveMember(const uint64 &guid, const uint8 &method)
 
         m_memberSlots.erase(slot);
     }
-    
+    error_log("Remove member %u , guid %u", GetId(), guid);
     if (Player *player = sObjectMgr.GetPlayer(guid))
     {
         player->m_lookingForGroup.groups.erase(m_dungeonInfo->ID);
@@ -153,24 +154,34 @@ uint8 LfgGroup::GetPlayerRole(uint64 guid, bool withLeader, bool joinedAs) const
 
 bool LfgGroup::RemoveOfflinePlayers()  // Return true if group is empty after check
 {
+    error_log("Remove Offline %u", GetId());
     if (m_memberSlots.empty())
     {
+        error_log("Group %u add to delete", GetId());
         sLfgMgr.AddGroupToDelete(this);
         return true;
     }
     PlayerList toRemove;
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
+         error_log("guid %u", citr->guid);
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
         if ((!plr || (!plr->GetSession() && !plr->IsBeingTeleported())) && premadePlayers.find(citr->guid) == premadePlayers.end())
+        {
+            error_log("Add to remove");
             toRemove.insert(citr->guid);
+        }
     }
     for(PlayerList::iterator itr = toRemove.begin(); itr != toRemove.end(); ++itr)
+    {
+        error_log("Remove %u", *itr);
         RemoveMember(*itr, 0);
+    }
     toRemove.clear();
     //flush empty group
     if (GetMembersCount() == 0)
     {
+        error_log("Group %u add to delete 2", GetId());
         sLfgMgr.AddGroupToDelete(this);
         return true;
     }
@@ -311,6 +322,7 @@ void LfgGroup::TeleportToDungeon()
             continue;
         if (m_groupType == GROUPTYPE_LFD_2 && plr->GetGroup())
         {
+            plr->GetGroup()->UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
             m_leaderGuid = plr->GetGroup()->GetLeaderGUID();
             m_leaderName = plr->GetGroup()->GetLeaderName();
             break;
@@ -340,6 +352,7 @@ void LfgGroup::TeleportToDungeon()
         m_Id, GUID_LOPART(m_leaderGuid), GUID_LOPART(m_tank), GUID_LOPART(m_mainAssistant), uint32(m_lootMethod),
         GUID_LOPART(m_looterGuid), uint32(m_lootThreshold), m_targetIcons[0], m_targetIcons[1], m_targetIcons[2], m_targetIcons[3], m_targetIcons[4], m_targetIcons[5], m_targetIcons[6], m_targetIcons[7], uint8(m_groupType), uint32(m_dungeonDifficulty), uint32(m_raidDifficulty), GUID_LOPART(m_heal), m_dungeonInfo->ID, randomDungeonEntry, m_instanceStatus);    
     //sort group members...
+    UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
     for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
     {
         Player *plr = sObjectMgr.GetPlayer(citr->guid);
@@ -406,9 +419,8 @@ void LfgGroup::TeleportPlayer(Player *plr, DungeonInfo *dungeonInfo, uint32 orig
             if (plr->GetRaidDifficulty() != GetRaidDifficulty())
                 plr->SetRaidDifficulty(GetRaidDifficulty());
         }
-        plr->SetGroup(this, 1);
+        plr->SetGroup(this, 0);
         plr->SetGroupInvite(NULL);
-        UnbindInstance(dungeonInfo->start_map, m_dungeonInfo->isHeroic() ? DUNGEON_DIFFICULTY_HEROIC : DUNGEON_DIFFICULTY_NORMAL);
     }
 
     uint32 taxi_start = 0;
