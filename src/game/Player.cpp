@@ -1149,11 +1149,12 @@ void Player::HandleDrowning(uint32 time_diff)
                 // Calculate and deal damage
                 // TODO: Check this formula
                 uint32 damage = urand(600, 700);
-                if (m_MirrorTimerFlags&UNDERWATER_INLAVA)
+                // not in arena
+                if ((m_MirrorTimerFlags&UNDERWATER_INLAVA) && !InArena())
                     EnvironmentalDamage(DAMAGE_LAVA, damage);
-                // need to skip Slime damage in Undercity,
+                // need to skip Slime damage in Undercity and in arenas,
                 // maybe someone can find better way to handle environmental damage
-                else if (m_zoneUpdateId != 1497)
+                else if (m_zoneUpdateId != 1497 && !InArena())
                     EnvironmentalDamage(DAMAGE_SLIME, damage);
             }
         }
