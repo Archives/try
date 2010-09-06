@@ -3947,6 +3947,10 @@ void Spell::EffectOpenLock(SpellEffectIndex eff_idx)
                 return;
             }
         }
+        // Disarm trap
+        else if(m_spellInfo->Id==1842)
+            gameObjTarget->Delete();
+
         lockId = goInfo->GetLockId();
         guid = gameObjTarget->GetGUID();
     }
